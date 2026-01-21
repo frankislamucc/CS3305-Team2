@@ -12,52 +12,38 @@ videoOverlay.height = 150
 let prevX = null
 let prevY = null
 
-// Variables for swipe detection
-let handPositions = []
-const maxPositions = 10 // Track last 10 positions
-const swipeThreshold = 0.15 // Minimum distance for swipe (normalized 0-1) - more sensitive
-const minSwipeSpeed = 0.08 // Minimum speed for swipe detection - more sensitive
+// Variables for fist detection
+let clearedThisFist = false
 let lastClearTime = 0 // Timestamp of last canvas clear
 const clearDelay = 1000 // 1 second delay before allowing drawing again
 
-function isSwipe(landmarks) {
-  const wrist = landmarks[0] // Use wrist for whole hand/palm swipe detection
-  const currentPos = { x: wrist.x, y: wrist.y, timestamp: Date.now() }
-  
-  // Add current position to history
-  handPositions.push(currentPos)
-  
-  // Keep only recent positions
-  if (handPositions.length > maxPositions) {
-    handPositions.shift()
+function distance(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+}
+
+function isFist(landmarks) {
+  // Calculate palm center as average of wrist and finger bases
+  const palmCenter = {
+    x: (landmarks[0].x + landmarks[5].x + landmarks[9].x + landmarks[13].x + landmarks[17].x) / 5,
+    y: (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5
   }
   
-  // Need at least 5 positions to detect swipe
-  if (handPositions.length < 5) {
-    return false
-  }
+  const thumbTip = landmarks[4]
+  const indexTip = landmarks[8]
+  const middleTip = landmarks[12]
+  const ringTip = landmarks[16]
+  const pinkyTip = landmarks[20]
   
-  // Calculate movement over the last few frames
-  const recentPositions = handPositions.slice(-5)
-  const firstPos = recentPositions[0]
-  const lastPos = recentPositions[recentPositions.length - 1]
+  const threshold = 0.12 // Tighter threshold for stricter fist detection
   
-  // Calculate distance and time
-  const distanceX = Math.abs(lastPos.x - firstPos.x)
-  const distanceY = Math.abs(lastPos.y - firstPos.y)
-  const timeDiff = lastPos.timestamp - firstPos.timestamp
-  
-  // Check for significant movement
-  const totalDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY)
-  const speed = totalDistance / (timeDiff / 1000) // pixels per second (normalized)
-  
-  // Detect swipe if movement is fast and covers minimum distance
-  if (speed > minSwipeSpeed && totalDistance > swipeThreshold) {
-    // Clear position history after detecting swipe
-    handPositions = []
+  // Check if all finger tips are close to the palm center (indicating a fist)
+  if (distance(thumbTip, palmCenter) < threshold &&
+      distance(indexTip, palmCenter) < threshold &&
+      distance(middleTip, palmCenter) < threshold &&
+      distance(ringTip, palmCenter) < threshold &&
+      distance(pinkyTip, palmCenter) < threshold) {
     return true
   }
-  
   return false
 }
 
@@ -84,13 +70,18 @@ hands.onResults(results => {
       z: landmark.z
     }))
     
-    // Check if swipe gesture detected
-    if (isSwipe(landmarks)) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      prevX = null
-      prevY = null
-      lastClearTime = Date.now() // Record when canvas was cleared
-      return // Skip drawing when clearing
+    // Check if fist gesture detected
+    if (isFist(landmarks)) {
+      if (!clearedThisFist) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        prevX = null
+        prevY = null
+        lastClearTime = Date.now() // Record when canvas was cleared
+        clearedThisFist = true
+      }
+      return // Skip drawing when fist is detected
+    } else {
+      clearedThisFist = false
     }
     
     // Check if we're still in the delay period after clearing
@@ -132,7 +123,7 @@ hands.onResults(results => {
     // Reset previous position when no hand detected
     prevX = null
     prevY = null
-    handPositions = [] // Also clear swipe history
+    clearedThisFist = false // Reset fist flag
   }
 })
 
