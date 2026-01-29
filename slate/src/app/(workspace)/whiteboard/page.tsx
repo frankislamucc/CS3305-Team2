@@ -35,7 +35,7 @@ export default function WhiteboardPage() {
   };
 
   return (
-    <div className="flex-1">
+    <div className="flex flex-col flex-1">
       <Canvas lines={lines} canvasRef={canvasRef} />
       <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} />
     </div>

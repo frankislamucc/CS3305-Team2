@@ -3,5 +3,5 @@ export default function WhiteBoardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <main className="flex h-screen w-screen">{children}</main>;
+  return <main className="flex flex-col h-screen w-screen">{children}</main>;
 }

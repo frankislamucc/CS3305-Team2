@@ -3,6 +3,7 @@ import { Stage, Layer, Line } from "react-konva";
 import type { CanvasHandle, LineData } from "../_types";
 import {
   Ref,
+  useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -68,7 +69,7 @@ export default function Canvas(props: CanvasProps) {
   });
 
   return (
-    <div ref={containerRef} className="flex-1 relative">
+    <div ref={containerRef} className="flex flex-1 relative">
       {dimensions.width > 0 && (
         <Stage width={dimensions.width} height={dimensions.height}>
           <Layer listening={false}>
