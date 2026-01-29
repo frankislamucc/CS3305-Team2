@@ -24,13 +24,13 @@ export default function WhiteboardPage() {
   const canvasRef = useRef<CanvasHandle>(null);
 
   const handleDrawEnd = () => {
-    const curLine = canvasRef.current;
-    if (curLine === null) return;
-    const newLine: LineData | null = curLine.exportLine();
-    if (newLine) {
-      setLines((lines) => [...lines, newLine]);
+    const canvasHandler = canvasRef.current;
+    if (canvasHandler === null) return;
+    const curLine: LineData | null = canvasHandler.exportLine();
+    if (curLine) {
+      setLines((lines) => [...lines, curLine]);
       // don't persist curLine state across renders
-      curLine.clear();
+      canvasHandler.clear();
     }
   };
 
