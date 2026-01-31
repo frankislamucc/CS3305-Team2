@@ -223,9 +223,12 @@ function isPinching(thumbXY, indexXY, width, height) {
 const initTime = performance.now() / 1000 // Initial timestamp in seconds
 
 
-const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
-const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
-const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
+const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
+const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
+const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
+
+let lastFilteredPos = null
+let lastUpdateTime = 0
 
 const hands = new Hands({
   locateFile: file =>
@@ -286,6 +289,34 @@ hands.onResults(results => {
     const currentY = drawXY[1] * canvas.height
 
     if (connected) {
+      const time = performance.now() / 1000
+      // Filter
+      const drawXY = indexFilterXY.filter(time, [rawIndex.x, rawIndex.y])
+      const currentX = drawXY[0] * canvas.width
+      const currentY = drawXY[1] * canvas.height
+      
+      const currentTime = performance.now()
+      // Interpolate
+      if (lastFilteredPos && (currentTime - lastUpdateTime < 100)) { // Only interpolate if recent
+        const timeDiff = currentTime - lastUpdateTime
+        const interpolationFactor = Math.min(1, timeDiff / 33) // 30 FPS Interpolation
+
+        const drawX = lastFilteredPos.x + (currentX - lastFilteredPos.x) * interpolationFactor
+        const drawY = lastFilteredPos.y + (currentY - lastFilteredPos.y) * interpolationFactor
+
+        if (prevX !== null && prevY !== null) {
+        ctx.beginPath()
+        ctx.moveTo(prevX, prevY)
+        ctx.lineTo(drawX, drawY)
+        ctx.strokeStyle = 'black'
+        ctx.lineWidth = 5
+        ctx.lineCap = 'round'
+        ctx.stroke()
+        }
+    
+      prevX = drawX
+      prevY = drawY
+      } else {
       if (prevX !== null && prevY !== null) {
         ctx.beginPath()
         ctx.moveTo(prevX, prevY)
@@ -297,6 +328,10 @@ hands.onResults(results => {
       
       prevX = currentX
       prevY = currentY
+    }
+
+    lastFilteredPos = {x: currentX, y: currentY}
+    lastUpdateTime = currentTime
     } else {
       // NOT PINCHING: "Lift pen" - break the line
       prevX = null
