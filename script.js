@@ -223,9 +223,35 @@ function isPinching(thumbXY, indexXY, width, height) {
 const initTime = performance.now() / 1000 // Initial timestamp in seconds
 
 
-const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
-const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
-const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
+const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
+const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
+const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
+
+class SimpleEMA {
+  constructor(alpha = 0.3) {
+    this.alpha = alpha
+    this.value = null
+  }
+
+  filter(newValue) {
+    if (this.value === null) {
+      this.value = Array.isArray(newValue) ? [...newValue] : newValue
+      return this.value
+    }
+
+    if (Array.isArray(newValue)) {
+      this.value = this.value.map((value, index) =>
+        this.alpha * newValue[index] + (1 - this.alpha) * value
+      )
+    } else {
+      this.value = this.alpha * newValue + (1 - this.alpha) * value
+    }
+
+    return this.value
+  }
+}
+
+const drawEMA = new SimpleEMA(0.4)
 
 let lastFilteredPos = null
 let lastUpdateTime = 0
@@ -239,7 +265,7 @@ hands.setOptions({
   maxNumHands: 1,
   modelComplexity: 1,
   minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
+  minTrackingConfidence: 0.6
 })
 
 hands.onResults(results => {
@@ -249,6 +275,7 @@ hands.onResults(results => {
 
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {// Hand detected - get current timestamp for filters
     const time = performance.now() / 1000
+    const currentTimeMs = performance.now()
     const landmarks = results.multiHandLandmarks[0].map(landmark => ({
       x: 1 - landmark.x, // Mirror horizontally
       y: landmark.y,
@@ -264,6 +291,7 @@ hands.onResults(results => {
         lastClearTime = Date.now() // Record when canvas was cleared
         clearedThisFist = true
       }
+      lastFilteredPos = null
       return // Skip drawing when fist is detected
     } else {
       clearedThisFist = false
@@ -284,27 +312,26 @@ hands.onResults(results => {
     const connected = isPinching(thumbXY, pinchIndexXY, canvas.width, canvas.height)
 
     const drawXY = indexFilterXY.filter(time, [rawIndex.x, rawIndex.y])
+    const drawSmoothed = drawEMA.filter(drawXY)
     
-    const currentX = drawXY[0] * canvas.width
-    const currentY = drawXY[1] * canvas.height
+    const currentX = drawSmoothed[0] * canvas.width
+    const currentY = drawSmoothed[1] * canvas.height
 
     if (connected) {
-      const time = performance.now() / 1000
-      // Filter
-      const drawXY = indexFilterXY.filter(time, [rawIndex.x, rawIndex.y])
-      const currentX = drawXY[0] * canvas.width
-      const currentY = drawXY[1] * canvas.height
+      const time = performance.now()
       
-      const currentTime = performance.now()
+      let drawX = currentX
+      let drawY = currentY
+
       // Interpolate
-      if (lastFilteredPos && (currentTime - lastUpdateTime < 100)) { // Only interpolate if recent
-        const timeDiff = currentTime - lastUpdateTime
-        const interpolationFactor = Math.min(1, timeDiff / 33) // 30 FPS Interpolation
+      if (lastFilteredPos && (currentTimeMs - lastUpdateTime < 50)) { // Only interpolate if recent
+        const timeDiff = currentTimeMs - lastUpdateTime
+        const interpolationFactor = Math.min(0.3, timeDiff / 50) // 30 FPS Interpolation
 
-        const drawX = lastFilteredPos.x + (currentX - lastFilteredPos.x) * interpolationFactor
-        const drawY = lastFilteredPos.y + (currentY - lastFilteredPos.y) * interpolationFactor
-
-        if (prevX !== null && prevY !== null) {
+        drawX = lastFilteredPos.x + (currentX - lastFilteredPos.x) * interpolationFactor
+        drawY = lastFilteredPos.y + (currentY - lastFilteredPos.y) * interpolationFactor
+      }
+      if (prevX !== null && prevY !== null) {
         ctx.beginPath()
         ctx.moveTo(prevX, prevY)
         ctx.lineTo(drawX, drawY)
@@ -316,26 +343,15 @@ hands.onResults(results => {
     
       prevX = drawX
       prevY = drawY
-      } else {
-      if (prevX !== null && prevY !== null) {
-        ctx.beginPath()
-        ctx.moveTo(prevX, prevY)
-        ctx.lineTo(currentX, currentY)
-        ctx.strokeStyle = 'black'
-        ctx.lineWidth = 5
-        ctx.stroke()
-      }
-      
-      prevX = currentX
-      prevY = currentY
-    }
 
-    lastFilteredPos = {x: currentX, y: currentY}
-    lastUpdateTime = currentTime
-    } else {
+      lastFilteredPos = {x: drawX, y: drawY}
+      lastUpdateTime = currentTimeMs
+
+      } else {
       // NOT PINCHING: "Lift pen" - break the line
       prevX = null
       prevY = null
+      lastFilteredPos = null
     }
 
 
@@ -351,6 +367,7 @@ hands.onResults(results => {
     prevX = null
     prevY = null
     clearedThisFist = false
+    lastFilteredPos = null
   }
 })
 
