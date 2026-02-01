@@ -2,8 +2,7 @@
 import { Stage, Layer, Line } from "react-konva";
 import type { CanvasHandle, LineData } from "../_types";
 import {
-  Ref,
-  useEffect,
+  RefObject,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -14,7 +13,7 @@ import type { Line as LineType } from "konva/lib/shapes/Line";
 
 interface CanvasProps {
   lines: LineData[];
-  canvasRef: Ref<CanvasHandle>;
+  canvasRef: RefObject<CanvasHandle | null>;
 }
 
 export default function Canvas(props: CanvasProps) {
@@ -26,7 +25,7 @@ export default function Canvas(props: CanvasProps) {
   });
 
   useLayoutEffect(() => {
-    if (!containerRef.current) return;
+    if (containerRef.current === null) return;
 
     // entries consists of single element container-div
     const observer = new ResizeObserver((entries) => {
@@ -47,7 +46,11 @@ export default function Canvas(props: CanvasProps) {
         const lineNode = lineRef.current;
         if (lineNode === null) return;
         const points = lineNode.points();
-        lineNode.points([...points, x, y]);
+        lineNode.points([
+          ...points,
+          x * dimensions.width,
+          y * dimensions.height,
+        ]);
       },
       clear: () => {
         lineRef.current?.points([]);
@@ -76,7 +79,15 @@ export default function Canvas(props: CanvasProps) {
             {props.lines.map((line) => (
               <Line key={line.id} {...line} />
             ))}
-            <Line ref={lineRef} />
+            <Line
+              key={crypto.randomUUID()}
+              ref={lineRef}
+              stroke="#df4b26"
+              strokeWidth={5}
+              tension={0.5}
+              lineCap="round"
+              lineJoin="round"
+            />
           </Layer>
         </Stage>
       )}
