@@ -223,9 +223,9 @@ function isPinching(thumbXY, indexXY, width, height) {
 const initTime = performance.now() / 1000 // Initial timestamp in seconds
 
 
-const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
-const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
-const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 0.6, 0.01, 0.3)
+const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
+const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
+const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 2.2, 0.18, 1.2)
 
 let lastFilteredPos = null
 let lastUpdateTime = 0
