@@ -1,8 +1,7 @@
 import { RefObject, useEffect, useRef, useState } from "react";
-import { CanvasHandle } from "../_types";
+import { CanvasHandle, WorkerResponse } from "../_types";
 import Camera from "./Camera";
-import { FilesetResolver, GestureRecognizer } from "@mediapipe/tasks-vision";
-import type { GestureRecognizer as GestureModel } from "@mediapipe/tasks-vision";
+import type { GestureRecognizerResult } from "@mediapipe/tasks-vision";
 import { Spinner } from "@/components/ui/spinner";
 import { useCallback } from "react";
 
@@ -18,24 +17,58 @@ export default function GestureEngine({
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
-  const gestureModelRef = useRef<GestureModel>(null);
+  const workerRef = useRef<Worker>(null);
   const lastVideoTime = useRef<number>(null);
   const isDrawing = useRef(false);
+  const isWorkerBusy = useRef(false);
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  // const [isDrawing, setIsDrawing] = useState(false);
+
+  const onPredict = useCallback(
+    (predictions: GestureRecognizerResult) => {
+      const gesture =
+        predictions.gestures && predictions.gestures[0]
+          ? predictions.gestures[0][0].categoryName
+          : "";
+      if (gesture === "Thumb_Up" && !isDrawing.current) {
+        isDrawing.current = true;
+      } else if (gesture === "Thumb_Down" && isDrawing.current) {
+        isDrawing.current = false;
+        onDrawEnd();
+      } else if (gesture === "Closed_Fist" && canvasRef.current) {
+        canvasRef.current.clear();
+        isDrawing.current = false;
+      }
+
+      console.log(isDrawing.current);
+      if (
+        isDrawing.current &&
+        canvasRef.current !== null &&
+        predictions.landmarks[0]
+      ) {
+        const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
+        // indexPoints are camera perspective
+        const transformedX = 1 - indexPoints.x;
+        canvasRef.current.drawPoints(transformedX, indexPoints.y);
+      }
+    },
+    [canvasRef, onDrawEnd],
+  );
 
   // Date.now() is seen as dynamically changing
-  // onPredict logic
-  const onPredict = useCallback(() => {
-    const runPrediction = () => {
+  // predict logic
+  const predict = useCallback(() => {
+    // to recurse on predict we need a nested func
+    const runPrediction = async () => {
       const video = videoRef.current;
       if (
-        gestureModelRef.current === null ||
+        workerRef.current === null ||
         video === null ||
-        video.readyState < 4
+        video.readyState < 4 ||
+        isWorkerBusy.current
       ) {
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
         requestRef.current = requestAnimationFrame(runPrediction);
         return;
       }
@@ -43,94 +76,60 @@ export default function GestureEngine({
       const currentTime = video.currentTime;
 
       if (
-        lastVideoTime.current == null ||
+        lastVideoTime.current === null ||
         currentTime !== lastVideoTime.current
       ) {
-        lastVideoTime.current = currentTime;
-        const results = gestureModelRef.current.recognizeForVideo(
-          video,
-          nowInMs,
-        );
-
-        const gesture =
-          results.gestures && results.gestures[0]
-            ? results.gestures[0][0].categoryName
-            : "";
-        if (gesture === "Thumb_Up" && !isDrawing.current) {
-          isDrawing.current = true;
-          // setIsDrawing(true);
-        } else if (gesture === "Thumb_Down" && isDrawing.current) {
-          isDrawing.current = false;
-          // setIsDrawing(false);
-          onDrawEnd();
-        } else if (gesture === "Closed_Fist" && canvasRef.current) {
-          canvasRef.current.clear();
-          isDrawing.current = false;
-        }
-
-        console.log(isDrawing.current);
-        if (
-          isDrawing.current &&
-          canvasRef.current !== null &&
-          results.landmarks[0]
-        ) {
-          const indexPoints = results.landmarks[0][INDEX_FINGER_TIP];
-          // indexPoints are camera perspective
-          const transformedX = 1 - indexPoints.x;
-          canvasRef.current.drawPoints(transformedX, indexPoints.y);
+        try {
+          const videoBitMap = await createImageBitmap(video);
+          // transfer array passes videoBitMap as pointer
+          workerRef.current.postMessage(
+            {
+              status: "predict",
+              videoFrame: videoBitMap,
+              timestamp: nowInMs,
+            },
+            [videoBitMap],
+          );
+          lastVideoTime.current = currentTime;
+          isWorkerBusy.current = true;
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            setError(`error running prediction: ${error.message}`);
+          }
         }
       }
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
       requestRef.current = requestAnimationFrame(runPrediction);
     };
-
     runPrediction();
-  }, [canvasRef, onDrawEnd]);
-
-  const cameraLoadedHandler = () => {
-    requestRef.current = requestAnimationFrame(onPredict);
-  };
+  }, []);
 
   useEffect(() => {
-    const modelSetup = async () => {
-      try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
-        );
-        const gestureRecognizer = await GestureRecognizer.createFromOptions(
-          vision,
-          {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
-            },
-            numHands: 1,
-            runningMode: "VIDEO",
-            cannedGesturesClassifierOptions: {
-              maxResults: 1,
-              categoryAllowlist: [
-                "Closed_Fist",
-                "Open_Palm",
-                "Pointing_Up",
-                "Thumb_Down",
-                "Thumb_Up",
-              ],
-            },
-          },
-        );
-        gestureModelRef.current = gestureRecognizer;
+    workerRef.current = new Worker(
+      new URL("@/workers/gesture.worker.ts", import.meta.url),
+    );
+
+    workerRef.current.onmessage = (event: MessageEvent) => {
+      const response: WorkerResponse = event.data;
+      if (response === null) return;
+      if (response.status === "initializeSuccess") {
         setIsLoading(false);
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Could not load gesture model.";
-        setError(
-          `Failed to initialize gesture engine: ${message}, please check your connection`,
-        );
+        predict();
+      } else if (
+        response.status === "predictionSuccess" &&
+        response.predictions
+      ) {
+        isWorkerBusy.current = false;
+        onPredict(response.predictions);
       }
     };
-    modelSetup();
-  }, []);
+
+    workerRef.current.postMessage({ status: "init" });
+    return () => {
+      workerRef.current?.terminate();
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [predict, onPredict]);
 
   return (
     <div className="flex flex-1">
@@ -141,7 +140,6 @@ export default function GestureEngine({
         width="640"
         height="480"
         style={{ width: "100%", height: "auto" }}
-        onLoadedData={cameraLoadedHandler}
       />
     </div>
   );

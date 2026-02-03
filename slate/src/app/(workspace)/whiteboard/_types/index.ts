@@ -1,3 +1,4 @@
+import { GestureRecognizerResult } from "@mediapipe/tasks-vision";
 import { LineJoin, LineCap } from "konva/lib/Shape";
 
 export interface LineData {
@@ -19,4 +20,15 @@ export interface CanvasHandle {
   drawPoints: (x: number, y: number) => void;
   clear: () => void;
   exportLine: () => LineData | null;
+}
+
+export interface WorkerRequest {
+  status: string;
+  videoFrame?: ImageBitmap;
+  timestamp?: number;
+}
+
+export interface WorkerResponse {
+  status: string;
+  predictions?: GestureRecognizerResult;
 }

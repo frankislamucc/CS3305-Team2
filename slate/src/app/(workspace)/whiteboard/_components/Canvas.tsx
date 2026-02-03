@@ -59,7 +59,7 @@ export default function Canvas(props: CanvasProps) {
         const lineNode = lineRef.current;
         if (lineNode === null || lineNode.points().length === 0) return null;
         return {
-          id: lineNode.id(),
+          id: crypto.randomUUID(),
           points: lineNode.points(),
           stroke: lineNode.stroke(),
           strokeWidth: lineNode.strokeWidth(),
@@ -80,7 +80,6 @@ export default function Canvas(props: CanvasProps) {
               <Line key={line.id} {...line} />
             ))}
             <Line
-              key={crypto.randomUUID()}
               ref={lineRef}
               stroke="#df4b26"
               strokeWidth={5}

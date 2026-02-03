@@ -6,7 +6,6 @@ interface CameraProps {
   width: string;
   height: string;
   style: CSSProperties;
-  onLoadedData: () => void;
 }
 
 export default function Camera({
@@ -14,7 +13,6 @@ export default function Camera({
   width,
   height,
   style,
-  onLoadedData,
 }: CameraProps) {
   const [error, setError] = useState<string>("");
   useEffect(() => {
@@ -26,7 +24,6 @@ export default function Camera({
           video: true,
         });
         video.srcObject = stream;
-        video.addEventListener("loadeddata", onLoadedData);
       } catch (err: unknown) {
         if (err instanceof DOMException) {
           switch (err.name) {
@@ -52,7 +49,7 @@ export default function Camera({
       }
     };
     startCamera();
-  }, [videoRef, onLoadedData]);
+  }, [videoRef]);
   return (
     <div>
       {error.length > 0 && <p className="accent-red-500">{error}</p>}
