@@ -5,6 +5,8 @@ import { LineData } from "./_types";
 import dynamic from "next/dynamic";
 import { CanvasHandle } from "./_types";
 import GestureEngine from "./_components/GestureEngine";
+import ScreenRecorderControls from "./ScreenRecorderControls";
+
 
 export default function WhiteboardPage() {
   const Canvas = dynamic(() => import("./_components/Canvas"), {
@@ -36,6 +38,7 @@ export default function WhiteboardPage() {
 
   return (
     <div className="flex flex-col flex-1">
+      <ScreenRecorderControls />
       <Canvas lines={lines} canvasRef={canvasRef} />
       <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} />
     </div>
