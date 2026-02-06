@@ -1,3 +1,10 @@
+import HomeNavbar from "./_components/ui/HomeNavbar";
+
 export default function HomePage() {
-        return <h1>Home page</h1>;
+  return (
+    <div className="h-full border-8 border-red-700">
+      <HomeNavbar />
+      Home page
+    </div>
+  );
 }
