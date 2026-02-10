@@ -3,5 +3,5 @@ export default function HomeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <main className="h-full">{children}</main>;
+  return <main className="min-h-screen">{children}</main>;
 }

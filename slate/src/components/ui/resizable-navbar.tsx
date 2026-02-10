@@ -9,11 +9,12 @@ import {
 } from "motion/react";
 import Image from "next/image";
 
-import React, { useRef, useState } from "react";
+import React, { RefObject, useState } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
   className?: string;
+  containerRef: RefObject<HTMLDivElement | null>;
 }
 
 interface NavBodyProps {
@@ -49,10 +50,9 @@ interface MobileNavMenuProps {
   onClose: () => void;
 }
 
-export const Navbar = ({ children, className }: NavbarProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+export const Navbar = ({ children, className, containerRef }: NavbarProps) => {
   const { scrollY } = useScroll({
-    target: ref,
+    target: containerRef,
     offset: ["start start", "end start"],
   });
   const [visible, setVisible] = useState<boolean>(false);
@@ -67,9 +67,9 @@ export const Navbar = ({ children, className }: NavbarProps) => {
 
   return (
     <motion.div
-      ref={ref}
+      ref={containerRef}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("sticky inset-x-0 top-20 z-40 w-full", className)}
+      className={cn("fixed inset-x-0 top-5 z-40 w-full", className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
