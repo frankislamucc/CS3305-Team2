@@ -4,6 +4,10 @@
 
 2. **Run the development server:** `npm run dev` (or `yarn dev`, `pnpm dev`, `bun dev`)
 
+<<<<<<< HEAD
 3. **Install MongoDB dependencies:** `npm add mongoose bcryptjs` `npm add -D @types/bcryptjs` `npm install mongodb`
 
 4.  **Slate cluster url:** `env var MONGODB_URI in .env.local`
+=======
+3. **Install MongoDB dependencies:** `npm add mongoose bcryptjs` `npm add -D @types/bcryptjs` `npm install mongodb`
+>>>>>>> mongoDBsetup
