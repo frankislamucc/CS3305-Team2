@@ -14,6 +14,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof username !== "string" || typeof password !== "string") {
+      return NextResponse.json(
+        { success: false, message: "Invalid input" },
+        { status: 400 }
+      );
+    }
+
     if (username.length < 3) {
       return NextResponse.json(
         { success: false, message: "Username must be at least 3 characters" },
