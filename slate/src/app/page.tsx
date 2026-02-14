@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +27,11 @@ export default function Home() {
 
       const data = await res.json();
       setMessage(data.message);
+
+      if (data.success && isLogin) {
+        router.push("/whiteboard");
+        return;
+      }
 
       if (data.success) {
         setUsername("");

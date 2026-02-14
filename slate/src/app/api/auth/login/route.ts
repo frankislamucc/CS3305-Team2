@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { createToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +40,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
+    const token = await createToken({
+      userId: user._id.toString(),
+      username: user.username,
+    });
+
+    const response = NextResponse.json(
       {
         success: true,
         message: "Login successful",
@@ -47,6 +53,16 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
+
+    response.cookies.set("session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
