@@ -45,14 +45,19 @@ export default function Home() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "80px auto", fontFamily: "sans-serif" }}>
+    <div
+      style={{ maxWidth: 400, margin: "80px auto", fontFamily: "sans-serif" }}
+    >
       <h1>Slate</h1>
 
       <hr />
 
       <nav style={{ display: "flex", gap: 16, margin: "20px 0" }}>
         <button
-          onClick={() => { setIsLogin(true); setMessage(""); }}
+          onClick={() => {
+            setIsLogin(true);
+            setMessage("");
+          }}
           style={{
             fontWeight: isLogin ? "bold" : "normal",
             fontSize: 16,
@@ -67,7 +72,10 @@ export default function Home() {
           Login
         </button>
         <button
-          onClick={() => { setIsLogin(false); setMessage(""); }}
+          onClick={() => {
+            setIsLogin(false);
+            setMessage("");
+          }}
           style={{
             fontWeight: !isLogin ? "bold" : "normal",
             fontSize: 16,
@@ -102,7 +110,12 @@ export default function Home() {
             onChange={(e) => setUsername(e.target.value)}
             required
             minLength={3}
-            style={{ width: "100%", padding: 8, marginTop: 4, boxSizing: "border-box" }}
+            style={{
+              width: "100%",
+              padding: 8,
+              marginTop: 4,
+              boxSizing: "border-box",
+            }}
           />
         </div>
 
@@ -116,7 +129,12 @@ export default function Home() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            style={{ width: "100%", padding: 8, marginTop: 4, boxSizing: "border-box" }}
+            style={{
+              width: "100%",
+              padding: 8,
+              marginTop: 4,
+              boxSizing: "border-box",
+            }}
           />
         </div>
 

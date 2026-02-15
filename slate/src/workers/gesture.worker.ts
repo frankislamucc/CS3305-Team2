@@ -1,4 +1,4 @@
-import { WorkerRequest, WorkerResponse } from "@/(workspace)/whiteboard/_types";
+import { WorkerRequest } from "@/app/(workspace)/whiteboard/_types";
 import { FilesetResolver, GestureRecognizer } from "@mediapipe/tasks-vision";
 
 let model: GestureRecognizer | null = null;
