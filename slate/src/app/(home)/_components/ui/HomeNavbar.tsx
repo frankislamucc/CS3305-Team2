@@ -37,8 +37,8 @@ export default function HomeNavbar({ navRef }: HomeNavbarProps) {
         <NavbarLogo />
         <NavItems items={navItems} />
         <div className="flex items-center gap-4">
-          <NavbarButton variant="secondary">Login</NavbarButton>
-          <NavbarButton variant="primary">Sign up</NavbarButton>
+          <NavbarButton href="/login" variant="secondary">Login</NavbarButton>
+          <NavbarButton href="/login" variant="primary">Sign up</NavbarButton>
         </div>
       </NavBody>
 

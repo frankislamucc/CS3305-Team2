@@ -6,7 +6,7 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 const protectedRoutes = ["/whiteboard", "/home"];
-const publicRoutes = ["/"];
+const publicRoutes = ["/login"];
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect to login if trying to access protected route without session
   if (isProtectedRoute && !session) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
   // Redirect to whiteboard if logged-in user visits login page
@@ -41,5 +41,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/whiteboard/:path*", "/home/:path*"],
+  matcher: ["/login", "/whiteboard/:path*", "/home/:path*"],
 };
