@@ -20,18 +20,17 @@ export default function HomeNavbar({ navRef }: HomeNavbarProps) {
   const navItems = [
     {
       name: "Whiteboard",
-      link: "#features",
+      link: "/whiteboard",
     },
     {
       name: "About us",
-      link: "#pricing",
+      link: "",
     },
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    // <div className="relative w-full">
     <Navbar containerRef={navRef}>
       {/* Desktop Navigation */}
       <NavBody>

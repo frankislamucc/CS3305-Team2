@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import {
@@ -125,7 +126,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
       )}
     >
       {items.map((item, idx) => (
-        <a
+        <Link
           onMouseEnter={() => setHovered(idx)}
           onClick={onItemClick}
           className="relative px-4 py-2 text-brand-text-secondary hover:text-brand-text-hover dark:text-neutral-300"
@@ -138,8 +139,15 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
               className="absolute inset-0 h-full w-full rounded-full bg-brand-hover dark:bg-neutral-800"
             />
           )}
-          <span className="relative z-20">{item.name}</span>
-        </a>
+          <span
+            className={cn(
+              "relative z-20",
+              hovered === idx && "text-brand-text-hover",
+            )}
+          >
+            {item.name}
+          </span>
+        </Link>
       ))}
     </motion.div>
   );
@@ -237,13 +245,13 @@ export const NavbarLogo = () => {
       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-brand-text-primary"
     >
       <Image
-        src="/icons/slate-logo.png"
+        src="/icons/slate-logo.svg"
         alt="logo"
         width={45}
-        height={45}
-        style={{ width: "auto" }}
+        height={55}
+        className="mix-blend-screen"
       />
-      <span className="font-bold text-black dark:text-white">Slate</span>
+      <span className="font-bold text-black dark:text-white mt-.5">Slate</span>
     </a>
   );
 };
