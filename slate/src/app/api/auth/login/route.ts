@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import User from "@/app/models/User";
 import { createToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
     if (!username || !password) {
       return NextResponse.json(
         { success: false, message: "Username and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof username !== "string" || typeof password !== "string") {
       return NextResponse.json(
         { success: false, message: "Invalid input" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "Invalid username or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     if (!isPasswordValid) {
       return NextResponse.json(
         { success: false, message: "Invalid username or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         message: "Login successful",
         user: { id: user._id, username: user.username },
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     response.cookies.set("session", token, {
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     console.error("Login error:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
