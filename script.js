@@ -1,5 +1,57 @@
 import { OneEuroFilter, smoothingFactor, exponentialSmoothing } from './OneEuro.js';
 
+class ViewTransform {
+  constructor() {
+    this.scale = 1.0;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.minScale = 0.5;
+    this.maxScale = 3.0;
+    this.panSpeed = 1.5;
+  }
+
+  screenToCanvas(screenX, screenY) {
+    return {
+      x: (screenX - this.offsetX) / this.scale,
+      y: (screenY - this.offsetY) / this.scale
+    };
+  }
+
+  canvasToScreen(canvasX, canvasY) {
+    return {
+      x: canvasX * this.scale + this.offsetX,
+      y: canvasY * this.scale + this.offsetY
+    };
+  }
+
+  zoomAtPoint(factor, pointX, pointY) {
+    const oldScale = this.scale;
+    const newScale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * factor));
+
+    if (oldScale !== newScale) {
+      this.offsetX = pointX - (pointX - this.offsetX) * (newScale / oldScale);
+      this.offsetY = pointY - (pointY - this.offsetY) * (newScale / oldScale);
+      this.scale = newScale;
+    }
+  }
+
+  pan(deltaX, deltaY) {
+    this.offsetX += deltaX * this.panSpeed;
+    this.offsetY += deltaY * this.panSpeed;
+  }
+
+  reset() {
+    this.scale = 1.0;
+    this.offsetX = 0;
+    this.offsetY = 0;
+  }
+
+  applyTransform(ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(this.offsetX, this.offsetY);
+    ctx.scale(this.scale, this.scale);
+  }
+}
 function drawPinchLandmarks(landmarks, ctx, width, height, connected) {
   // Draw thumb and index finger tips with visual feedback
 
@@ -53,6 +105,17 @@ const ctx = canvas.getContext("2d")
 const videoCtx = videoOverlay.getContext("2d")
 const uiCtx = uiCanvas.getContext("2d")
 
+const offscreenCanvas = document.createElement('canvas');
+const offscreenCtx = offscreenCanvas.getContext('2d');
+
+const INITIAL_CANVAS_SIZE = 4000; // 4000x4000 pixels
+offscreenCanvas.width = INITIAL_CANVAS_SIZE;
+offscreenCanvas.height = INITIAL_CANVAS_SIZE;
+offscreenCtx.fillStyle = 'white';
+offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+const view = new ViewTransform();
+
 function resizeCanvases() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
@@ -73,11 +136,25 @@ const THUMB_TIP_INDEX = 4
 const INDEX_FINGER_TIP_INDEX = 8 
 const PINCH_THRESHOLD_PX = 50  
 
+let isPanning = false
+let lastPanPosition = null
+
 // Variables for fist detection
 let clearedThisFist = false
 let lastClearTime = 0 // Timestamp of last canvas clear
 const clearDelay = 1000 // 1 second delay before allowing drawing again
 
+document.getElementById('zoomInBtn').addEventListener('click', () => {
+  view.zoomAtPoint(1.2, window.innerWidth / 2, window.innerHeight / 2);
+});
+
+document.getElementById('zoomOutBtn').addEventListener('click', () => {
+  view.zoomAtPoint(0.8, window.innerWidth / 2, window.innerHeight / 2);
+});
+
+document.getElementById('resetViewBtn').addEventListener('click', () => {
+  view.reset();
+});
 
 function distance(a, b) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
@@ -124,7 +201,6 @@ function isPinching(thumbXY, indexXY, width, height) {
 
 const initTime = performance.now() / 1000 // Initial timestamp in seconds
 
-
 const indexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
 const thumbFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
 const pinchIndexFilterXY = new OneEuroFilter(initTime, [0, 0], 0.0, 1.0, 0.05, 0.8)
@@ -169,6 +245,21 @@ hands.setOptions({
   minDetectionConfidence: 0.7,
   minTrackingConfidence: 0.6
 })
+
+function renderView() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const topLeft = view.screenToCanvas(0, 0);
+  const bottomRight = view.screenToCanvas(canvas.width, canvas.height);
+
+  const visibleWidth = bottomRight.x - topLeft.x;
+  const visibleHeight = bottomRight.y - topLeft.y;
+
+  ctx.drawImage(
+    offscreenCanvas,
+    topLeft.x, topLeft.y, visibleWidth, visibleHeight,
+    0, 0, canvas.width, canvas.height
+  );
+}
 
 hands.onResults(results => {
   // Clear video overlay each frame
@@ -215,9 +306,14 @@ hands.onResults(results => {
 
     const drawXY = indexFilterXY.filter(time, [rawIndex.x, rawIndex.y])
     const drawSmoothed = drawEMA.filter(drawXY)
-    
-    const currentX = drawSmoothed[0] * canvas.width
-    const currentY = drawSmoothed[1] * canvas.height
+
+    const screenX = drawSmoothed[0] * canvas.width
+    const screenY = drawSmoothed[1] * canvas.height
+      
+    // Convert screen coordinates to world coordinates for drawing on offscreen canvas
+    const worldPos = view.screenToCanvas(screenX, screenY)
+    const currentX = worldPos.x
+    const currentY = worldPos.y
 
     if (connected) {
       const time = performance.now()
@@ -234,13 +330,13 @@ hands.onResults(results => {
         drawY = lastFilteredPos.y + (currentY - lastFilteredPos.y) * interpolationFactor
       }
       if (prevX !== null && prevY !== null) {
-        ctx.beginPath()
-        ctx.moveTo(prevX, prevY)
-        ctx.lineTo(drawX, drawY)
-        ctx.strokeStyle = 'black'
-        ctx.lineWidth = 5
-        ctx.lineCap = 'round'
-        ctx.stroke()
+          offscreenCtx.beginPath()
+          offscreenCtx.moveTo(prevX, prevY)
+          offscreenCtx.lineTo(drawX, drawY)
+          offscreenCtx.strokeStyle = 'black'
+          offscreenCtx.lineWidth = 5
+          offscreenCtx.lineCap = 'round'
+          offscreenCtx.stroke()
         }
     
       prevX = drawX
@@ -271,6 +367,8 @@ hands.onResults(results => {
     clearedThisFist = false
     lastFilteredPos = null
   }
+
+  renderView();
 })
 
 const camera = new Camera(video, {
