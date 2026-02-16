@@ -140,11 +140,6 @@ const PINCH_THRESHOLD_PX = 50
 let isPanning = false
 let lastPanPosition = null
 
-// Variables for fist detection
-let clearedThisFist = false
-let lastClearTime = 0 // Timestamp of last canvas clear
-const clearDelay = 1000 // 1 second delay before allowing drawing again
-
 document.getElementById('clearBtn').addEventListener('click', () => {
   offscreenCtx.fillStyle = 'white';
   offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
@@ -289,25 +284,43 @@ hands.onResults(results => {
 
     // Check if fist gesture detected
     if (isFist(landmarks)) {
-      if (!clearedThisFist) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        prevX = null
-        prevY = null
-        lastClearTime = Date.now() // Record when canvas was cleared
-        clearedThisFist = true
-      }
-      lastFilteredPos = null
-      return // Skip drawing when fist is detected
-    } else {
-      clearedThisFist = false
-    }
+        const palmCenter = {
+          x: (landmarks[0].x + landmarks[5].x + landmarks[9].x + landmarks[13].x + landmarks[17].x) / 5,
+          y: (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5
+      };
 
-    // Check if we're still in the delay period after clearing
-    const timeSinceClear = Date.now() - lastClearTime
-    if (timeSinceClear < clearDelay) {
-      // Still in delay period, don't draw yet
-      return
-    }
+      const screenX = palmCenter.x * uiCanvas.width;
+      const screenY = palmCenter.y * uiCanvas.height;
+
+      if (!isPanning) {
+        isPanning = true;
+        lastPanPosition = { x: screenX, y: screenY };
+      } else if (lastPanPosition) {
+        const deltaX = lastPanPosition.x - screenX;
+        const deltaY = lastPanPosition.y - screenY;
+
+        view.pan(deltaX, deltaY);
+
+        lastPanPosition = { x: screenX, y: screenY };
+      }
+
+      prevX = null;
+      prevY = null;
+      lastFilteredPos = null;
+
+      drawPinchLandmarks(
+        landmarks,
+        uiCtx,
+        uiCanvas.width,
+        uiCanvas.height,
+        false
+      );
+
+  } else {
+    // Not a fist
+    isPanning = false;
+    lastPanPosition = null;
+
     const rawThumb = landmarks[THUMB_TIP_INDEX]
     const rawIndex = landmarks[INDEX_FINGER_TIP_INDEX]
 
@@ -328,8 +341,6 @@ hands.onResults(results => {
     const currentY = worldPos.y
 
     if (connected) {
-      const time = performance.now()
-      
       let drawX = currentX
       let drawY = currentY
 
@@ -372,11 +383,12 @@ hands.onResults(results => {
       uiCanvas.height,
       connected
     )
+  }
   } else {
     // No hand detected: reset drawing state
     prevX = null
     prevY = null
-    clearedThisFist = false
+    lastPanPosition = null
     lastFilteredPos = null
   }
 
@@ -387,8 +399,8 @@ const camera = new Camera(video, {
   onFrame: async () => {
     await hands.send({ image: video })
   },
-  width: 640,
-  height: 480
+  width: 1280,
+  height: 720
 })
 
 camera.start()
