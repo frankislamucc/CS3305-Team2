@@ -52,6 +52,7 @@ class ViewTransform {
     ctx.scale(this.scale, this.scale);
   }
 }
+
 function drawPinchLandmarks(landmarks, ctx, width, height, connected) {
   // Draw thumb and index finger tips with visual feedback
 
@@ -108,7 +109,7 @@ const uiCtx = uiCanvas.getContext("2d")
 const offscreenCanvas = document.createElement('canvas');
 const offscreenCtx = offscreenCanvas.getContext('2d');
 
-const INITIAL_CANVAS_SIZE = 4000; // 4000x4000 pixels
+const INITIAL_CANVAS_SIZE = 4000;
 offscreenCanvas.width = INITIAL_CANVAS_SIZE;
 offscreenCanvas.height = INITIAL_CANVAS_SIZE;
 offscreenCtx.fillStyle = 'white';
@@ -143,6 +144,17 @@ let lastPanPosition = null
 let clearedThisFist = false
 let lastClearTime = 0 // Timestamp of last canvas clear
 const clearDelay = 1000 // 1 second delay before allowing drawing again
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  offscreenCtx.fillStyle = 'white';
+  offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  prevX = null;
+  prevY = null;
+  lastFilteredPos = null;
+});
 
 document.getElementById('zoomInBtn').addEventListener('click', () => {
   view.zoomAtPoint(1.2, window.innerWidth / 2, window.innerHeight / 2);
