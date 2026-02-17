@@ -8,6 +8,17 @@ class ViewTransform {
     this.minScale = 0.5;
     this.maxScale = 3.0;
     this.panSpeed = 1.5;
+    this.onChangeCallback = null;
+  }
+
+  setOnChangeCallback(callback) {
+    this.onChangeCallback = callback;
+  }
+
+  notifyChange() {
+    if (this.onChangeCallback) {
+      this.onChangeCallback();
+    }
   }
 
   screenToCanvas(screenX, screenY) {
@@ -32,24 +43,21 @@ class ViewTransform {
       this.offsetX = pointX - (pointX - this.offsetX) * (newScale / oldScale);
       this.offsetY = pointY - (pointY - this.offsetY) * (newScale / oldScale);
       this.scale = newScale;
+      this.notifyChange();
     }
   }
 
   pan(deltaX, deltaY) {
     this.offsetX += deltaX * this.panSpeed;
     this.offsetY += deltaY * this.panSpeed;
+    this.notifyChange();
   }
 
   reset() {
     this.scale = 1.0;
     this.offsetX = 0;
     this.offsetY = 0;
-  }
-
-  applyTransform(ctx) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.translate(this.offsetX, this.offsetY);
-    ctx.scale(this.scale, this.scale);
+    this.notifyChange();
   }
 }
 
@@ -117,6 +125,13 @@ offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
 const view = new ViewTransform();
 
+let needsViewRedraw = true;
+let needsUIRedraw = true;
+
+view.setOnChangeCallback(() => {
+  needsViewRedraw = true;
+});
+
 function resizeCanvases() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
@@ -124,6 +139,7 @@ function resizeCanvases() {
   uiCanvas.height = window.innerHeight
   videoOverlay.width = 160
   videoOverlay.height = 120
+  needsViewRedraw = true;
 }
 
 let prevX = null
@@ -144,11 +160,10 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   offscreenCtx.fillStyle = 'white';
   offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   prevX = null;
   prevY = null;
   lastFilteredPos = null;
+  needsViewRedraw = true;
 });
 
 document.getElementById('zoomInBtn').addEventListener('click', () => {
@@ -254,6 +269,8 @@ hands.setOptions({
 })
 
 function renderView() {
+  if (!needsViewRedraw) return;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const topLeft = view.screenToCanvas(0, 0);
   const bottomRight = view.screenToCanvas(canvas.width, canvas.height);
@@ -266,7 +283,20 @@ function renderView() {
     topLeft.x, topLeft.y, visibleWidth, visibleHeight,
     0, 0, canvas.width, canvas.height
   );
+
+  needsViewRedraw = false;
 }
+
+
+function animationLoop() {
+  if (needsViewRedraw) renderView();
+  if (needsUIRedraw) needsUIRedraw = false;
+
+  requestAnimationFrame(animationLoop)
+}
+
+animationLoop();
+
 
 hands.onResults(results => {
   // Clear video overlay each frame
@@ -360,6 +390,8 @@ hands.onResults(results => {
           offscreenCtx.lineWidth = 5
           offscreenCtx.lineCap = 'round'
           offscreenCtx.stroke()
+
+          needsViewRedraw = true;
         }
     
       prevX = drawX
