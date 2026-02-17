@@ -6,15 +6,12 @@ import User from "@/app/models/User";
 import { createToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { AuthError } from "@/app/(workspace)/whiteboard/_types";
 
-interface LoginResponse {
-  errorMessage: string;
-}
-
-export async function login(
-  prevResponse: LoginResponse | undefined,
+export async function loginAction(
+  prevResponse: AuthError | undefined,
   formData: FormData,
-): Promise<LoginResponse | undefined> {
+): Promise<AuthError | undefined> {
   try {
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
