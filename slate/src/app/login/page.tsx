@@ -77,6 +77,30 @@ export default function LoginPage() {
         {/* Logo / Back link */}
         <div className="flex items-center justify-center mb-8">
           <Link href="/" className="relative z-20 flex items-center space-x-3 px-2 py-1 group">
+      <hr />
+      {/* Animated background — same as landing page */}
+      <ColorBends
+        className="absolute inset-0 -z-10"
+        colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+        rotation={0}
+        speed={0.2}
+        scale={1}
+        frequency={1}
+        warpStrength={1}
+        mouseInfluence={1}
+        parallax={0.5}
+        noise={0.1}
+        transparent
+        autoRotate={0}
+      />
+
+      <div className="w-full max-w-md">
+        {/* Logo / Back link */}
+        <div className="flex items-center justify-center mb-8">
+          <Link
+            href="/"
+            className="relative z-20 flex items-center space-x-3 px-2 py-1 group"
+          >
             <Image
               src="/icons/slate-logo.svg"
               alt="logo"
