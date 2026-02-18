@@ -7,6 +7,7 @@ interface CardProps {
   subHeadingText: string;
   children: ReactNode;
   error: AuthError | undefined;
+  isLoginPage: boolean;
 }
 
 export default function Card({
@@ -14,10 +15,11 @@ export default function Card({
   subHeadingText,
   children,
   error,
+  isLoginPage,
 }: CardProps) {
   return (
     <div className="backdrop-blur-xl bg-neutral-900/80 border border-white/15 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-8">
-      <ToggleNavbar />
+      <ToggleNavbar isLoginPage={isLoginPage} />
 
       <h2 className="text-2xl font-bold text-white mb-1">{headingText}</h2>
       <p className="text-white/60 text-sm mb-6">{subHeadingText}</p>

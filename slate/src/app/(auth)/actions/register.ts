@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 interface RegisterResponse {
   errorMessage: string;
 }
-export async function POST(
+export async function registerAction(
   prevResponse: RegisterResponse | undefined,
   formData: FormData,
 ): Promise<RegisterResponse | undefined> {

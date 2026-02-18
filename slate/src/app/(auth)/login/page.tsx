@@ -16,6 +16,7 @@ export default function LoginPage() {
         headingText="Welcome back"
         subHeadingText="Sign in to get access"
         error={error}
+        isLoginPage={true}
       >
         <AuthForm
           actionHandler={actionHandler}

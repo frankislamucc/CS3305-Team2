@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface AuthInputProps {
   labelText: string;
   defaultText: string;
@@ -9,6 +11,7 @@ export default function AuthInput({
   defaultText,
   promptText,
 }: AuthInputProps) {
+  const [inputValue, setInputValue] = useState(defaultText);
   return (
     <div>
       <label
@@ -20,7 +23,14 @@ export default function AuthInput({
       <input
         id={defaultText}
         type="text"
-        defaultValue={defaultText}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onFocus={() => {
+          if (inputValue === defaultText) setInputValue("");
+        }}
+        onBlur={() => {
+          if (inputValue === "") setInputValue(defaultText);
+        }}
         required
         minLength={3}
         placeholder={promptText}

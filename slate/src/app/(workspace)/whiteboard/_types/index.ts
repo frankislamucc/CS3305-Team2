@@ -34,5 +34,5 @@ export interface WorkerResponse {
 }
 
 export interface AuthError {
-  errorMessage: string;
+  errorMessages: string[];
 }
