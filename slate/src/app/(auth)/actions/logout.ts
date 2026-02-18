@@ -7,10 +7,7 @@ interface LogoutResponse {
   errorMessage: string;
 }
 
-export async function Logout(
-  prevResponse: LogoutResponse | undefined,
-  formData: FormData,
-): Promise<LogoutResponse | undefined> {
+export async function logoutAction(): Promise<LogoutResponse | undefined> {
   try {
     const cookieStore = await cookies();
     cookieStore.delete("session");
@@ -18,4 +15,5 @@ export async function Logout(
   } catch {
     return { errorMessage: "Uknown error occurred, please try again" };
   }
+  redirect("/");
 }

@@ -7,6 +7,8 @@ import { createToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AuthError } from "@/app/(workspace)/whiteboard/_types";
+import schema from "@/lib/validation/auth";
+import z from "zod";
 
 export async function loginAction(
   prevResponse: AuthError | undefined,
@@ -16,19 +18,36 @@ export async function loginAction(
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
 
+    const validationResult = schema.safeParse({
+      username: username,
+      password: password,
+    });
+
+    if (!validationResult.success) {
+      const errors = z.flattenError(validationResult.error);
+      const errorMessages = [
+        ...Object.values(errors.fieldErrors).flat(),
+        ...errors.formErrors,
+      ];
+
+      return {
+        errorMessages: errorMessages,
+      };
+    }
+
     await dbConnect();
 
     const user = await User.findOne({ username });
     if (!user) {
       return {
-        errorMessage: "Invalid username or password",
+        errorMessages: ["Invalid username or password"],
       };
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return {
-        errorMessage: "Invalid username or password",
+        errorMessages: ["Invalid username or password"],
       };
     }
 
@@ -46,9 +65,11 @@ export async function loginAction(
       maxAge: 60 * 15, // 15 mins
       path: "/",
     });
-
-    redirect("/");
-  } catch {
-    return { errorMessage: "Uknown error occurred, please try again" };
+  } catch (error: unknown) {
+    console.log(error);
+    return { errorMessages: ["Uknown error occurred, please try again"] };
   }
+  // succesfull redirect throws an error
+  // so keep out of try catch
+  redirect("/");
 }

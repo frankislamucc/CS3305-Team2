@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "@/app/(auth)/actions/logout";
 
 export default function WhiteBoardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [username, setUsername] = useState<string>("");
 
   useEffect(() => {
@@ -21,8 +21,9 @@ export default function WhiteBoardLayout({
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
+    try {
+      await logoutAction();
+    } catch {}
   };
 
   return (
@@ -32,7 +33,8 @@ export default function WhiteBoardLayout({
         <div className="flex items-center gap-4">
           {username && (
             <span className="text-sm text-gray-300">
-              Welcome, <span className="font-medium text-white">{username}</span>
+              Welcome,{" "}
+              <span className="font-medium text-white">{username}</span>
             </span>
           )}
           <button

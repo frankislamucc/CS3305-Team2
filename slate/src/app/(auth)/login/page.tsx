@@ -3,7 +3,7 @@
 import AuthForm from "../_components/forms/AuthForm";
 import Card from "../_components/ui/Card";
 import { loginAction } from "../actions/login";
-import { act, useActionState } from "react";
+import { useActionState } from "react";
 
 export default function LoginPage() {
   const [error, actionHandler, isPending] = useActionState(

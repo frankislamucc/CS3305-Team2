@@ -24,9 +24,9 @@ export default function Card({
       <h2 className="text-2xl font-bold text-white mb-1">{headingText}</h2>
       <p className="text-white/60 text-sm mb-6">{subHeadingText}</p>
 
-      {error && (
+      {error && error.errorMessages && error.errorMessages.length >= 1 && (
         <div className="rounded-lg px-4 py-3 text-sm mb-4 bg-red-500/20 border border-red-400/30 text-red-200">
-          {error.errorMessage}
+          {error.errorMessages[0]}
         </div>
       )}
 

@@ -14,15 +14,11 @@ export default function AuthForm({
   return (
     <form action={actionHandler} className="space-y-4">
       <AuthInput
-        labelText="username"
-        defaultText="username"
+        name="username"
         promptText="Enter your username"
+        isPassword={false}
       />
-      <AuthInput
-        labelText="password"
-        defaultText="password"
-        promptText="Enter your password"
-      />
+      <AuthInput name="password" promptText="Enter your password" isPassword />
 
       <button
         type="submit"

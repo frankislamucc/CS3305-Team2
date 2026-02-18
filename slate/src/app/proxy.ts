@@ -6,7 +6,7 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 const protectedRoutes = ["/whiteboard", "/home"];
-const publicRoutes = ["/login"];
+const publicRoutes = ["/auth/login"];
 
 export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
