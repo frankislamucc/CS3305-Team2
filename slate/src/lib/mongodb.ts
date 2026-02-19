@@ -28,6 +28,8 @@ if (!global.mongooseCache) {
 }
 
 async function dbConnect() {
+  console.log(MONGODB_URI);
+  console.log("cached promise is " + cached.promise);
   if (cached.conn) {
     return cached.conn;
   }

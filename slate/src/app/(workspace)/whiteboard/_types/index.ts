@@ -32,3 +32,7 @@ export interface WorkerResponse {
   status: string;
   predictions?: GestureRecognizerResult;
 }
+
+export interface AuthError {
+  errorMessages: string[];
+}
