@@ -1,18 +1,20 @@
 "use client";
 
 import { logoutAction } from "@/app/(auth)/actions/logout";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   username: string;
 }
 
-const handleLogout = async () => {
-  try {
-    await logoutAction();
-  } catch {}
-};
-
 export default function Header({ username }: HeaderProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logoutAction();
+    router.push("/");
+  };
+
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white">
       <span className="text-lg font-semibold">Slate</span>
