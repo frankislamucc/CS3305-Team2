@@ -1,6 +1,7 @@
 import ColorBends from "@/components/ui/ColorBends";
 import Link from "next/link";
 import LogoHeader from "./_components/ui/LogoHeader";
+import BackButton from "./_components/ui/BackButton";
 
 export default function AuthLayout({
   children,
@@ -28,15 +29,7 @@ export default function AuthLayout({
         <div className="w-full max-w-md">
           <LogoHeader />
           {children}
-
-          <p className="text-center mt-5">
-            <Link
-              href="/"
-              className="text-neutral-600 hover:text-black dark:text-white/50 dark:hover:text-white text-sm transition-colors"
-            >
-              ← Back to home
-            </Link>
-          </p>
+          <BackButton />
         </div>
       </div>
     </main>
