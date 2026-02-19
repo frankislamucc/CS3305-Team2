@@ -14,6 +14,8 @@ export async function logoutAction(): Promise<LogoutResponse | undefined> {
     redirect("/");
   } catch {
     return { errorMessage: "Uknown error occurred, please try again" };
+  } finally {
+    // redirect throws error so must call again once error is caught
+    redirect("/");
   }
-  redirect("/");
 }

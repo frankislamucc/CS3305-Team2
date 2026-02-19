@@ -1,8 +1,18 @@
+"use client";
+
+import { logoutAction } from "@/app/(auth)/actions/logout";
+
 interface HeaderProps {
   username: string;
-  handleLogout: () => void;
 }
-export default function Header({ username, handleLogout }: HeaderProps) {
+
+const handleLogout = async () => {
+  try {
+    await logoutAction();
+  } catch {}
+};
+
+export default function Header({ username }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white">
       <span className="text-lg font-semibold">Slate</span>

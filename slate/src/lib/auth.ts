@@ -1,8 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { UserData } from "../../models/User";
 import dbConnect from "./mongodb";
 import User from "../../models/User";
+import { IUser } from "@/app/models/User";
+import { error } from "node:console";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "default-secret-change-me",
@@ -41,11 +42,13 @@ export async function getSession(): Promise<SessionPayload | null> {
   return verifyToken(token);
 }
 
-export async function getAuthenticatedUser(): Promise<UserData | null> {
+export async function getAuthenticatedUser(): Promise<IUser | null> {
   try {
     const session = await getSession();
+    if (!session || !session.userId) return null;
     await dbConnect();
-    const user = User.findOne();
+    const user = await User.findById(session?.userId).lean().exec();
+    return user;
   } catch {
     return null;
   }

@@ -1,11 +1,5 @@
 import mongoose, { Schema, Document, models, model } from "mongoose";
 
-export interface UserData {
-  _id: string;
-  username: string;
-  createdAt: string | Date;
-}
-
 export interface IUser extends Document {
   username: string;
   password: string;

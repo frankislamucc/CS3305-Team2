@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface AuthInputProps {
   name: string;
@@ -12,6 +13,8 @@ export default function AuthInput({
   isPassword,
 }: AuthInputProps) {
   const [inputValue, setInputValue] = useState(promptText);
+  const [isVisible, setIsVisible] = useState(isPassword);
+
   return (
     <div>
       <label
@@ -23,15 +26,8 @@ export default function AuthInput({
       <input
         id={name}
         name={name}
-        type={isPassword ? "password" : "text"}
-        value={inputValue}
+        type={isVisible ? "password" : "text"}
         onChange={(e) => setInputValue(e.target.value)}
-        onFocus={() => {
-          if (inputValue === promptText) setInputValue("");
-        }}
-        onBlur={() => {
-          if (inputValue === "") setInputValue(promptText);
-        }}
         required
         placeholder={promptText}
         className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 backdrop-blur-sm outline-none transition-all focus:border-brand-select focus:ring-2 focus:ring-brand-select/30"
