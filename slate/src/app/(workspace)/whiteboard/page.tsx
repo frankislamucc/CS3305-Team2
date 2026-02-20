@@ -59,13 +59,9 @@ export default function WhiteboardPage() {
     if (canvasHandler === null) return;
     const curLine: LineData | null = canvasHandler.exportLine();
     if (curLine) {
-      setLines((prev) => {
-        const updated = [...prev, curLine];
-        // Auto-save after each stroke
-        saveCanvas(updated, canvasId);
-        return updated;
-      });
-      // don't persist curLine state across renders
+      const updated = [...lines, curLine];
+      setLines(updated);
+      saveCanvas(updated, canvasId);
       canvasHandler.clear();
     }
   };

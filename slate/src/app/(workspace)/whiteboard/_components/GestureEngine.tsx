@@ -33,14 +33,22 @@ export default function GestureEngine({
           : "";
       if (gesture === "Thumb_Up" && !isDrawing.current) {
         isDrawing.current = true;
+        if (canvasRef.current) {
+          canvasRef.current.hideColourPicker();
+        }
       } else if (gesture === "Thumb_Down" && isDrawing.current) {
         isDrawing.current = false;
         onDrawEnd();
-      } else if (gesture === "Closed_Fist" && canvasRef.current) {
-        canvasRef.current.clear();
-        isDrawing.current = false;
-      }
+        if (canvasRef.current) {
+          canvasRef.current.hideColourPicker();
+        }
 
+      } else if (gesture === "Closed_Fist" && canvasRef.current) {
+        canvasRef.current.showColourPicker();
+      } else if (gesture === "Open_Palm" && canvasRef.current) {
+        canvasRef.current.hideColourPicker();
+      }
+      
       console.log(isDrawing.current);
       if (
         isDrawing.current &&
@@ -144,3 +152,5 @@ export default function GestureEngine({
     </div>
   );
 }
+
+

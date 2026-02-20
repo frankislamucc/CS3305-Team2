@@ -10,6 +10,8 @@ import {
 } from "react";
 import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
+import ColorWheelSpinner from "./ColourWheelSpinner";
+import Konva from "konva";
 
 interface CanvasProps {
   lines: LineData[];
@@ -23,6 +25,10 @@ export default function Canvas(props: CanvasProps) {
     width: 0,
     height: 0,
   });
+  const layerRef = useRef<Konva.Layer>(null); 
+  const [showSpinner, setShowSpinner] = useState(false);
+
+  
 
   useLayoutEffect(() => {
     if (containerRef.current === null) return;
@@ -68,8 +74,15 @@ export default function Canvas(props: CanvasProps) {
           lineJoin: lineNode.lineJoin(),
         };
       },
+
+      showColourPicker: () => setShowSpinner(true),
+      hideColourPicker: () => setShowSpinner(false)
+
     };
   });
+
+  // 1st layer is for canvas
+  // 2nd layer is for UI (eg colour picker)
 
   return (
     <div ref={containerRef} className="flex flex-1 relative">
@@ -87,6 +100,11 @@ export default function Canvas(props: CanvasProps) {
               lineCap="round"
               lineJoin="round"
             />
+          </Layer>
+          <Layer ref={layerRef}>
+            {layerRef.current && showSpinner && (
+              <ColorWheelSpinner layer={layerRef.current} x={200} y={200} angle={0}/>
+            )}          
           </Layer>
         </Stage>
       )}
