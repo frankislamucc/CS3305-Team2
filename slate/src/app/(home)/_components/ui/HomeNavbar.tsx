@@ -10,15 +10,14 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
-import { RefObject, useEffect, useState } from "react";
-import { getMeAction } from "@/app/(auth)/actions/me";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/app/(auth)/actions/logout";
 
 interface HomeNavbarProps {
-  navRef: RefObject<HTMLDivElement | null>;
+  username: string;
 }
 
-export default function HomeNavbar({ navRef }: HomeNavbarProps) {
+export default function HomeNavbar({ username }: HomeNavbarProps) {
   const navItems = [
     {
       name: "Whiteboard",
@@ -30,16 +29,22 @@ export default function HomeNavbar({ navRef }: HomeNavbarProps) {
     },
   ];
 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getMeAction().then((result) => {
-      if (result.authenticated && result.username) {
-        setUsername(result.username);
-      }
-    });
+    const updateNavHeight = () => {
+      if (navRef.current === null) return;
+      const height = navRef.current.offsetHeight;
+      document.documentElement.style.setProperty("--nav-height", `${height}px`);
+    };
+    updateNavHeight();
+    window.addEventListener("resize", updateNavHeight);
+    return () => {
+      window.removeEventListener("resize", updateNavHeight);
+    };
   }, []);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutAction();
@@ -57,7 +62,9 @@ export default function HomeNavbar({ navRef }: HomeNavbarProps) {
             <>
               <span className="text-sm text-neutral-700 dark:text-neutral-300">
                 Welcome,{" "}
-                <span className="font-medium text-black dark:text-white">{username}</span>
+                <span className="font-medium text-black dark:text-white">
+                  {username}
+                </span>
               </span>
               <NavbarButton
                 as="button"

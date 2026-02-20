@@ -1,27 +1,13 @@
 "use client";
 
-import HomeNavbar from "./_components/ui/HomeNavbar";
 import BentoCards from "./_components/ui/BentoCards";
-import { useEffect, useRef, useState } from "react";
 import ColorBends from "@/components/ui/ColorBends";
 import Footer from "./_components/ui/Footer";
 
 export default function HomePage() {
-  const [navHeight, setNavHeight] = useState<number>(0);
-  const navRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const nav = navRef.current;
-    if (nav && nav.offsetHeight != navHeight) {
-      setNavHeight(nav.offsetHeight);
-    }
-  }, [navHeight]);
-
-  // TODO: is state needed, can we just use turnary with navRef.current : 0
   return (
-    <div className="relative min-h-screen w-full">
-      <HomeNavbar navRef={navRef} />
-      <div style={{ height: navHeight }} aria-hidden="true" />
+    <>
+      <div style={{ height: "var(--nav-height, 0px)" }} aria-hidden="true" />
       <ColorBends
         className="fixed inset-0 -z-10"
         colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
@@ -38,6 +24,6 @@ export default function HomePage() {
       />
       <BentoCards />
       <Footer />
-    </div>
+    </>
   );
 }
