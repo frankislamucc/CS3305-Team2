@@ -1,97 +1,133 @@
 import { useEffect, useRef } from "react";
 import Konva from "konva";
 
-interface ColorWheelSpinnerProps {
+const COLOURS = [
+  { hsl: "hsl(0, 100%, 50%)", label: "Red" },
+  { hsl: "hsl(45, 100%, 50%)", label: "Orange" },
+  { hsl: "hsl(60, 100%, 50%)", label: "Yellow" },
+  { hsl: "hsl(120, 100%, 50%)", label: "Green" },
+  { hsl: "hsl(180, 100%, 50%)", label: "Cyan" },
+  { hsl: "hsl(240, 100%, 50%)", label: "Blue" },
+  { hsl: "hsl(270, 100%, 50%)", label: "Purple" },
+  { hsl: "hsl(300, 100%, 50%)", label: "Pink" },
+];
+
+const SEGMENT_COUNT = COLOURS.length;
+const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
+const GAP = 3;
+
+interface ColourWheelSpinnerProps {
   layer: Konva.Layer;
   x: number;
   y: number;
   radius?: number;
-  angle: number; // 0–360, drives the needle
+  rotationAngle: number;
+  onColourSelect?: (colour: string) => void;
 }
 
-export default function ColorWheelSpinner({
+export default function ColourWheelSpinner({
   layer,
   x,
   y,
   radius = 80,
-  angle,
-}: ColorWheelSpinnerProps) {
+  rotationAngle,
+  onColourSelect,
+}: ColourWheelSpinnerProps) {
   const groupRef = useRef<Konva.Group | null>(null);
-  const needleRef = useRef<Konva.Line | null>(null);
+  const segmentsRef = useRef<Konva.Arc[]>([]);
+  const centerRef = useRef<Konva.Circle | null>(null);
   const labelRef = useRef<Konva.Text | null>(null);
+  const pointerRef = useRef<Konva.RegularPolygon | null>(null);
+
+  const getSelectedIndex = (rotation: number) => {
+    const raw = (-rotation / SEGMENT_ANGLE) % SEGMENT_COUNT;
+    return ((Math.round(raw) % SEGMENT_COUNT) + SEGMENT_COUNT) % SEGMENT_COUNT;
+  };
 
   useEffect(() => {
-    // Build the wheel once
     const group = new Konva.Group({ x, y });
     groupRef.current = group;
+    segmentsRef.current = [];
 
-    // Draw hue segments
-    const segments = 360;
-    for (let i = 0; i < segments; i++) {
-      const startAngle = (i * Math.PI * 2) / segments;
-      const endAngle = ((i + 1) * Math.PI * 2) / segments;
-      const wedge = new Konva.Arc({
-        innerRadius: radius * 0.5,
+    COLOURS.forEach((colour, i) => {
+      const arc = new Konva.Arc({
+        x: 0,
+        y: 0,
+        innerRadius: radius * 0.4,
         outerRadius: radius,
-        angle: 360 / segments + 0.5, 
-        fill: `hsl(${i}, 100%, 50%)`,
-        rotation: i * (360 / segments) - 90, // start from top
+        angle: SEGMENT_ANGLE - GAP,
+        fill: colour.hsl,
+        rotation: i * SEGMENT_ANGLE - 90 + GAP / 2,
       });
-      group.add(wedge);
-    }
+      segmentsRef.current.push(arc);
+      group.add(arc);
+    });
 
-    // Center circle (shows selected color)
     const center = new Konva.Circle({
-      radius: radius * 0.45,
-      fill: `hsl(${angle}, 100%, 50%)`,
+      x: 0,
+      y: 0,
+      radius: radius * 0.35,
+      fill: COLOURS[0].hsl,
       stroke: "#fff",
       strokeWidth: 2,
     });
+    centerRef.current = center;
     group.add(center);
 
-    // Needle pointing to selected color
-    // const needle = new Konva.Line({
-    //   points: [0, 0, 0, -(radius + 10)],
-    //   stroke: "white",
-    //   strokeWidth: 3,
-    //   lineCap: "round",
-    //   rotation: angle - 90,
-    // });
-    // needleRef.current = needle;
-    // group.add(needle);
-
-    // Label
-    const label = new Konva.Text({
-      text: `hsl(${Math.round(angle)}, 100%, 50%)`,
-      fontSize: 12,
+    const pointer = new Konva.RegularPolygon({
+      x,
+      y: y - radius - 14,
+      sides: 3,
+      radius: 10,
       fill: "white",
-      offsetX: 40,
-      y: radius + 15,
+      rotation: 180,
     });
+    pointerRef.current = pointer;
+
+    const label = new Konva.Text({
+      x,
+      y: y + radius + 12,
+      text: COLOURS[0].label,
+      fontSize: 13,
+      fill: "white",
+    });
+    label.offsetX(label.width() / 2);
     labelRef.current = label;
-    group.add(label);
 
     layer.add(group);
+    layer.add(pointer);
+    layer.add(label);
     layer.batchDraw();
 
     return () => {
       group.destroy();
+      pointer.destroy();
+      label.destroy();
       layer.batchDraw();
     };
   }, [layer, x, y, radius]);
 
-  // Update needle and label on every angle change (no full rebuild!)
   useEffect(() => {
-    if (!needleRef.current || !labelRef.current || !groupRef.current) return;
-    needleRef.current.rotation(angle - 90);
-    
-    // Update center fill
-    const center = groupRef.current.findOne("Circle");
-    if (center) (center as Konva.Circle).fill(`hsl(${Math.round(angle)}, 100%, 50%)`);
-    
-    labelRef.current.text(`hsl(${Math.round(angle)}, 100%, 50%)`);
-    layer.batchDraw();
-  }, [angle, layer]);
+    if (!groupRef.current || !centerRef.current || !labelRef.current) return;
+    console.log("angle recieved at  spinner: ", rotationAngle);
 
-  return null; 
+    groupRef.current.rotation(rotationAngle);
+
+    const selectedIndex = getSelectedIndex(rotationAngle);
+    const selected = COLOURS[selectedIndex];
+
+    segmentsRef.current.forEach((seg, i) => {
+      seg.outerRadius(i === selectedIndex ? radius * 1.12 : radius);
+      seg.opacity(i === selectedIndex ? 1 : 0.6);
+    });
+
+    centerRef.current.fill(selected.hsl);
+    labelRef.current.text(selected.label);
+    labelRef.current.offsetX(labelRef.current.width() / 2);
+    onColourSelect?.(selected.hsl);
+
+    layer.batchDraw();
+  }, [rotationAngle, layer, radius, onColourSelect]);
+
+  return null;
 }

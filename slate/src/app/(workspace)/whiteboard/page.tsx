@@ -79,6 +79,11 @@ export default function WhiteboardPage() {
         {isSaving && (
           <span className="text-xs text-gray-400">Saving…</span>
         )}
+        <button
+          onClick={() => toggleCamera(cameraLocation)}
+            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+        >
+        </button>
       </div>
       <Canvas lines={lines} canvasRef={canvasRef} />
       <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} />

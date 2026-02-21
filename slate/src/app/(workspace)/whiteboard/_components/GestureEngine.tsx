@@ -21,6 +21,7 @@ export default function GestureEngine({
   const lastVideoTime = useRef<number>(null);
   const isDrawing = useRef(false);
   const isWorkerBusy = useRef(false);
+  const isGauntlet = useRef(false);
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -31,43 +32,53 @@ export default function GestureEngine({
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
           : "";
-      if (gesture === "Thumb_Up" && !isDrawing.current) {
-        isDrawing.current = true;
-        if (canvasRef.current) {
-          canvasRef.current.hideColourPicker();
-        }
-      } else if (gesture === "Thumb_Down" && isDrawing.current) {
-        isDrawing.current = false;
-        onDrawEnd();
-        if (canvasRef.current) {
-          canvasRef.current.hideColourPicker();
+          
+      // if (gesture === "Thumb_Up" && !isDrawing.current && !isGauntlet.current) {
+        // isDrawing.current = true;
+        // canvasRef.current?.hideSpinner();
+        // console.log("thumb up detected!");
+
+      // } else if (gesture === "Thumb_Down" && isDrawing.current) {
+      //   isDrawing.current = false;
+      //   onDrawEnd();
+      if (gesture === "Closed_Fist") {
+        if (!isGauntlet.current) {
+          console.log("fist detected! showing spinner");
+          isGauntlet.current = true;
+          isDrawing.current = false;
+        } else if (isGauntlet.current && predictions.landmarks[0]) {
+          console.log("gauntlet already active, updating spinner angle");
+        const currentAngle = Math.atan2(
+          -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
+          predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
+        );
+        const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
+        console.log(`current angle: ${degrees.toFixed(2)} degrees`);
+        canvasRef.current?.showSpinner(degrees);
         }
 
-      } else if (gesture === "Closed_Fist" && canvasRef.current) {
-        canvasRef.current.showColourPicker();
-      } else if (gesture === "Open_Palm" && canvasRef.current) {
-        canvasRef.current.hideColourPicker();
+
+      } else if (gesture === "Open_Palm" && isGauntlet.current) {
+        console.log("palm detected! hiding spinner");
+        isGauntlet.current = false;
+        canvasRef.current?.hideSpinner();
       }
-      
-      console.log(isDrawing.current);
-      if (
-        isDrawing.current &&
-        canvasRef.current !== null &&
-        predictions.landmarks[0]
-      ) {
-        const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
-        // indexPoints are camera perspective
-        const transformedX = 1 - indexPoints.x;
-        canvasRef.current.drawPoints(transformedX, indexPoints.y);
-      }
+
+
+      // if (
+      //   isDrawing.current &&
+      //   canvasRef.current !== null &&
+      //   predictions.landmarks[0]
+      // ) {
+      //   const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
+      //   const transformedX = 1 - indexPoints.x;
+      //   canvasRef.current.drawPoints(transformedX, indexPoints.y);
+      // }
     },
     [canvasRef, onDrawEnd],
   );
 
-  // Date.now() is seen as dynamically changing
-  // predict logic
   const predict = useCallback(() => {
-    // to recurse on predict we need a nested func
     const runPrediction = async () => {
       const video = videoRef.current;
       if (
@@ -89,7 +100,6 @@ export default function GestureEngine({
       ) {
         try {
           const videoBitMap = await createImageBitmap(video);
-          // transfer array passes videoBitMap as pointer
           workerRef.current.postMessage(
             {
               status: "predict",
@@ -152,5 +162,3 @@ export default function GestureEngine({
     </div>
   );
 }
-
-

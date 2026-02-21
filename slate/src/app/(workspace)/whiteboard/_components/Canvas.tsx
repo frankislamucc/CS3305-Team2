@@ -10,8 +10,7 @@ import {
 } from "react";
 import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
-import ColorWheelSpinner from "./ColourWheelSpinner";
-import Konva from "konva";
+import ColourWheelSpinner from "./ColourWheelSpinner";
 
 interface CanvasProps {
   lines: LineData[];
@@ -25,24 +24,28 @@ export default function Canvas(props: CanvasProps) {
     width: 0,
     height: 0,
   });
-  const layerRef = useRef<Konva.Layer>(null); 
-  const [showSpinner, setShowSpinner] = useState(false);
 
+  const layerRef = useRef<any>(null);
+  const [layerReady, setLayerReady] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [selectedColor, setSelectedColor] = useState("#df4b26");
   
+  useLayoutEffect(() => {
+    if (layerRef.current) {
+      setLayerReady(true);
+    }
+  }, []);
 
   useLayoutEffect(() => {
     if (containerRef.current === null) return;
-
-    // entries consists of single element container-div
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
         setDimensions({ width, height });
       }
     });
-
     observer.observe(containerRef.current);
-
     return () => observer.disconnect();
   }, []);
 
@@ -74,15 +77,21 @@ export default function Canvas(props: CanvasProps) {
           lineJoin: lineNode.lineJoin(),
         };
       },
-
-      showColourPicker: () => setShowSpinner(true),
-      hideColourPicker: () => setShowSpinner(false)
-
+      showSpinner: (angle: number) => {
+        setShowSpinner(true);
+        setWheelRotation(angle);
+      },
+      hideSpinner: () => setShowSpinner(false),
+      showSizeSelector: () => {},
+      hideSizeSelector: () => {},
     };
-  });
+  }, [dimensions]);
 
-  // 1st layer is for canvas
-  // 2nd layer is for UI (eg colour picker)
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+  };
+
+  
 
   return (
     <div ref={containerRef} className="flex flex-1 relative">
@@ -94,17 +103,28 @@ export default function Canvas(props: CanvasProps) {
             ))}
             <Line
               ref={lineRef}
-              stroke="#df4b26"
+              stroke={selectedColor}
               strokeWidth={5}
               tension={0.5}
               lineCap="round"
               lineJoin="round"
             />
           </Layer>
-          <Layer ref={layerRef}>
-            {layerRef.current && showSpinner && (
-              <ColorWheelSpinner layer={layerRef.current} x={200} y={200} angle={0}/>
-            )}          
+          <Layer ref={(node) => {
+            if (node && !layerRef.current) {
+              layerRef.current = node;
+              setLayerReady(true);
+            }
+          }}>
+            {layerReady && layerRef.current && showSpinner && (
+              <ColourWheelSpinner
+                layer={layerRef.current}
+                x={dimensions.width / 2}
+                y={dimensions.height / 2}
+                rotationAngle={wheelRotation}
+                onColourSelect={handleColorSelect}
+              />
+            )}
           </Layer>
         </Stage>
       )}

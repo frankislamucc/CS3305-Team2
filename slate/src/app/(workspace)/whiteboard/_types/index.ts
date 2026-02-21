@@ -20,8 +20,10 @@ export interface CanvasHandle {
   drawPoints: (x: number, y: number) => void;
   clear: () => void;
   exportLine: () => LineData | null;
-  showColourPicker: () => void;
-  hideColourPicker: () => void;
+  showSpinner: (angle: number) => void;
+  hideSpinner: () => void;
+  showSizeSelector: () => void;
+  hideSizeSelector: () => void;
 }
 
 export interface WorkerRequest {
