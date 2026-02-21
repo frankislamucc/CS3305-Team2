@@ -19,6 +19,7 @@ export default function WhiteboardPage() {
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
+  const [cameraLocation, setCameraLocation] = useState<"front" | "back">("front");
 
   // Load the most recent canvas on mount
   useEffect(() => {
@@ -54,6 +55,11 @@ export default function WhiteboardPage() {
     [],
   );
 
+  const toggleCamera = (currentLocation: string) => {
+    console.log(`Toggling camera from ${currentLocation}...`);
+    setCameraLocation(currentLocation === "front" ? "back" : "front");
+  };
+
   const handleDrawEnd = () => {
     const canvasHandler = canvasRef.current;
     if (canvasHandler === null) return;
@@ -81,12 +87,15 @@ export default function WhiteboardPage() {
         )}
         <button
           onClick={() => toggleCamera(cameraLocation)}
-            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
+          {cameraLocation === "front" ? "Switch to Back Camera" : "Switch to Front Camera"}
         </button>
       </div>
-      <Canvas lines={lines} canvasRef={canvasRef} />
-      <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} />
+      <div className="relative flex-1">
+        <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} cameraLocation={cameraLocation}/>
+        <Canvas lines={lines} canvasRef={canvasRef} />
+      </div>
     </div>
   );
 }

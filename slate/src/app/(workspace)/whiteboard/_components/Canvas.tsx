@@ -94,7 +94,7 @@ export default function Canvas(props: CanvasProps) {
   
 
   return (
-    <div ref={containerRef} className="flex flex-1 relative">
+    <div ref={containerRef} className="absolute inset-0 z-10">
       {dimensions.width > 0 && (
         <Stage width={dimensions.width} height={dimensions.height}>
           <Layer listening={false}>

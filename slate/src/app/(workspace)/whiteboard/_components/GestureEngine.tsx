@@ -8,12 +8,14 @@ import { useCallback } from "react";
 interface GestureEngineProps {
   canvasRef: RefObject<CanvasHandle | null>;
   onDrawEnd: () => void;
+  cameraLocation: "front" | "back";
 }
 
 const INDEX_FINGER_TIP = 8;
 export default function GestureEngine({
   canvasRef,
   onDrawEnd,
+  cameraLocation
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -148,17 +150,21 @@ export default function GestureEngine({
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
   }, [predict, onPredict]);
-
-  return (
-    <div className="flex flex-1">
-      {isLoading && <Spinner className="size-8" />}
-      {error.length > 0 && <p className="accent-red-500">{error}</p>}
-      <Camera
-        videoRef={videoRef}
-        width="640"
-        height="480"
-        style={{ width: "100%", height: "auto" }}
-      />
-    </div>
-  );
+  
+return (
+  <div className={
+    cameraLocation === "front"
+      ? "absolute inset-0 opacity-30 pointer-events-none z-0"
+      : "absolute bottom-4 left-4 w-64 h-48 z-20 rounded-lg overflow-hidden shadow-lg"
+  }>
+    {isLoading && <Spinner className="size-8" />}
+    {error.length > 0 && <p className="accent-red-500">{error}</p>}
+    <Camera
+      videoRef={videoRef}
+      width="640"
+      height="480"
+      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+    />
+  </div>
+);
 }
