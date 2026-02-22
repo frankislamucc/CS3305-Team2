@@ -8,20 +8,24 @@ interface SettingsMenuOptionProps {
 
 export default function SettingsMenuOption({action}: SettingsMenuOptionProps) {
   const [value, setValue] = React.useState("medium");
-
+  const totalGestures = ["Closed_Fist", "Open_Palm", "Pinch", "Thumb_Up", "Thumb_Down"]
+  const availableGestures = ["Closed_Fist", "Open_Palm", "Pinch"];
 
   return (
-      <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900 w-[800px]">
-        <p className="mb-2 font-medium">{action}</p>
+    <div className="p-6 rounded-xl border border-blue-800 bg-brand-hover w-full max-w-2xl">        <p className="mb-2 font-medium">{action}</p>
 
         <select
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800"
+          className="w-full px-3 py-2 rounded-lg bg-brand-hover border border-zinc-800"
         >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
+
+            {availableGestures.map((gesture) => (
+                <option key={gesture} value={gesture}>
+                    {gesture}
+                </option>
+            ))}
+            
         </select>
 
         <p className="mt-3 text-sm text-zinc-400">

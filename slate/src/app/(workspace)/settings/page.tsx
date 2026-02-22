@@ -4,22 +4,20 @@ import React from "react";
 import SettingsMenuOption from "./_components/SettingsMenuOption";
 
 export default function SettingsPage() {
-  const [value, setValue] = React.useState("medium");
+//   const [value, setValue] = React.useState("medium");
 
-  const availableGestures = ["Closed_Fist", "Open_Palm", "Pinch"];
-  const actions = ["draw", "pan", "zoom"]
+  const actions = ["Draw", "Pan", "Zoom"]
 
-  const [selected, setSelected] = React.useState(availableGestures[0]);
+//   const [selected, setSelected] = React.useState(availableGestures[0]);
 
   return (
 
-    <div>
-        {actions.map((action) => (
-        <div key={action} className="mb-4">
-            <p>{action}</p>
-            <SettingsMenuOption action={action} />
+    <div className="min-h-screen flex flex-col items-center justify-center">
+    {actions.map((action) => (
+        <div key={action} className="mb-4 w-full max-w-lg">
+        <SettingsMenuOption action={action} />
         </div>
-        ))}
+    ))}
     </div>
   );
 }
