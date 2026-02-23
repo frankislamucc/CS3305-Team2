@@ -2,19 +2,25 @@
 
 import React, { useCallback, useState } from "react";
 import SettingsMenuOption from "./_components/SettingsMenuOption";
-import { saveSettingsAction } from "./actions/settings";
+import { saveSettingsAction, loadSettingsAction } from "./actions/settings";
 
 export default function SettingsPage() {
   const actions = ["Draw", "Pan", "Zoom"];
 
-  const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({
-    Draw: "Closed_Fist",
-    Pan: "Open_Palm",
-    Zoom: "Pinch",
-  });
-
   const totalGestures = ["Closed_Fist", "Open_Palm", "Pinch", "Thumb_Up", "Thumb_Down", "[UNBOUND]"];
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({});
+
+    React.useEffect(() => {
+    loadSettingsAction().then((result) => {
+        if (result.success && result.settings && Object.keys(result.settings).length > 0) {
+        setBindingsSelections(result.settings);
+        } else {
+        setBindingsSelections({ Draw: "Closed_Fist", Pan: "Open_Palm", Zoom: "Pinch" });
+        }
+    });
+    }, []);
 
   const handleGestureChange = (action: string, newGesture: string) => {
     setBindingsSelections((prev) => {
@@ -27,7 +33,7 @@ export default function SettingsPage() {
     });
   };
 
-  const saveSettings = useCallback(async () => {
+  const saveSettings = useCallback(async () => { 
     setIsSavingSettings(true);
     try {
       const result = await saveSettingsAction(bindingsSelections);
