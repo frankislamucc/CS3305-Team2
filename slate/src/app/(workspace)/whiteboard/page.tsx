@@ -56,7 +56,6 @@ export default function WhiteboardPage() {
   );
 
   const toggleCamera = (currentLocation: string) => {
-    console.log(`Toggling camera from ${currentLocation}...`);
     setCameraLocation(currentLocation === "front" ? "back" : "front");
   };
 
@@ -70,6 +69,12 @@ export default function WhiteboardPage() {
       saveCanvas(updated, canvasId);
       canvasHandler.clear();
     }
+  };
+
+  const zoomIn = () => {
+
+  };
+  const zoomOut = () => {
   };
 
   return (
@@ -90,6 +95,26 @@ export default function WhiteboardPage() {
           className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
           {cameraLocation === "front" ? "Switch to Back Camera" : "Switch to Front Camera"}
+        </button>
+
+        {/* We can and should replace these 3 with gestures */}
+        <button
+          onClick={() => canvasRef.current?.zoomOut()}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+        >
+          Zoom Out
+        </button>
+        <button
+          onClick={() => canvasRef.current?.zoomIn()}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+        >
+          Zoom In
+        </button>
+        <button
+          onClick={() => canvasRef.current?.resetZoom()}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+        >
+          Reset Zoom
         </button>
       </div>
       <div className="relative flex-1">

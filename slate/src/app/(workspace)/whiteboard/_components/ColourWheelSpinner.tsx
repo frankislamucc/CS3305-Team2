@@ -109,7 +109,6 @@ export default function ColourWheelSpinner({
 
   useEffect(() => {
     if (!groupRef.current || !centerRef.current || !labelRef.current) return;
-    console.log("angle recieved at  spinner: ", rotationAngle);
 
     groupRef.current.rotation(rotationAngle);
 

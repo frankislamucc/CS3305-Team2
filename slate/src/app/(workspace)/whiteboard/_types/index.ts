@@ -24,6 +24,9 @@ export interface CanvasHandle {
   hideSpinner: () => void;
   showSizeSelector: () => void;
   hideSizeSelector: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetZoom: () => void;
 }
 
 export interface WorkerRequest {

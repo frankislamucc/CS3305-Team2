@@ -7,10 +7,13 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useEffect,
 } from "react";
 import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
 import ColourWheelSpinner from "./ColourWheelSpinner";
+import { ViewTransform } from "./ViewTransform";
+
 
 interface CanvasProps {
   lines: LineData[];
@@ -30,6 +33,12 @@ export default function Canvas(props: CanvasProps) {
   const [showSpinner, setShowSpinner] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [selectedColor, setSelectedColor] = useState("#df4b26");
+  const transform = useRef(new ViewTransform());
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    transform.current.setOnChangeCallback(() => forceUpdate(n => n + 1));
+  }, []);
   
   useLayoutEffect(() => {
     if (layerRef.current) {
@@ -84,6 +93,9 @@ export default function Canvas(props: CanvasProps) {
       hideSpinner: () => setShowSpinner(false),
       showSizeSelector: () => {},
       hideSizeSelector: () => {},
+      zoomIn: () => transform.current.zoomAtPoint(1.2, dimensions.width / 2, dimensions.height / 2),
+      zoomOut: () => transform.current.zoomAtPoint(0.8, dimensions.width / 2, dimensions.height / 2),
+      resetZoom: () => transform.current.reset(),
     };
   }, [dimensions]);
 
@@ -91,12 +103,17 @@ export default function Canvas(props: CanvasProps) {
     setSelectedColor(color);
   };
 
-  
-
   return (
     <div ref={containerRef} className="absolute inset-0 z-10">
       {dimensions.width > 0 && (
-        <Stage width={dimensions.width} height={dimensions.height}>
+        <Stage
+          width={dimensions.width}
+          height={dimensions.height}
+          scaleX={transform.current.scale}
+          scaleY={transform.current.scale}
+          x={transform.current.offsetX}
+          y={transform.current.offsetY}
+        >
           <Layer listening={false}>
             {props.lines.map((line) => (
               <Line key={line.id} {...line} />
