@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useState } from "react";
 import SettingsMenuOption from "./_components/SettingsMenuOption";
+import { saveSettingsAction } from "./actions/settings";
 
 export default function SettingsPage() {
-  const actions = ["Draw", "Pan", "Zoom"]
+  const actions = ["Draw", "Pan", "Zoom"];
 
   const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({
     Draw: "Closed_Fist",
@@ -12,7 +13,8 @@ export default function SettingsPage() {
     Zoom: "Pinch",
   });
 
-  const totalGestures = ["Closed_Fist", "Open_Palm", "Pinch", "Thumb_Up", "Thumb_Down", "[UNBOUND]"]
+  const totalGestures = ["Closed_Fist", "Open_Palm", "Pinch", "Thumb_Up", "Thumb_Down", "[UNBOUND]"];
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const handleGestureChange = (action: string, newGesture: string) => {
     setBindingsSelections((prev) => {
@@ -25,21 +27,39 @@ export default function SettingsPage() {
     });
   };
 
+  const saveSettings = useCallback(async () => {
+    setIsSavingSettings(true);
+    try {
+      const result = await saveSettingsAction(bindingsSelections);
+      if (!result.success) {
+        console.error("Failed to save settings:", result.errorMessage);
+      }
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }, [bindingsSelections]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       {actions.map((action) => (
         <div key={action} className="mb-4 w-full max-w-lg">
-            <SettingsMenuOption
+          <SettingsMenuOption
             action={action}
             availableGestures={totalGestures}
             defaultGesture={bindingsSelections[action]}
             bindingsSelections={bindingsSelections}
             onGestureChange={handleGestureChange}
-            />
+          />
         </div>
       ))}
-      <button>
-        Save
+      <button
+        onClick={saveSettings}
+        disabled={isSavingSettings}
+        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+      >
+        {isSavingSettings ? "Saving..." : "Save Settings"}
       </button>
     </div>
   );
