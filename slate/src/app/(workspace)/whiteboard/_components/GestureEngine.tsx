@@ -164,6 +164,8 @@ export default function GestureEngine({
   }, []);
 
   useEffect(() => {
+    console.log("worker useEffect running — onPredict changed");
+
     workerRef.current = new Worker(
       new URL("@/workers/gesture.worker.ts", import.meta.url),
     );

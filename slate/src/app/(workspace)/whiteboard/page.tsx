@@ -59,7 +59,9 @@ export default function WhiteboardPage() {
     setCameraLocation(currentLocation === "front" ? "back" : "front");
   };
 
-  const handleDrawEnd = () => {
+  // wrapping in a callback to try and prevent the crashing
+
+  const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
     if (canvasHandler === null) return;
     const curLine: LineData | null = canvasHandler.exportLine();
@@ -69,7 +71,7 @@ export default function WhiteboardPage() {
       saveCanvas(updated, canvasId);
       canvasHandler.clear();
     }
-  };
+  }, [lines, canvasId, saveCanvas]);
 
   return (
     <div className="flex flex-col flex-1">
