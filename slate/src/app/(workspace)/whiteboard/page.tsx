@@ -8,7 +8,9 @@ import GestureEngine from "./_components/GestureEngine";
 import {
   saveCanvasAction,
   loadCanvasAction,
+  renameCanvasAction,
 } from "./actions/canvas";
+import WhiteboardName from "./_components/ui/WhiteboardName";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -17,6 +19,7 @@ const Canvas = dynamic(() => import("./_components/Canvas"), {
 export default function WhiteboardPage() {
   const [lines, setLines] = useState<LineData[]>([]);
   const [canvasId, setCanvasId] = useState<string | null>(null);
+  const [canvasName, setCanvasName] = useState<string>("Untitled");
   const [isSaving, setIsSaving] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
   const [cameraLocation, setCameraLocation] = useState<"front" | "back">("front");
@@ -29,6 +32,7 @@ export default function WhiteboardPage() {
         if (result.success && result.lines && result.lines.length > 0) {
           setLines(result.lines);
           setCanvasId(result.canvasId ?? null);
+          setCanvasName(result.name ?? "Untitled");
         }
       } catch (err) {
         console.error("Failed to load canvas:", err);
@@ -73,9 +77,27 @@ export default function WhiteboardPage() {
     }
   }, [lines, canvasId, saveCanvas]);
 
+  const handleRename = useCallback(
+    async (newName: string) => {
+      if (!canvasId) {
+        // Canvas hasn't been persisted yet — save it first so we have an id
+        const result = await saveCanvasAction(lines, null, newName);
+        if (result.success && result.canvasId) {
+          setCanvasId(result.canvasId);
+        }
+      } else {
+        await renameCanvasAction(canvasId, newName);
+      }
+      setCanvasName(newName);
+    },
+    [canvasId, lines],
+  );
+
   return (
     <div className="flex flex-col flex-1">
       <div className="flex items-center gap-2 px-4 py-2">
+        <WhiteboardName name={canvasName} onRename={handleRename} />
+        <div className="w-px h-5 bg-gray-600" /> {/* divider */}
         <button
           onClick={() => saveCanvas(lines, canvasId)}
           disabled={isSaving}

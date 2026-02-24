@@ -14,6 +14,7 @@ export interface SaveCanvasResult {
 export interface LoadCanvasResult {
   success: boolean;
   canvasId?: string;
+  name?: string;
   lines?: LineData[];
   errorMessage?: string;
 }
@@ -97,6 +98,7 @@ export async function loadCanvasAction(): Promise<LoadCanvasResult> {
     return {
       success: true,
       canvasId: canvas._id.toString(),
+      name: (canvas as any).name ?? "Untitled",
       lines: canvas.lines as LineData[],
     };
   } catch (error) {
@@ -132,5 +134,42 @@ export async function deleteCanvasAction(
   } catch (error) {
     console.error("Delete canvas error:", error);
     return { success: false, errorMessage: "Failed to delete canvas" };
+  }
+}
+
+/**
+ * Rename a canvas belonging to the authenticated user.
+ */
+export async function renameCanvasAction(
+  canvasId: string,
+  name: string,
+): Promise<{ success: boolean; errorMessage?: string }> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, errorMessage: "Not authenticated" };
+    }
+
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > 100) {
+      return { success: false, errorMessage: "Name must be 1-100 characters" };
+    }
+
+    await dbConnect();
+
+    const canvas = await Canvas.findOneAndUpdate(
+      { _id: canvasId, userId: session.userId },
+      { name: trimmed },
+      { new: true },
+    );
+
+    if (!canvas) {
+      return { success: false, errorMessage: "Canvas not found" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Rename canvas error:", error);
+    return { success: false, errorMessage: "Failed to rename canvas" };
   }
 }
