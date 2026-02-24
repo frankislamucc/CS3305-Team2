@@ -34,48 +34,55 @@ export default function GestureEngine({
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
           : "";
-          
-      // if (gesture === "Thumb_Up" && !isDrawing.current && !isGauntlet.current) {
-        // isDrawing.current = true;
-        // canvasRef.current?.hideSpinner();
-        // console.log("thumb up detected!");
 
-      // } else if (gesture === "Thumb_Down" && isDrawing.current) {
-      //   isDrawing.current = false;
-      //   onDrawEnd();
-      if (gesture === "Closed_Fist") {
+      console.log("predicted gesture:", gesture);
+
+      // if (gesture === "Thumb_Up" && !isDrawing.current && !isGauntlet.current) {
+      if (gesture === "Thumb_Up") {
+
+        isDrawing.current = true;
+        canvasRef.current?.hideSpinner();
+        console.log("thumb up detected!");
+
+      } else if (gesture === "Thumb_Down" && isDrawing.current) {
+        isDrawing.current = false;
+        onDrawEnd();
+      } else if (gesture === "Closed_Fist") {
+
         if (!isGauntlet.current) {
           console.log("fist detected! showing spinner");
           isGauntlet.current = true;
           isDrawing.current = false;
         } else if (isGauntlet.current && predictions.landmarks[0]) {
           console.log("gauntlet already active, updating spinner angle");
-        const currentAngle = Math.atan2(
-          -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
-          predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
-        );
-        const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
-        console.log(`current angle: ${degrees.toFixed(2)} degrees`);
-        canvasRef.current?.showSpinner(degrees);
+          const currentAngle = Math.atan2(
+            -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
+            predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
+          );
+          const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
+          console.log(`current angle: ${degrees.toFixed(2)} degrees`);
+          canvasRef.current?.showSpinner(degrees);
         }
+      }
+      // not sure about these
+
+      // } else if (gesture === "Open_Palm" && isGauntlet.current) {
+      //   console.log("palm detected! hiding spinner");
+      //   isGauntlet.current = false;
+      //   canvasRef.current?.hideSpinner();
+      // }
 
 
-      } else if (gesture === "Open_Palm" && isGauntlet.current) {
-        console.log("palm detected! hiding spinner");
-        isGauntlet.current = false;
-        canvasRef.current?.hideSpinner();
+      if (
+        isDrawing.current &&
+        canvasRef.current !== null &&
+        predictions.landmarks[0]
+      ) {
+        const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
+        const transformedX = 1 - indexPoints.x;
+        canvasRef.current.drawPoints(transformedX, indexPoints.y);
       }
 
-
-      // if (
-      //   isDrawing.current &&
-      //   canvasRef.current !== null &&
-      //   predictions.landmarks[0]
-      // ) {
-      //   const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
-      //   const transformedX = 1 - indexPoints.x;
-      //   canvasRef.current.drawPoints(transformedX, indexPoints.y);
-      // }
     },
     [canvasRef, onDrawEnd],
   );
@@ -150,21 +157,21 @@ export default function GestureEngine({
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
   }, [predict, onPredict]);
-  
-return (
-  <div className={
-    cameraLocation === "front"
-      ? "absolute inset-0 opacity-30 pointer-events-none z-0"
-      : "absolute bottom-4 left-4 w-64 h-48 z-20 rounded-lg overflow-hidden shadow-lg"
-  }>
-    {isLoading && <Spinner className="size-8" />}
-    {error.length > 0 && <p className="accent-red-500">{error}</p>}
-    <Camera
-      videoRef={videoRef}
-      width="640"
-      height="480"
-      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-    />
-  </div>
-);
+
+  return (
+    <div className={
+      cameraLocation === "front"
+        ? "absolute inset-0 opacity-30 pointer-events-none z-0"
+        : "absolute bottom-4 left-4 w-64 h-48 z-20 rounded-lg overflow-hidden shadow-lg"
+    }>
+      {isLoading && <Spinner className="size-8" />}
+      {error.length > 0 && <p className="accent-red-500">{error}</p>}
+      <Camera
+        videoRef={videoRef}
+        width="640"
+        height="480"
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
 }

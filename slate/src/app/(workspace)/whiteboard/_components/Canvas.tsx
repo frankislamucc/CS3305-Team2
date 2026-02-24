@@ -13,6 +13,8 @@ import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
 import ColourWheelSpinner from "./ColourWheelSpinner";
 import { ViewTransform } from "./ViewTransform";
+import { OneEuroFilter } from "./OneEuro";
+
 
 
 interface CanvasProps {
@@ -35,6 +37,8 @@ export default function Canvas(props: CanvasProps) {
   const [selectedColor, setSelectedColor] = useState("#df4b26");
   const transform = useRef(new ViewTransform());
   const [, forceUpdate] = useState(0);
+  const filterRef = useRef<any>(null);
+
 
   useEffect(() => {
     transform.current.setOnChangeCallback(() => forceUpdate(n => n + 1));
@@ -63,15 +67,28 @@ export default function Canvas(props: CanvasProps) {
       drawPoints: (x: number, y: number) => {
         const lineNode = lineRef.current;
         if (lineNode === null) return;
+
+        // 1Euro filter for smoothing the input points
+        const rawX = x * dimensions.width;
+        const rawY = y * dimensions.height;
+
+        if (!filterRef.current) {
+        filterRef.current = new OneEuroFilter(performance.now() / 1000, [rawX, rawY]);
+        } 
+        
+        const [smoothX, smoothY] = filterRef.current.filter(performance.now() / 1000, [rawX, rawY]);
+
         const points = lineNode.points();
         lineNode.points([
           ...points,
-          x * dimensions.width,
-          y * dimensions.height,
+          smoothX,
+          smoothY,
         ]);
       },
       clear: () => {
         lineRef.current?.points([]);
+        filterRef.current = null;
+
       },
       exportLine: (): LineData | null => {
         const lineNode = lineRef.current;
@@ -96,6 +113,11 @@ export default function Canvas(props: CanvasProps) {
       zoomIn: () => transform.current.zoomAtPoint(1.2, dimensions.width / 2, dimensions.height / 2),
       zoomOut: () => transform.current.zoomAtPoint(0.8, dimensions.width / 2, dimensions.height / 2),
       resetZoom: () => transform.current.reset(),
+      clearCanvas: () => {
+        lineRef.current?.points([]);
+        filterRef.current = null;
+        transform.current.reset();
+      }
     };
   }, [dimensions]);
 

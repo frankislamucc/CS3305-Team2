@@ -27,6 +27,7 @@ export interface CanvasHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  clearCanvas: () => void;
 }
 
 export interface WorkerRequest {

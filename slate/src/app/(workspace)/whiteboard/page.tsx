@@ -71,12 +71,6 @@ export default function WhiteboardPage() {
     }
   };
 
-  const zoomIn = () => {
-
-  };
-  const zoomOut = () => {
-  };
-
   return (
     <div className="flex flex-col flex-1">
       <div className="flex items-center gap-2 px-4 py-2">
@@ -115,6 +109,12 @@ export default function WhiteboardPage() {
           className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
           Reset Zoom
+        </button>
+        <button
+          onClick={() => canvasRef.current?.clearCanvas()}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+        >
+          Clear Canvas
         </button>
       </div>
       <div className="relative flex-1">
