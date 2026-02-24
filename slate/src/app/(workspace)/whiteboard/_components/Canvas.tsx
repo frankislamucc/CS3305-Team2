@@ -13,7 +13,7 @@ import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
 import ColourWheelSpinner from "./ColourWheelSpinner";
 import { ViewTransform } from "./ViewTransform";
-import { OneEuroFilter } from "./OneEuro";
+import { OneEuroFilter, SimpleEMA } from "./OneEuro";
 
 
 
@@ -43,7 +43,7 @@ export default function Canvas(props: CanvasProps) {
   useEffect(() => {
     transform.current.setOnChangeCallback(() => forceUpdate(n => n + 1));
   }, []);
-  
+
   useLayoutEffect(() => {
     if (layerRef.current) {
       setLayerReady(true);
@@ -73,11 +73,12 @@ export default function Canvas(props: CanvasProps) {
         const rawY = y * dimensions.height;
 
         if (!filterRef.current) {
-        filterRef.current = new OneEuroFilter(performance.now() / 1000, [rawX, rawY]);
-        } 
-        
+          filterRef.current = new OneEuroFilter(performance.now() / 1000, [rawX, rawY]);
+        }
+
         const [smoothX, smoothY] = filterRef.current.filter(performance.now() / 1000, [rawX, rawY]);
 
+        // to remove 1euro filter just replace smoothX/Y with rawX/Y
         const points = lineNode.points();
         lineNode.points([
           ...points,
@@ -108,8 +109,8 @@ export default function Canvas(props: CanvasProps) {
         setWheelRotation(angle);
       },
       hideSpinner: () => setShowSpinner(false),
-      showSizeSelector: () => {},
-      hideSizeSelector: () => {},
+      showSizeSelector: () => { },
+      hideSizeSelector: () => { },
       zoomIn: () => transform.current.zoomAtPoint(1.2, dimensions.width / 2, dimensions.height / 2),
       zoomOut: () => transform.current.zoomAtPoint(0.8, dimensions.width / 2, dimensions.height / 2),
       resetZoom: () => transform.current.reset(),

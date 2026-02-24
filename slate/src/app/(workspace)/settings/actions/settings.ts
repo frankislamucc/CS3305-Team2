@@ -26,17 +26,17 @@ export async function saveSettingsAction(
     }
 
     const result = await UserSettings.findOneAndUpdate(
-        { userId: new mongoose.Types.ObjectId(session.userId) },
-        { settings },
-        { upsert: true, new: true },
+      { userId: new mongoose.Types.ObjectId(session.userId) },
+      { settings },
+      { upsert: true, new: true },
     );
 
     await dbConnect();
 
     await UserSettings.findOneAndUpdate(
-        { userId: session.userId },
-        { settings },
-        { upsert: true, new: true },
+      { userId: session.userId },
+      { settings },
+      { upsert: true, new: true },
     );
 
     return { success: true };

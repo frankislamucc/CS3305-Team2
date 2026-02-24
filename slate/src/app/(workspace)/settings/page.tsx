@@ -12,15 +12,15 @@ export default function SettingsPage() {
 
   const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({});
 
-    React.useEffect(() => {
+  React.useEffect(() => {
     loadSettingsAction().then((result) => {
-        if (result.success && result.settings && Object.keys(result.settings).length > 0) {
+      if (result.success && result.settings && Object.keys(result.settings).length > 0) {
         setBindingsSelections(result.settings);
-        } else {
+      } else {
         setBindingsSelections({ Draw: "Closed_Fist", Pan: "Open_Palm", Zoom: "Pinch" });
-        }
+      }
     });
-    }, []);
+  }, []);
 
   const handleGestureChange = (action: string, newGesture: string) => {
     setBindingsSelections((prev) => {
@@ -33,7 +33,7 @@ export default function SettingsPage() {
     });
   };
 
-  const saveSettings = useCallback(async () => { 
+  const saveSettings = useCallback(async () => {
     setIsSavingSettings(true);
     try {
       const result = await saveSettingsAction(bindingsSelections);

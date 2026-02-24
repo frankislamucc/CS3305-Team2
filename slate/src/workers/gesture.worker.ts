@@ -17,7 +17,7 @@ self.onmessage = async (event: MessageEvent) => {
           modelAssetPath:
             "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
         },
-        numHands: 1,
+        numHands: 2,
         runningMode: "VIDEO",
         cannedGesturesClassifierOptions: {
           maxResults: 1,

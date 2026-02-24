@@ -23,11 +23,11 @@ export default function SizeSelector({
     const sizes = [2, 4, 6, 8, 10];
     const barHeight = 30;
     const barSpacing = 5;
-    
+
     sizes.forEach((s, i) => {
       const isSelected = s === size;
       const barWidth = 100 + (s * 10);
-      
+
       const bar = new Konva.Rect({
         x: 0,
         y: i * (barHeight + barSpacing),
@@ -38,7 +38,7 @@ export default function SizeSelector({
         strokeWidth: isSelected ? 3 : 1,
         cornerRadius: 5,
       });
-      
+
       const label = new Konva.Text({
         x: 10,
         y: i * (barHeight + barSpacing) + 8,
@@ -47,7 +47,7 @@ export default function SizeSelector({
         fill: isSelected ? "white" : "#333",
         fontStyle: isSelected ? "bold" : "normal",
       });
-      
+
       group.add(bar);
       group.add(label);
     });

@@ -4,6 +4,7 @@ import Camera from "./Camera";
 import type { GestureRecognizerResult } from "@mediapipe/tasks-vision";
 import { Spinner } from "@/components/ui/spinner";
 import { useCallback } from "react";
+import { detectCustomGestures, produceHighestPriorityGesture } from "./CustomGestures";
 
 interface GestureEngineProps {
   canvasRef: RefObject<CanvasHandle | null>;
@@ -30,40 +31,64 @@ export default function GestureEngine({
 
   const onPredict = useCallback(
     (predictions: GestureRecognizerResult) => {
-      const gesture =
+      var gesture =
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
           : "";
 
+      console.log("predictions.landmarks:", predictions.landmarks);
+
+      const customGesture = produceHighestPriorityGesture(predictions.landmarks);
+
+      // custom gestures take priority over regular ones, so we check those first
+
+      if (customGesture) {
+        gesture = customGesture;
+      }
+
       console.log("predicted gesture:", gesture);
 
-      // if (gesture === "Thumb_Up" && !isDrawing.current && !isGauntlet.current) {
-      if (gesture === "Thumb_Up") {
+      // gesture bindings here
+
+      if (gesture === "rightIndexPinch") {
 
         isDrawing.current = true;
-        canvasRef.current?.hideSpinner();
-        console.log("thumb up detected!");
-
-      } else if (gesture === "Thumb_Down" && isDrawing.current) {
+        console.log("pinch detected! STARTING TO DRAW");
+      } else {
         isDrawing.current = false;
         onDrawEnd();
-      } else if (gesture === "Closed_Fist") {
-
-        if (!isGauntlet.current) {
-          console.log("fist detected! showing spinner");
-          isGauntlet.current = true;
-          isDrawing.current = false;
-        } else if (isGauntlet.current && predictions.landmarks[0]) {
-          console.log("gauntlet already active, updating spinner angle");
-          const currentAngle = Math.atan2(
-            -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
-            predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
-          );
-          const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
-          console.log(`current angle: ${degrees.toFixed(2)} degrees`);
-          canvasRef.current?.showSpinner(degrees);
-        }
       }
+
+      if (gesture === "rightMiddlePinch") {
+        console.log("middle pinch detected! zooming in");
+        canvasRef.current?.zoomIn()
+      }
+
+      if (gesture === "rightRingPinch") {
+        console.log("ring pinch detected! zooming out");
+        canvasRef.current?.zoomOut()
+      }
+
+      // } else if (gesture === "Thumb_Down" && isDrawing.current) {
+      //   isDrawing.current = false;
+      //   onDrawEnd();
+      // } else if (gesture === "Closed_Fist") {
+
+      //   if (!isGauntlet.current) {
+      //     console.log("fist detected! showing spinner");
+      //     isGauntlet.current = true;
+      //     isDrawing.current = false;
+      //   } else if (isGauntlet.current && predictions.landmarks[0]) {
+      //     console.log("gauntlet already active, updating spinner angle");
+      //     const currentAngle = Math.atan2(
+      //       -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
+      //       predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
+      //     );
+      //     const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
+      //     console.log(`current angle: ${degrees.toFixed(2)} degrees`);
+      //     canvasRef.current?.showSpinner(degrees);
+      //   }
+      // }
       // not sure about these
 
       // } else if (gesture === "Open_Palm" && isGauntlet.current) {
@@ -73,12 +98,15 @@ export default function GestureEngine({
       // }
 
 
+
+      
       if (
         isDrawing.current &&
         canvasRef.current !== null &&
-        predictions.landmarks[0]
+        predictions.landmarks[0][0]
       ) {
         const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
+        // indexPoints are camera perspective
         const transformedX = 1 - indexPoints.x;
         canvasRef.current.drawPoints(transformedX, indexPoints.y);
       }
@@ -87,7 +115,10 @@ export default function GestureEngine({
     [canvasRef, onDrawEnd],
   );
 
+  // Date.now() is seen as dynamically changing
+  // predict logic
   const predict = useCallback(() => {
+    // to recurse on predict we need a nested func
     const runPrediction = async () => {
       const video = videoRef.current;
       if (
@@ -108,6 +139,7 @@ export default function GestureEngine({
         currentTime !== lastVideoTime.current
       ) {
         try {
+          // transfer array passes videoBitMap as pointer
           const videoBitMap = await createImageBitmap(video);
           workerRef.current.postMessage(
             {
@@ -170,7 +202,7 @@ export default function GestureEngine({
         videoRef={videoRef}
         width="640"
         height="480"
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
       />
     </div>
   );
