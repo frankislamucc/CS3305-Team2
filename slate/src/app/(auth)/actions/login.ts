@@ -62,7 +62,7 @@ export async function loginAction(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 15, // 15 mins
+      maxAge: 604800, // 7 days
       path: "/",
     });
   } catch (error: unknown) {
