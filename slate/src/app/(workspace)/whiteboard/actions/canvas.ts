@@ -19,6 +19,18 @@ export interface LoadCanvasResult {
   errorMessage?: string;
 }
 
+export interface CanvasSummary {
+  id: string;
+  name: string;
+  updatedAt: string;
+}
+
+export interface ListCanvasesResult {
+  success: boolean;
+  canvases?: CanvasSummary[];
+  errorMessage?: string;
+}
+
 /**
  * Save (create or update) a canvas for the authenticated user.
  */
@@ -103,6 +115,72 @@ export async function loadCanvasAction(): Promise<LoadCanvasResult> {
     };
   } catch (error) {
     console.error("Load canvas error:", error);
+    return { success: false, errorMessage: "Failed to load canvas" };
+  }
+}
+
+/**
+ * List all canvases for the authenticated user (summary only, no lines).
+ */
+export async function listCanvasesAction(): Promise<ListCanvasesResult> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, errorMessage: "Not authenticated" };
+    }
+
+    await dbConnect();
+
+    const canvases = await Canvas.find({ userId: session.userId })
+      .select("_id name updatedAt")
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    return {
+      success: true,
+      canvases: canvases.map((c: any) => ({
+        id: c._id.toString(),
+        name: c.name ?? "Untitled",
+        updatedAt: c.updatedAt?.toISOString() ?? new Date().toISOString(),
+      })),
+    };
+  } catch (error) {
+    console.error("List canvases error:", error);
+    return { success: false, errorMessage: "Failed to list canvases" };
+  }
+}
+
+/**
+ * Load a specific canvas by ID for the authenticated user.
+ */
+export async function loadCanvasByIdAction(
+  canvasId: string,
+): Promise<LoadCanvasResult> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, errorMessage: "Not authenticated" };
+    }
+
+    await dbConnect();
+
+    const canvas = await Canvas.findOne({
+      _id: canvasId,
+      userId: session.userId,
+    }).lean();
+
+    if (!canvas) {
+      return { success: false, errorMessage: "Canvas not found" };
+    }
+
+    return {
+      success: true,
+      canvasId: canvas._id.toString(),
+      name: (canvas as any).name ?? "Untitled",
+      lines: canvas.lines as LineData[],
+    };
+  } catch (error) {
+    console.error("Load canvas by ID error:", error);
     return { success: false, errorMessage: "Failed to load canvas" };
   }
 }

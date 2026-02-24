@@ -11,9 +11,11 @@ export default async function WhiteBoardLayout({
   const user = (await getAuthenticatedUser()) as IUser;
 
   return (
-    <main className="flex flex-col h-screen w-screen">
+    <main className="flex flex-col h-screen w-screen overflow-hidden">
       <Header username={user ? user.username : ""} />
-      {children}
+      <div className="flex flex-1 min-h-0">
+        {children}
+      </div>
     </main>
   );
 }
