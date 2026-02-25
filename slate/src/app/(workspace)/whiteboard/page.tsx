@@ -22,7 +22,6 @@ export default function WhiteboardPage() {
   const [lines, setLines] = useState<LineData[]>([]);
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [canvasName, setCanvasName] = useState<string>("Untitled");
-  const [isSaving, setIsSaving] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
   const [cameraLocation, setCameraLocation] = useState<"front" | "back">("front");
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
@@ -47,7 +46,6 @@ export default function WhiteboardPage() {
   // Save the current canvas to MongoDB
   const saveCanvas = useCallback(
     async (currentLines: LineData[], currentCanvasId: string | null) => {
-      setIsSaving(true);
       try {
         const result = await saveCanvasAction(currentLines, currentCanvasId);
         if (result.success && result.canvasId && !currentCanvasId) {
@@ -56,8 +54,6 @@ export default function WhiteboardPage() {
         }
       } catch (err) {
         console.error("Failed to save canvas:", err);
-      } finally {
-        setIsSaving(false);
       }
     },
     [],
@@ -137,14 +133,10 @@ export default function WhiteboardPage() {
           <div className="w-px h-5 bg-gray-600" />
           <button
             onClick={() => saveCanvas(lines, canvasId)}
-            disabled={isSaving}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
           >
-            {isSaving ? "Saving…" : "Save"}
+            Save
           </button>
-          {isSaving && (
-            <span className="text-xs text-gray-400">Saving…</span>
-          )}
           <button
             onClick={() => toggleCamera(cameraLocation)}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
