@@ -151,10 +151,10 @@ export function detectCustomGestures(landmarks: NormalizedLandmark[][]) {
 export function produceHighestPriorityGesture(landmarks: NormalizedLandmark[][]) {
   const gestures = detectCustomGestures(landmarks);
   // priority list - random rn
+  if (gestures.rightIndexPinch) return "rightIndexPinch";
   if (gestures.rightPinkyPinch) return "rightPinkyPinch";
   if (gestures.rightRingPinch) return "rightRingPinch";
   if (gestures.rightMiddlePinch) return "rightMiddlePinch";
-  if (gestures.rightIndexPinch) return "rightIndexPinch";
   if (gestures.leftPinkyPinch) return "leftPinkyPinch";
   if (gestures.leftRingPinch) return "leftRingPinch";
   if (gestures.leftMiddlePinch) return "leftMiddlePinch";
