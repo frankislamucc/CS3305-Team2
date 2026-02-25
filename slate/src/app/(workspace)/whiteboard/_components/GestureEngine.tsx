@@ -29,6 +29,12 @@ export default function GestureEngine({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Use a ref so the worker useEffect doesn't re-run when onDrawEnd changes
+  const onDrawEndRef = useRef(onDrawEnd);
+  useEffect(() => {
+    onDrawEndRef.current = onDrawEnd;
+  }, [onDrawEnd]);
+
   const onPredict = useCallback(
     (predictions: GestureRecognizerResult) => {
       var gesture =
@@ -56,7 +62,7 @@ export default function GestureEngine({
         console.log("pinch detected! STARTING TO DRAW");
       } else {
         isDrawing.current = false;
-        onDrawEnd();
+        onDrawEndRef.current();
       }
 
       if (gesture === "rightMiddlePinch") {
@@ -112,7 +118,7 @@ export default function GestureEngine({
       }
 
     },
-    [canvasRef, onDrawEnd],
+    [canvasRef],
   );
 
   // Date.now() is seen as dynamically changing
@@ -190,7 +196,7 @@ export default function GestureEngine({
       workerRef.current?.terminate();
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [predict, onPredict]);
+  }, [predict]);
 
   return (
     <div className={
