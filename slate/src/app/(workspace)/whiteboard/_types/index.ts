@@ -16,6 +16,17 @@ export interface Dimensions {
   height: number;
 }
 
+export interface LandmarkPoint {
+  x: number;
+  y: number;
+}
+
+export interface LandmarkData {
+  thumb: LandmarkPoint;
+  index: LandmarkPoint;
+  isPinching: boolean;
+}
+
 export interface CanvasHandle {
   drawPoints: (x: number, y: number) => void;
   clear: () => void;
@@ -28,6 +39,7 @@ export interface CanvasHandle {
   zoomOut: () => void;
   resetZoom: () => void;
   clearCanvas: () => void;
+  updateLandmarks: (data: LandmarkData | null) => void;
 }
 
 export interface WorkerRequest {

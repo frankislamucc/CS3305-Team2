@@ -1,6 +1,6 @@
 "use client";
-import { Stage, Layer, Line } from "react-konva";
-import type { CanvasHandle, LineData } from "../_types";
+import { Stage, Layer, Line, Circle, Line as KonvaLine } from "react-konva";
+import type { CanvasHandle, LineData, LandmarkData } from "../_types";
 import {
   RefObject,
   useImperativeHandle,
@@ -38,6 +38,7 @@ export default function Canvas(props: CanvasProps) {
   const transform = useRef(new ViewTransform());
   const [, forceUpdate] = useState(0);
   const filterRef = useRef<any>(null);
+  const [landmarks, setLandmarks] = useState<LandmarkData | null>(null);
 
 
   useEffect(() => {
@@ -118,6 +119,9 @@ export default function Canvas(props: CanvasProps) {
         lineRef.current?.points([]);
         filterRef.current = null;
         transform.current.reset();
+      },
+      updateLandmarks: (data: LandmarkData | null) => {
+        setLandmarks(data);
       }
     };
   }, [dimensions]);
@@ -149,6 +153,48 @@ export default function Canvas(props: CanvasProps) {
               lineCap="round"
               lineJoin="round"
             />
+          </Layer>
+          <Layer listening={false}>
+            {landmarks && !landmarks.isPinching && (
+              <>
+                {/* Thumb dot - faint red */}
+                <Circle
+                  x={landmarks.thumb.x * dimensions.width}
+                  y={landmarks.thumb.y * dimensions.height}
+                  radius={6}
+                  fill="rgba(255, 0, 0, 0.3)"
+                />
+                {/* Index dot - faint red */}
+                <Circle
+                  x={landmarks.index.x * dimensions.width}
+                  y={landmarks.index.y * dimensions.height}
+                  radius={6}
+                  fill="rgba(255, 0, 0, 0.3)"
+                />
+              </>
+            )}
+            {landmarks && landmarks.isPinching && (
+              <>
+                {/* Merged pinch dot - solid red at midpoint */}
+                <Circle
+                  x={(landmarks.thumb.x + landmarks.index.x) / 2 * dimensions.width}
+                  y={(landmarks.thumb.y + landmarks.index.y) / 2 * dimensions.height}
+                  radius={8}
+                  fill="rgba(255, 0, 0, 0.95)"
+                />
+                {/* Line connecting thumb and index */}
+                <KonvaLine
+                  points={[
+                    landmarks.thumb.x * dimensions.width,
+                    landmarks.thumb.y * dimensions.height,
+                    landmarks.index.x * dimensions.width,
+                    landmarks.index.y * dimensions.height,
+                  ]}
+                  stroke="rgba(255, 0, 0, 0.5)"
+                  strokeWidth={2}
+                />
+              </>
+            )}
           </Layer>
           <Layer ref={(node) => {
             if (node && !layerRef.current) {

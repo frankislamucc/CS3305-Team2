@@ -106,6 +106,21 @@ export default function GestureEngine({
 
 
       
+      // Update landmark dots (thumb + index finger)
+      if (canvasRef.current !== null && predictions.landmarks[0]) {
+        const THUMB_TIP = 4;
+        const thumbPoint = predictions.landmarks[0][THUMB_TIP];
+        const indexPoint = predictions.landmarks[0][INDEX_FINGER_TIP];
+
+        canvasRef.current.updateLandmarks({
+          thumb: { x: 1 - thumbPoint.x, y: thumbPoint.y },
+          index: { x: 1 - indexPoint.x, y: indexPoint.y },
+          isPinching: isDrawing.current,
+        });
+      } else {
+        canvasRef.current?.updateLandmarks(null);
+      }
+
       if (
         isDrawing.current &&
         canvasRef.current !== null &&
