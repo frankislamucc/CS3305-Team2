@@ -11,8 +11,17 @@ import {
   loadCanvasByIdAction,
   renameCanvasAction,
 } from "./actions/canvas";
+import {
+  listSharedCanvasesAction,
+  loadSharedCanvasAction,
+  type SharedCanvasSummary,
+} from "./actions/share";
 import WhiteboardName from "./_components/ui/WhiteboardName";
 import WhiteboardSidebar from "./_components/ui/WhiteboardSidebar";
+import ShareDialog from "./_components/ui/ShareDialog";
+import ToastContainer, { type ToastData } from "./_components/ui/Toast";
+import { useUser } from "./_components/UserContext";
+import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -25,6 +34,41 @@ export default function WhiteboardPage() {
   const canvasRef = useRef<CanvasHandle>(null);
   const [cameraLocation, setCameraLocation] = useState<"front" | "back">("front");
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+
+  // Sharing state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [viewingShared, setViewingShared] = useState<{
+    fromUsername: string;
+    sharedId: string;
+  } | null>(null);
+
+  const user = useUser();
+
+  // ── Toast helpers ──
+  const addToast = useCallback((message: string, type: ToastData["type"] = "info") => {
+    const id = crypto.randomUUID();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // ── WebSocket: listen for incoming shares ──
+  const handleIncomingShare = useCallback(
+    (event: WhiteboardSharedEvent) => {
+      addToast(
+        `📩 ${event.fromUsername} shared "${event.canvasName}" with you!`,
+        "info",
+      );
+      // Refresh sidebar to show the new shared canvas
+      setSidebarRefreshKey((k) => k + 1);
+    },
+    [addToast],
+  );
+
+  useSocket(user?.userId ?? null, handleIncomingShare);
 
   // Load the most recent canvas on mount
   useEffect(() => {
@@ -63,8 +107,6 @@ export default function WhiteboardPage() {
     setCameraLocation(currentLocation === "front" ? "back" : "front");
   };
 
-  // wrapping in a callback to try and prevent the crashing
-
   const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
     if (canvasHandler === null) return;
@@ -80,7 +122,6 @@ export default function WhiteboardPage() {
   const handleRename = useCallback(
     async (newName: string) => {
       if (!canvasId) {
-        // Canvas hasn't been persisted yet — save it first so we have an id
         const result = await saveCanvasAction(lines, null, newName);
         if (result.success && result.canvasId) {
           setCanvasId(result.canvasId);
@@ -103,6 +144,7 @@ export default function WhiteboardPage() {
           setLines(result.lines ?? []);
           setCanvasId(result.canvasId ?? null);
           setCanvasName(result.name ?? "Untitled");
+          setViewingShared(null);
           canvasRef.current?.clearCanvas();
         }
       } catch (err) {
@@ -112,10 +154,32 @@ export default function WhiteboardPage() {
     [canvasId],
   );
 
+  const handleSelectSharedCanvas = useCallback(
+    async (shared: SharedCanvasSummary) => {
+      try {
+        const result = await loadSharedCanvasAction(shared.id);
+        if (result.success) {
+          setLines(result.lines ?? []);
+          setCanvasId(null); // shared canvases are read-only view
+          setCanvasName(result.name ?? "Untitled");
+          setViewingShared({
+            fromUsername: result.fromUsername ?? shared.fromUsername,
+            sharedId: shared.id,
+          });
+          canvasRef.current?.clearCanvas();
+        }
+      } catch (err) {
+        console.error("Failed to load shared canvas:", err);
+      }
+    },
+    [],
+  );
+
   const handleNewCanvas = useCallback(() => {
     setLines([]);
     setCanvasId(null);
     setCanvasName("Untitled");
+    setViewingShared(null);
     canvasRef.current?.clearCanvas();
   }, []);
 
@@ -126,11 +190,35 @@ export default function WhiteboardPage() {
         onSelectCanvas={handleSelectCanvas}
         onNewCanvas={handleNewCanvas}
         refreshKey={sidebarRefreshKey}
+        onSelectSharedCanvas={handleSelectSharedCanvas}
+        viewingSharedId={viewingShared?.sharedId ?? null}
       />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-2 px-4 py-2">
           <WhiteboardName name={canvasName} onRename={handleRename} />
+
+          {/* Shared-from indicator */}
+          {viewingShared && (
+            <span className="px-3 py-1 text-sm font-semibold bg-purple-600 text-white border border-purple-400 rounded-full shadow">
+              Shared by {viewingShared.fromUsername}
+            </span>
+          )}
+
           <div className="w-px h-5 bg-gray-600" />
+
+          {/* Share button — only for canvases the user owns */}
+          {canvasId && !viewingShared && (
+            <button
+              onClick={() => setShowShareDialog(true)}
+              className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 8a3 3 0 100-6 3 3 0 000 6zm-6 6a3 3 0 100-6 3 3 0 000 6zm6 6a3 3 0 100-6 3 3 0 000 6zm-2.5-8.5l-5-3m0 6l5-3" />
+              </svg>
+              Share
+            </button>
+          )}
+
           <button
             onClick={() => saveCanvas(lines, canvasId)}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
@@ -177,6 +265,18 @@ export default function WhiteboardPage() {
           <Canvas lines={lines} canvasRef={canvasRef} />
         </div>
       </div>
+
+      {/* Share dialog */}
+      {showShareDialog && canvasId && (
+        <ShareDialog
+          canvasId={canvasId}
+          canvasName={canvasName}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

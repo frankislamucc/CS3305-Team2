@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.mjs --dev",
+    "dev:next": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.mjs",
     "lint": "eslint"
   },
   "dependencies": {
@@ -26,6 +27,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-konva": "^19.2.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
     "three": "^0.167.1",
     "zod": "^4.3.6"
