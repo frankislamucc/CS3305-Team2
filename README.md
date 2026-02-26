@@ -7,3 +7,5 @@
 3. **Install MongoDB dependencies:** `npm add mongoose bcryptjs` `npm add -D @types/bcryptjs` `npm install mongodb` `npm add jose`
 
 4.  **Slate cluster url:** env var `MONGODB_URI` in .env.local
+
+5. **Install WebSocket dependencies:** `npm add socket.io socket.io-client --legacy-peer-deps`
