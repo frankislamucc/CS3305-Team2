@@ -8,6 +8,8 @@ export interface ISharedCanvas extends Document {
   toUsername: string;
   canvasName: string;
   seen: boolean;
+  /** The recipient's personal copy of this canvas (created on first save) */
+  copyCanvasId?: Types.ObjectId;
   createdAt: Date;
 }
 
@@ -43,6 +45,11 @@ const SharedCanvasSchema = new Schema<ISharedCanvas>(
     seen: {
       type: Boolean,
       default: false,
+    },
+    copyCanvasId: {
+      type: Schema.Types.ObjectId,
+      ref: "Canvas",
+      default: null,
     },
   },
   { timestamps: true },

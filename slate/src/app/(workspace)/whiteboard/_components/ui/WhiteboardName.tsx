@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface WhiteboardNameProps {
   name: string;
-  onRename: (newName: string) => Promise<void>;
+  onRename?: (newName: string) => Promise<void>;
 }
 
 export default function WhiteboardName({ name, onRename }: WhiteboardNameProps) {
@@ -32,7 +32,7 @@ export default function WhiteboardName({ name, onRename }: WhiteboardNameProps) 
       setValue(name); // revert to previous name
       return;
     }
-    if (trimmed !== name) {
+    if (trimmed !== name && onRename) {
       await onRename(trimmed);
     }
   }, [value, name, onRename]);
@@ -58,6 +58,14 @@ export default function WhiteboardName({ name, onRename }: WhiteboardNameProps) 
         maxLength={100}
         className="text-sm font-medium bg-background text-foreground border border-border rounded px-2 py-0.5 outline-none focus:border-brand-primary min-w-[120px]"
       />
+    );
+  }
+
+  if (!onRename) {
+    return (
+      <span className="text-sm font-medium text-gray-400 px-2 py-0.5 truncate max-w-[240px]">
+        {name}
+      </span>
     );
   }
 

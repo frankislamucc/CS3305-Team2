@@ -33,6 +33,8 @@ export interface ListSharedResult {
 export interface LoadSharedCanvasResult {
   success: boolean;
   canvasId?: string;
+  /** The recipient's personal copy ID (if they've saved edits before) */
+  copyCanvasId?: string;
   name?: string;
   fromUsername?: string;
   lines?: LineData[];
@@ -180,7 +182,22 @@ export async function loadSharedCanvasAction(
       await share.save();
     }
 
-    // Load the actual canvas data
+    // If the recipient already has a personal copy, load that instead
+    if (share.copyCanvasId) {
+      const copy = await Canvas.findById(share.copyCanvasId).lean();
+      if (copy) {
+        return {
+          success: true,
+          canvasId: share.canvasId.toString(),
+          copyCanvasId: share.copyCanvasId.toString(),
+          name: (copy as any).name ?? (share.canvasName ?? "Untitled"),
+          fromUsername: share.fromUsername,
+          lines: copy.lines as LineData[],
+        };
+      }
+    }
+
+    // No copy yet — load the original sender's canvas
     const canvas = await Canvas.findById(share.canvasId).lean();
 
     if (!canvas) {
@@ -197,6 +214,85 @@ export async function loadSharedCanvasAction(
   } catch (error) {
     console.error("Load shared canvas error:", error);
     return { success: false, errorMessage: "Failed to load shared canvas" };
+  }
+}
+
+/* ─── Save the recipient's edits to their personal copy ─── */
+
+export async function saveSharedCanvasAction(
+  sharedId: string,
+  lines: LineData[],
+): Promise<{ success: boolean; copyCanvasId?: string; errorMessage?: string }> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, errorMessage: "Not authenticated" };
+    }
+
+    await dbConnect();
+
+    const share = await SharedCanvas.findOne({
+      _id: sharedId,
+      toUserId: session.userId,
+    });
+
+    if (!share) {
+      return { success: false, errorMessage: "Shared canvas not found" };
+    }
+
+    // Serialize lines
+    const serializedLines = lines.map((line) => ({
+      id: line.id,
+      points: line.points,
+      stroke: typeof line.stroke === "string" ? line.stroke : "#000000",
+      strokeWidth: line.strokeWidth,
+      tension: line.tension,
+      lineCap: line.lineCap,
+      lineJoin: line.lineJoin,
+    }));
+
+    // Re-fetch atomically to avoid race conditions from rapid saves
+    const freshShare = await SharedCanvas.findById(sharedId).lean();
+    const existingCopyId = (freshShare as any)?.copyCanvasId;
+
+    if (existingCopyId) {
+      // Update existing copy
+      await Canvas.findByIdAndUpdate(existingCopyId, {
+        lines: serializedLines,
+      });
+      return { success: true, copyCanvasId: existingCopyId.toString() };
+    }
+
+    // Create a new personal copy for the recipient
+    const copy = await Canvas.create({
+      userId: session.userId,
+      name: share.canvasName,
+      lines: serializedLines,
+      isSharedCopy: true,
+    });
+
+    // Atomically set copyCanvasId only if still null (prevents duplicates)
+    const updated = await SharedCanvas.findOneAndUpdate(
+      { _id: sharedId, copyCanvasId: null },
+      { copyCanvasId: copy._id },
+      { new: true },
+    );
+
+    if (!updated) {
+      // Another save already created the copy — delete ours and use theirs
+      await Canvas.findByIdAndDelete(copy._id);
+      const latest = await SharedCanvas.findById(sharedId).lean();
+      const latestCopyId = (latest as any)?.copyCanvasId;
+      if (latestCopyId) {
+        await Canvas.findByIdAndUpdate(latestCopyId, { lines: serializedLines });
+        return { success: true, copyCanvasId: latestCopyId.toString() };
+      }
+    }
+
+    return { success: true, copyCanvasId: copy._id.toString() };
+  } catch (error) {
+    console.error("Save shared canvas error:", error);
+    return { success: false, errorMessage: "Failed to save shared canvas" };
   }
 }
 

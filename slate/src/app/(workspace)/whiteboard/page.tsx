@@ -14,6 +14,7 @@ import {
 import {
   listSharedCanvasesAction,
   loadSharedCanvasAction,
+  saveSharedCanvasAction,
   type SharedCanvasSummary,
 } from "./actions/share";
 import WhiteboardName from "./_components/ui/WhiteboardName";
@@ -41,7 +42,14 @@ export default function WhiteboardPage() {
   const [viewingShared, setViewingShared] = useState<{
     fromUsername: string;
     sharedId: string;
+    copyCanvasId: string | null;
   } | null>(null);
+
+  // Keep a ref in sync so callbacks always read the latest value
+  const viewingSharedRef = useRef(viewingShared);
+  useEffect(() => {
+    viewingSharedRef.current = viewingShared;
+  }, [viewingShared]);
 
   const user = useUser();
 
@@ -91,6 +99,20 @@ export default function WhiteboardPage() {
   const saveCanvas = useCallback(
     async (currentLines: LineData[], currentCanvasId: string | null) => {
       try {
+        // Always read the latest shared state from the ref
+        const shared = viewingSharedRef.current;
+        if (shared) {
+          const result = await saveSharedCanvasAction(shared.sharedId, currentLines);
+          if (result.success && result.copyCanvasId) {
+            setViewingShared((prev) =>
+              prev ? { ...prev, copyCanvasId: result.copyCanvasId! } : prev,
+            );
+          } else if (!result.success) {
+            addToast(result.errorMessage ?? "Failed to save", "error");
+          }
+          return;
+        }
+
         const result = await saveCanvasAction(currentLines, currentCanvasId);
         if (result.success && result.canvasId && !currentCanvasId) {
           setCanvasId(result.canvasId);
@@ -98,9 +120,10 @@ export default function WhiteboardPage() {
         }
       } catch (err) {
         console.error("Failed to save canvas:", err);
+        addToast("Failed to save canvas", "error");
       }
     },
-    [],
+    [addToast],
   );
 
   const toggleCamera = (currentLocation: string) => {
@@ -160,11 +183,12 @@ export default function WhiteboardPage() {
         const result = await loadSharedCanvasAction(shared.id);
         if (result.success) {
           setLines(result.lines ?? []);
-          setCanvasId(null); // shared canvases are read-only view
+          setCanvasId(null);
           setCanvasName(result.name ?? "Untitled");
           setViewingShared({
             fromUsername: result.fromUsername ?? shared.fromUsername,
             sharedId: shared.id,
+            copyCanvasId: result.copyCanvasId ?? null,
           });
           canvasRef.current?.clearCanvas();
         }
@@ -183,6 +207,8 @@ export default function WhiteboardPage() {
     canvasRef.current?.clearCanvas();
   }, []);
 
+  const isViewOnly = !!viewingShared;
+
   return (
     <>
       <WhiteboardSidebar
@@ -195,13 +221,18 @@ export default function WhiteboardPage() {
       />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-2 px-4 py-2">
-          <WhiteboardName name={canvasName} onRename={handleRename} />
+          <WhiteboardName name={canvasName} onRename={isViewOnly ? undefined : handleRename} />
 
-          {/* Shared-from indicator */}
+          {/* Shared-from indicator + view-only badge */}
           {viewingShared && (
-            <span className="px-3 py-1 text-sm font-semibold bg-purple-600 text-white border border-purple-400 rounded-full shadow">
-              Shared by {viewingShared.fromUsername}
-            </span>
+            <>
+              <span className="px-3 py-1 text-sm font-semibold bg-purple-600 text-white border border-purple-400 rounded-full shadow">
+                Shared by {viewingShared.fromUsername}
+              </span>
+              <span className="px-3 py-1 text-sm font-medium bg-gray-700 text-gray-300 border border-gray-600 rounded-full">
+                🔒 View Only
+              </span>
+            </>
           )}
 
           <div className="w-px h-5 bg-gray-600" />
@@ -221,31 +252,33 @@ export default function WhiteboardPage() {
 
           <button
             onClick={() => saveCanvas(lines, canvasId)}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+            disabled={isViewOnly}
+            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
           >
             Save
           </button>
           <button
             onClick={() => toggleCamera(cameraLocation)}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            disabled={isViewOnly}
+            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
           >
             {cameraLocation === "front" ? "Switch to Back Camera" : "Switch to Front Camera"}
           </button>
           <button
             onClick={() => canvasRef.current?.zoomOut()}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
           >
             Zoom Out
           </button>
           <button
             onClick={() => canvasRef.current?.zoomIn()}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
           >
             Zoom In
           </button>
           <button
             onClick={() => canvasRef.current?.resetZoom()}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
           >
             Reset Zoom
           </button>
@@ -255,13 +288,16 @@ export default function WhiteboardPage() {
               setLines([]);
               saveCanvas([], canvasId);
             }}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            disabled={isViewOnly}
+            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
           >
             Clear Canvas
           </button>
         </div>
         <div className="relative flex-1">
-          <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} cameraLocation={cameraLocation} />
+          {!isViewOnly && (
+            <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} cameraLocation={cameraLocation} />
+          )}
           <Canvas lines={lines} canvasRef={canvasRef} />
         </div>
       </div>

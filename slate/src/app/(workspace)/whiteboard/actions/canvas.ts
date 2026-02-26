@@ -131,7 +131,7 @@ export async function listCanvasesAction(): Promise<ListCanvasesResult> {
 
     await dbConnect();
 
-    const canvases = await Canvas.find({ userId: session.userId })
+    const canvases = await Canvas.find({ userId: session.userId, isSharedCopy: { $ne: true } })
       .select("_id name updatedAt")
       .sort({ updatedAt: -1 })
       .lean();

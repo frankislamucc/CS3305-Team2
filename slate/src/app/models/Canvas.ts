@@ -14,6 +14,7 @@ export interface ICanvas extends Document {
   userId: Types.ObjectId;
   name: string;
   lines: ILineData[];
+  isSharedCopy: boolean;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -46,6 +47,10 @@ const CanvasSchema = new Schema<ICanvas>(
     lines: {
       type: [LineDataSchema],
       default: [],
+    },
+    isSharedCopy: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },
