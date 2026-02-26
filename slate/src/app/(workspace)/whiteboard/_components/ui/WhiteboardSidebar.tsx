@@ -132,8 +132,8 @@ export default function WhiteboardSidebar({
         </div>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto py-1">
+      {/* ── My Whiteboards (scrollable) ── */}
+      <div className="flex-1 overflow-y-auto py-1 min-h-0">
         {isLoading ? (
           <div className="px-3 py-4 text-xs text-gray-500 text-center">Loading…</div>
         ) : canvases.length === 0 && sharedCanvases.length === 0 ? (
@@ -146,7 +146,6 @@ export default function WhiteboardSidebar({
           </div>
         ) : (
           <>
-            {/* ── Own canvases ── */}
             {canvases.length > 0 && (
               <>
                 <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
@@ -182,49 +181,58 @@ export default function WhiteboardSidebar({
                 ))}
               </>
             )}
-
-            {/* ── Shared with me ── */}
-            {sharedCanvases.length > 0 && (
-              <>
-                <div className="px-3 pt-4 pb-1 text-[10px] font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 8a3 3 0 100-6 3 3 0 000 6zm-6 6a3 3 0 100-6 3 3 0 000 6zm6 6a3 3 0 100-6 3 3 0 000 6zm-2.5-8.5l-5-3m0 6l5-3" />
-                  </svg>
-                  Shared with me
-                </div>
-                {sharedCanvases.map((shared) => (
-                  <div
-                    key={shared.id}
-                    onClick={() => onSelectSharedCanvas?.(shared)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") onSelectSharedCanvas?.(shared);
-                    }}
-                    className={`w-full text-left px-3 py-2 group flex items-center justify-between transition-colors cursor-pointer border-l-2 ${
-                      viewingSharedId === shared.id
-                        ? "bg-purple-900/30 text-purple-200 border-purple-500"
-                        : "text-gray-300 hover:bg-purple-900/20 hover:text-purple-200 border-transparent hover:border-purple-500/50"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium truncate">{shared.canvasName}</span>
-                        {!shared.seen && (
-                          <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" title="New" />
-                        )}
-                      </div>
-                      <div className="text-xs text-purple-400/70">
-                        from {shared.fromUsername} · {formatDate(shared.sharedAt)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
+            {canvases.length === 0 && sharedCanvases.length > 0 && (
+              <div className="px-3 py-4 text-xs text-gray-500 text-center">
+                No whiteboards yet.
+                <br />
+                <button onClick={onNewCanvas} className="text-blue-400 hover:underline mt-1 cursor-pointer">
+                  Create one
+                </button>
+              </div>
             )}
           </>
         )}
       </div>
+
+      {/* ── Shared with me (pinned to bottom) ── */}
+      {sharedCanvases.length > 0 && (
+        <div className="border-t border-gray-800 max-h-[40%] overflow-y-auto shrink-0">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 sticky top-0 bg-gray-900 z-10">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 8a3 3 0 100-6 3 3 0 000 6zm-6 6a3 3 0 100-6 3 3 0 000 6zm6 6a3 3 0 100-6 3 3 0 000 6zm-2.5-8.5l-5-3m0 6l5-3" />
+            </svg>
+            Shared with me
+          </div>
+          {sharedCanvases.map((shared) => (
+            <div
+              key={shared.id}
+              onClick={() => onSelectSharedCanvas?.(shared)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSelectSharedCanvas?.(shared);
+              }}
+              className={`w-full text-left px-3 py-2 group flex items-center justify-between transition-colors cursor-pointer border-l-2 ${
+                viewingSharedId === shared.id
+                  ? "bg-purple-900/30 text-purple-200 border-purple-500"
+                  : "text-gray-300 hover:bg-purple-900/20 hover:text-purple-200 border-transparent hover:border-purple-500/50"
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium truncate">{shared.canvasName}</span>
+                  {!shared.seen && (
+                    <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" title="New" />
+                  )}
+                </div>
+                <div className="text-xs text-purple-400/70">
+                  from {shared.fromUsername} · {formatDate(shared.sharedAt)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
