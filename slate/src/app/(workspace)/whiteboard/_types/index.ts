@@ -28,7 +28,7 @@ export interface LandmarkData {
 }
 
 export interface CanvasHandle {
-  drawPoints: (x: number, y: number) => void;
+  drawPoints: (x: number, y: number, isPinching: boolean, thumbX?: number, thumbY?: number) => void;
   clear: () => void;
   exportLine: () => LineData | null;
   showSpinner: (angle: number) => void;

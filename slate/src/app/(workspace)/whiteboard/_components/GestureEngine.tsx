@@ -47,7 +47,6 @@ export default function GestureEngine({
       const customGesture = produceHighestPriorityGesture(predictions.landmarks);
 
       // custom gestures take priority over regular ones, so we check those first
-
       if (customGesture) {
         gesture = customGesture;
       }
@@ -55,9 +54,7 @@ export default function GestureEngine({
       console.log("predicted gesture:", gesture);
 
       // gesture bindings here
-
       if (gesture === "rightIndexPinch") {
-
         isDrawing.current = true;
         console.log("pinch detected! STARTING TO DRAW");
       } else {
@@ -67,45 +64,14 @@ export default function GestureEngine({
 
       if (gesture === "rightMiddlePinch") {
         console.log("middle pinch detected! zooming in");
-        canvasRef.current?.zoomIn()
+        canvasRef.current?.zoomIn();
       }
 
       if (gesture === "rightRingPinch") {
         console.log("ring pinch detected! zooming out");
-        canvasRef.current?.zoomOut()
+        canvasRef.current?.zoomOut();
       }
 
-      // } else if (gesture === "Thumb_Down" && isDrawing.current) {
-      //   isDrawing.current = false;
-      //   onDrawEnd();
-      // } else if (gesture === "Closed_Fist") {
-
-      //   if (!isGauntlet.current) {
-      //     console.log("fist detected! showing spinner");
-      //     isGauntlet.current = true;
-      //     isDrawing.current = false;
-      //   } else if (isGauntlet.current && predictions.landmarks[0]) {
-      //     console.log("gauntlet already active, updating spinner angle");
-      //     const currentAngle = Math.atan2(
-      //       -(predictions.landmarks[0][9].y - predictions.landmarks[0][10].y),
-      //       predictions.landmarks[0][9].x - predictions.landmarks[0][10].x
-      //     );
-      //     const degrees = ((currentAngle * 180) / Math.PI + 360) % 360;
-      //     console.log(`current angle: ${degrees.toFixed(2)} degrees`);
-      //     canvasRef.current?.showSpinner(degrees);
-      //   }
-      // }
-      // not sure about these
-
-      // } else if (gesture === "Open_Palm" && isGauntlet.current) {
-      //   console.log("palm detected! hiding spinner");
-      //   isGauntlet.current = false;
-      //   canvasRef.current?.hideSpinner();
-      // }
-
-
-
-      
       // Update landmark dots (thumb + index finger)
       if (canvasRef.current !== null && predictions.landmarks[0]) {
         const THUMB_TIP = 4;
@@ -121,17 +87,26 @@ export default function GestureEngine({
         canvasRef.current?.updateLandmarks(null);
       }
 
+      
       if (
         isDrawing.current &&
         canvasRef.current !== null &&
-        predictions.landmarks[0][0]
+        predictions.landmarks[0]?.[0]
       ) {
+        const thumbPoints = predictions.landmarks[0][4];
         const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
-        // indexPoints are camera perspective
-        const transformedX = 1 - indexPoints.x;
-        canvasRef.current.drawPoints(transformedX, indexPoints.y);
+        
+        const transformedThumbX = 1 - thumbPoints.x;
+        const transformedIndexX = 1 - indexPoints.x;
+        
+        canvasRef.current.drawPoints(
+          transformedIndexX, 
+          indexPoints.y, 
+          isDrawing.current,  // isPinching flag
+          transformedThumbX,  // thumbX
+          thumbPoints.y       // thumbY
+        );
       }
-
     },
     [canvasRef],
   );
