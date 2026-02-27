@@ -25,6 +25,7 @@ export default function GestureEngine({
   const isDrawing = useRef(false);
   const isWorkerBusy = useRef(false);
   const isGauntlet = useRef(false);
+  const isPanning = useRef(false);
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -36,24 +37,54 @@ export default function GestureEngine({
   }, [onDrawEnd]);
 
   const onPredict = useCallback(
-    (predictions: GestureRecognizerResult) => {
-      var gesture =
-        predictions.gestures && predictions.gestures[0]
-          ? predictions.gestures[0][0].categoryName
-          : "";
+  (predictions: GestureRecognizerResult) => {
+    var gesture =
+      predictions.gestures && predictions.gestures[0]
+        ? predictions.gestures[0][0].categoryName
+        : "";
 
-      console.log("predictions.landmarks:", predictions.landmarks);
+    console.log("predictions.landmarks:", predictions.landmarks);
 
-      const customGesture = produceHighestPriorityGesture(predictions.landmarks);
+    const customGesture = produceHighestPriorityGesture(predictions.landmarks);
 
-      // custom gestures take priority over regular ones, so we check those first
-      if (customGesture) {
-        gesture = customGesture;
+    // custom gestures take priority over regular ones, so we check those first
+    if (customGesture) {
+      gesture = customGesture;
+    }
+
+    console.log("predicted gesture:", gesture);
+
+    // Handle fist for panning
+    if (gesture === "rightFist" || gesture === "leftFist") {
+      // Calculate palm center for panning
+      const landmarks_list = predictions.landmarks[0];
+      const palmCenter = {
+        x: (landmarks_list[0].x + landmarks_list[5].x + landmarks_list[9].x + landmarks_list[13].x + landmarks_list[17].x) / 5,
+        y: (landmarks_list[0].y + landmarks_list[5].y + landmarks_list[9].y + landmarks_list[13].y + landmarks_list[17].y) / 5
+      };
+      
+      // Transform coordinates (mirror horizontally)
+      const transformedX = 1 - palmCenter.x;
+      
+      if (!isPanning.current) {
+        // Start panning
+        canvasRef.current?.startPan(transformedX, palmCenter.y);
+        isPanning.current = true;
+      } else {
+        // Update pan
+        canvasRef.current?.updatePan(transformedX, palmCenter.y);
       }
-
-      console.log("predicted gesture:", gesture);
-
-      // gesture bindings here
+      
+      // Ensure we're not drawing while panning
+      isDrawing.current = false;
+    } else {
+      // End panning if we were panning
+      if (isPanning.current) {
+        canvasRef.current?.endPan();
+        isPanning.current = false;
+      }
+      
+      // Handle pinch for drawing
       if (gesture === "rightIndexPinch") {
         isDrawing.current = true;
         console.log("pinch detected! STARTING TO DRAW");
@@ -62,6 +93,7 @@ export default function GestureEngine({
         onDrawEndRef.current();
       }
 
+      // Handle other gestures
       if (gesture === "rightMiddlePinch") {
         console.log("middle pinch detected! zooming in");
         canvasRef.current?.zoomIn();
@@ -71,45 +103,47 @@ export default function GestureEngine({
         console.log("ring pinch detected! zooming out");
         canvasRef.current?.zoomOut();
       }
+    }
 
-      // Update landmark dots (thumb + index finger)
-      if (canvasRef.current !== null && predictions.landmarks[0]) {
-        const THUMB_TIP = 4;
-        const thumbPoint = predictions.landmarks[0][THUMB_TIP];
-        const indexPoint = predictions.landmarks[0][INDEX_FINGER_TIP];
+    // Update landmark dots (thumb + index finger)
+    if (canvasRef.current !== null && predictions.landmarks[0]) {
+      const THUMB_TIP = 4;
+      const thumbPoint = predictions.landmarks[0][THUMB_TIP];
+      const indexPoint = predictions.landmarks[0][INDEX_FINGER_TIP];
 
-        canvasRef.current.updateLandmarks({
-          thumb: { x: 1 - thumbPoint.x, y: thumbPoint.y },
-          index: { x: 1 - indexPoint.x, y: indexPoint.y },
-          isPinching: isDrawing.current,
-        });
-      } else {
-        canvasRef.current?.updateLandmarks(null);
-      }
+      canvasRef.current.updateLandmarks({
+        thumb: { x: 1 - thumbPoint.x, y: thumbPoint.y },
+        index: { x: 1 - indexPoint.x, y: indexPoint.y },
+        isPinching: isDrawing.current,
+      });
+    } else {
+      canvasRef.current?.updateLandmarks(null);
+    }
 
+    // Draw if pinching (and not panning)
+    if (
+      isDrawing.current &&
+      !isPanning.current &&  // Don't draw while panning
+      canvasRef.current !== null &&
+      predictions.landmarks[0]?.[0]
+    ) {
+      const thumbPoints = predictions.landmarks[0][4];
+      const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
       
-      if (
-        isDrawing.current &&
-        canvasRef.current !== null &&
-        predictions.landmarks[0]?.[0]
-      ) {
-        const thumbPoints = predictions.landmarks[0][4];
-        const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
-        
-        const transformedThumbX = 1 - thumbPoints.x;
-        const transformedIndexX = 1 - indexPoints.x;
-        
-        canvasRef.current.drawPoints(
-          transformedIndexX, 
-          indexPoints.y, 
-          isDrawing.current,  // isPinching flag
-          transformedThumbX,  // thumbX
-          thumbPoints.y       // thumbY
-        );
-      }
-    },
-    [canvasRef],
-  );
+      const transformedThumbX = 1 - thumbPoints.x;
+      const transformedIndexX = 1 - indexPoints.x;
+      
+      canvasRef.current.drawPoints(
+        transformedIndexX, 
+        indexPoints.y, 
+        isDrawing.current,
+        transformedThumbX,
+        thumbPoints.y
+      );
+    }
+  },
+  [canvasRef],
+);
 
   // Date.now() is seen as dynamically changing
   // predict logic

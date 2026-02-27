@@ -40,6 +40,9 @@ export interface CanvasHandle {
   resetZoom: () => void;
   clearCanvas: () => void;
   updateLandmarks: (data: LandmarkData | null) => void;
+  startPan: (x: number, y: number) => void;
+  updatePan: (x: number, y: number) => void;
+  endPan: () => void;
 }
 
 export interface WorkerRequest {

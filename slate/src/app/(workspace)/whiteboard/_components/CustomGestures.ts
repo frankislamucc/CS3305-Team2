@@ -135,6 +135,36 @@ export function detectLeftIndexPinch(landmarks: NormalizedLandmark[][]): boolean
   return Math.abs(LEFT_THUMB_TIP.x - LEFT_INDEX_TIP.x) < PINCH_THRESHOLD && Math.abs(LEFT_THUMB_TIP.y - LEFT_INDEX_TIP.y) < PINCH_THRESHOLD
 }
 
+export function detectRightFist(landmarks: NormalizedLandmark[][]): boolean {
+  const { 
+    RIGHT_THUMB_TIP, RIGHT_INDEX_TIP, RIGHT_MIDDLE_TIP, RIGHT_RING_TIP, RIGHT_PINKY_TIP,
+    RIGHT_THUMB_MCP, RIGHT_INDEX_MCP, RIGHT_MIDDLE_MCP, RIGHT_RING_MCP, RIGHT_PINKY_MCP,
+    WRIST
+  } = getLandmarks(landmarks);
+  
+  if (!RIGHT_THUMB_TIP || !RIGHT_INDEX_TIP || !RIGHT_MIDDLE_TIP || !RIGHT_RING_TIP || !RIGHT_PINKY_TIP) return false;
+  if (!RIGHT_THUMB_MCP || !RIGHT_INDEX_MCP || !RIGHT_MIDDLE_MCP || !RIGHT_RING_MCP || !RIGHT_PINKY_MCP) return false;
+  if (!WRIST) return false;
+  
+  // Calculate palm center as average of wrist and finger MCPs
+  const palmCenter = {
+    x: (WRIST.x + RIGHT_INDEX_MCP.x + RIGHT_MIDDLE_MCP.x + RIGHT_RING_MCP.x + RIGHT_PINKY_MCP.x) / 5,
+    y: (WRIST.y + RIGHT_INDEX_MCP.y + RIGHT_MIDDLE_MCP.y + RIGHT_RING_MCP.y + RIGHT_PINKY_MCP.y) / 5,
+    z: (WRIST.z + RIGHT_INDEX_MCP.z + RIGHT_MIDDLE_MCP.z + RIGHT_RING_MCP.z + RIGHT_PINKY_MCP.z) / 5
+  };
+  
+  const FIST_THRESHOLD = 0.08;
+  
+  // Check if all finger tips are close to the palm center (using 2D distance for x,y only)
+  return (
+    Math.hypot(RIGHT_THUMB_TIP.x - palmCenter.x, RIGHT_THUMB_TIP.y - palmCenter.y) < FIST_THRESHOLD &&
+    Math.hypot(RIGHT_INDEX_TIP.x - palmCenter.x, RIGHT_INDEX_TIP.y - palmCenter.y) < FIST_THRESHOLD &&
+    Math.hypot(RIGHT_MIDDLE_TIP.x - palmCenter.x, RIGHT_MIDDLE_TIP.y - palmCenter.y) < FIST_THRESHOLD &&
+    Math.hypot(RIGHT_RING_TIP.x - palmCenter.x, RIGHT_RING_TIP.y - palmCenter.y) < FIST_THRESHOLD &&
+    Math.hypot(RIGHT_PINKY_TIP.x - palmCenter.x, RIGHT_PINKY_TIP.y - palmCenter.y) < FIST_THRESHOLD
+  );
+}
+
 export function detectCustomGestures(landmarks: NormalizedLandmark[][]) {
   return {
     rightPinkyPinch: detectRightPinkyPinch(landmarks),
@@ -145,12 +175,14 @@ export function detectCustomGestures(landmarks: NormalizedLandmark[][]) {
     leftRingPinch: detectLeftRingPinch(landmarks),
     leftMiddlePinch: detectLeftMiddlePinch(landmarks),
     leftIndexPinch: detectLeftIndexPinch(landmarks),
+    rightFist: detectRightFist(landmarks),
   }
 }
 
 export function produceHighestPriorityGesture(landmarks: NormalizedLandmark[][]) {
   const gestures = detectCustomGestures(landmarks);
   // priority list - random rn
+  if (gestures.rightFist) return "rightFist";
   if (gestures.rightIndexPinch) return "rightIndexPinch";
   if (gestures.rightPinkyPinch) return "rightPinkyPinch";
   if (gestures.rightRingPinch) return "rightRingPinch";

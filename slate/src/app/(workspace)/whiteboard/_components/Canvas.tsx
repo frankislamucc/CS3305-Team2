@@ -42,6 +42,9 @@ export default function Canvas(props: CanvasProps) {
   const pinchIndexFilterRef = useRef<OneEuroFilter | null>(null);
   const drawEMAFilterRef = useRef<SimpleEMA | null>(null);
 
+  const isPanning = useRef(false);
+  const lastPanPosition = useRef<{x: number, y: number} | null>(null);
+
   const lastFilteredPos = useRef<{x: number, y: number} | null>(null);
   const lastUpdateTime = useRef<number>(0);
   const prevPoint = useRef<{x: number, y: number} | null>(null);
@@ -150,6 +153,29 @@ export default function Canvas(props: CanvasProps) {
           prevPoint.current = null;
           lastFilteredPos.current = null;
         }
+      },
+      startPan: (x: number, y: number) => {
+        isPanning.current = true;
+        lastPanPosition.current = { x: x * dimensions.width, y: y * dimensions.height };
+      },
+
+      updatePan: (x: number, y: number) => {
+        if (!isPanning.current || !lastPanPosition.current) return;
+        
+        const screenX = x * dimensions.width;
+        const screenY = y * dimensions.height;
+        
+        const deltaX = lastPanPosition.current.x - screenX;
+        const deltaY = lastPanPosition.current.y - screenY;
+        
+        transform.current.pan(deltaX, deltaY);
+        
+        lastPanPosition.current = { x: screenX, y: screenY };
+      },
+
+      endPan: () => {
+        isPanning.current = false;
+        lastPanPosition.current = null;
       },
       clear: () => {
         lineRef.current?.points([]);
