@@ -6,7 +6,7 @@ import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 
 // Configuration Options - Should maybe be in a separate file!
 
-const PINCH_THRESHOLD = 0.08;
+const PINCH_THRESHOLD = 0.05;
 
 // this function just lets us use the shorthand in this file
 function getLandmarks(landmarks: NormalizedLandmark[][]) {

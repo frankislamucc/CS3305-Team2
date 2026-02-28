@@ -40,8 +40,8 @@ export default function ColourWheelSpinner({
   const pointerRef = useRef<Konva.RegularPolygon | null>(null);
 
   const getSelectedIndex = (rotation: number) => {
-    const raw = (-rotation / SEGMENT_ANGLE) % SEGMENT_COUNT;
-    return ((Math.round(raw) % SEGMENT_COUNT) + SEGMENT_COUNT) % SEGMENT_COUNT;
+    const raw = Math.round(-rotation / SEGMENT_ANGLE);
+    return ((raw % SEGMENT_COUNT) + SEGMENT_COUNT) % SEGMENT_COUNT;
   };
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function ColourWheelSpinner({
         outerRadius: radius,
         angle: SEGMENT_ANGLE - GAP,
         fill: colour.hsl,
-        rotation: i * SEGMENT_ANGLE - 90 + GAP / 2,
+        rotation: i * SEGMENT_ANGLE - 110 + GAP / 2,
       });
       segmentsRef.current.push(arc);
       group.add(arc);
@@ -123,6 +123,7 @@ export default function ColourWheelSpinner({
     centerRef.current.fill(selected.hsl);
     labelRef.current.text(selected.label);
     labelRef.current.offsetX(labelRef.current.width() / 2);
+    
     onColourSelect?.(selected.hsl);
 
     layer.batchDraw();

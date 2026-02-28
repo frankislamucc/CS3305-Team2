@@ -115,7 +115,7 @@ export class SimpleEMA {
         this.alpha * newValue[index] + (1 - this.alpha) * value
       )
     } else {
-      this.value = this.alpha * newValue + (1 - this.alpha) * value
+      this.value = this.alpha * newValue + (1 - this.alpha) * this.value
     }
 
     return this.value

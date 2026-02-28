@@ -43,6 +43,10 @@ export interface CanvasHandle {
   startPan: (x: number, y: number) => void;
   updatePan: (x: number, y: number) => void;
   endPan: () => void;
+  setSpinnerStartY: (y: number) => void;
+  spinnerStartY: () => number;
+  setSizeSelectorStartY: (y: number) => void;
+  sizeSelectorStartY: () => number;
 }
 
 export interface WorkerRequest {

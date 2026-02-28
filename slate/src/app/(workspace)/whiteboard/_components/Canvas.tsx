@@ -12,6 +12,7 @@ import {
 import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
 import ColourWheelSpinner from "./ColourWheelSpinner";
+import SizeSelector from "./sizeSelector";  
 import { ViewTransform } from "./ViewTransform";
 import { OneEuroFilter, SimpleEMA } from "./OneEuro";
 
@@ -31,8 +32,13 @@ export default function Canvas(props: CanvasProps) {
   const layerRef = useRef<any>(null);
   const [layerReady, setLayerReady] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
+  const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
+  const [sizeSelectorY, setSizeSelector] = useState(0);
+  const spinnerStartY = useRef(0); 
+  const sizeSelectorStartY = useRef(0); 
   const [selectedColor, setSelectedColor] = useState("#df4b26");
+  const [selectedSize, setSelectedSize] = useState(2);
   const transform = useRef(new ViewTransform());
   const [, forceUpdate] = useState(0);
   const [landmarks, setLandmarks] = useState<LandmarkData | null>(null);
@@ -204,8 +210,15 @@ export default function Canvas(props: CanvasProps) {
         setWheelRotation(angle);
       },
       hideSpinner: () => setShowSpinner(false),
-      showSizeSelector: () => { },
-      hideSizeSelector: () => { },
+      spinnerStartY: () => spinnerStartY.current,
+      setSpinnerStartY: (y: number) => { spinnerStartY.current = y; },
+      sizeSelectorStartY: () => sizeSelectorStartY.current,
+      setSizeSelectorStartY: (y: number) => { sizeSelectorStartY.current = y; },
+      showSizeSelector: (Yvalue: number) => {
+        setShowSizeSelector(true);
+        setSizeSelector(Yvalue);
+      },      
+      hideSizeSelector: () => {setShowSizeSelector(false)},
       zoomIn: () => transform.current.zoomAtPoint(1.2, dimensions.width / 2, dimensions.height / 2),
       zoomOut: () => transform.current.zoomAtPoint(0.8, dimensions.width / 2, dimensions.height / 2),
       resetZoom: () => transform.current.reset(),
@@ -229,6 +242,10 @@ export default function Canvas(props: CanvasProps) {
     setSelectedColor(color);
   };
 
+   const handleSizeSelect = (size: number) => {
+    setSelectedSize(size);
+  };
+
   return (
     <div ref={containerRef} className="absolute inset-0 z-10">
       {dimensions.width > 0 && (
@@ -247,7 +264,7 @@ export default function Canvas(props: CanvasProps) {
             <Line
               ref={lineRef}
               stroke={selectedColor}
-              strokeWidth={5}
+              strokeWidth={selectedSize}
               tension={0.5}
               lineCap="round"
               lineJoin="round"
@@ -306,6 +323,17 @@ export default function Canvas(props: CanvasProps) {
                 onColourSelect={handleColorSelect}
               />
             )}
+
+            {layerReady && layerRef.current && showSizeSelector && (
+              <SizeSelector
+                layer={layerRef.current}
+                x={dimensions.width / 2}
+                y={dimensions.height / 2}
+                normalisedY={sizeSelectorY}
+                onSizeSelect={handleSizeSelect}
+              />
+            )}
+            
           </Layer>
         </Stage>
       )}
