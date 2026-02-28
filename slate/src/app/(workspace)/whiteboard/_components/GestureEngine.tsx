@@ -61,16 +61,12 @@ export default function GestureEngine({
           ? predictions.gestures[0][0].categoryName
           : "";
 
-      console.log("predictions.landmarks:", predictions.landmarks);
-
       const customGesture = produceHighestPriorityGesture(predictions.landmarks);
 
       // custom gestures take priority over regular ones, so we check those first
       if (customGesture) {
         gesture = customGesture;
       }
-
-      console.log("predicted gesture:", gesture);
 
       // Handle fist for panning
       if (gesture === "rightFist" || gesture === "leftFist") {
