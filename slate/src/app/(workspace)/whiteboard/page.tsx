@@ -23,6 +23,7 @@ import ShareDialog from "./_components/ui/ShareDialog";
 import ToastContainer, { type ToastData } from "./_components/ui/Toast";
 import { useUser } from "./_components/UserContext";
 import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
+import OptionButton from "./_components/ui/OptionButton";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -271,51 +272,42 @@ export default function WhiteboardPage() {
             </button>
           )}
 
-          <button
+          <OptionButton
             onClick={() => saveCanvas(lines, canvasId)}
-            disabled={isViewOnly}
-            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
-          >
-            Save
-          </button>
-          <button
+            isDisabled={isViewOnly}
+            text="Save"
+          />
+          <OptionButton
             onClick={() => toggleCamera(cameraLocation)}
-            disabled={isViewOnly}
-            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
-          >
-            {cameraLocation === "front"
-              ? "Switch to Back Camera"
-              : "Switch to Front Camera"}
-          </button>
-          <button
+            isDisabled={isViewOnly}
+            text={
+              cameraLocation === "front"
+                ? "Switch to Back Camera"
+                : "Switch to Front Camera"
+            }
+          />
+          <OptionButton
             onClick={() => canvasRef.current?.zoomOut()}
-            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-          >
-            Zoom Out
-          </button>
-          <button
+            text="Zoom Out"
+          />
+          <OptionButton
             onClick={() => canvasRef.current?.zoomIn()}
-            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-          >
-            Zoom In
-          </button>
-          <button
+            text="Zoom In"
+          />
+          <OptionButton
             onClick={() => canvasRef.current?.resetZoom()}
-            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-          >
-            Reset Zoom
-          </button>
-          <button
+            text="Reset Zoom"
+          />
+
+          <OptionButton
             onClick={() => {
               canvasRef.current?.clearCanvas();
               setLines([]);
               saveCanvas([], canvasId);
             }}
-            disabled={isViewOnly}
-            className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
-          >
-            Clear Canvas
-          </button>
+            isDisabled={isViewOnly}
+            text="Clear Canvas"
+          />
         </div>
         <div className="relative flex-1">
           {!isViewOnly && (
