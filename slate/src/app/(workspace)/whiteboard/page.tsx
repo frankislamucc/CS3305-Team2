@@ -152,6 +152,16 @@ export default function WhiteboardPage() {
     }
   }, [lines, canvasId, saveCanvas]);
 
+  // ── Copy & Paste: add pasted lines to the canvas ──
+  const handlePaste = useCallback(
+    (pastedLines: LineData[]) => {
+      const updated = [...lines, ...pastedLines];
+      setLines(updated);
+      saveCanvas(updated, canvasId);
+    },
+    [lines, canvasId, saveCanvas],
+  );
+
   const handleRename = useCallback(
     async (newName: string) => {
       if (!canvasId) {
@@ -318,7 +328,11 @@ export default function WhiteboardPage() {
               cameraLocation={cameraLocation}
             />
           )}
-          <Canvas lines={lines} canvasRef={canvasRef} />
+          <Canvas
+            lines={lines}
+            canvasRef={canvasRef}
+            onPaste={isViewOnly ? undefined : handlePaste}
+          />
         </div>
       </div>
 

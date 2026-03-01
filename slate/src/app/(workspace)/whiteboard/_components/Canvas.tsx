@@ -1,8 +1,9 @@
 "use client";
-import { Stage, Layer, Line, Circle } from "react-konva";
+import { Stage, Layer, Line, Circle, Rect } from "react-konva";
 import type { CanvasHandle, LineData, LandmarkData } from "../_types";
 import {
   RefObject,
+  useCallback,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -19,6 +20,7 @@ import { OneEuroFilter, SimpleEMA } from "./OneEuro";
 interface CanvasProps {
   lines: LineData[];
   canvasRef: RefObject<CanvasHandle | null>;
+  onPaste?: (lines: LineData[]) => void;
 }
 
 export default function Canvas(props: CanvasProps) {
@@ -42,6 +44,16 @@ export default function Canvas(props: CanvasProps) {
   const transform = useRef(new ViewTransform());
   const [, forceUpdate] = useState(0);
   const [landmarks, setLandmarks] = useState<LandmarkData | null>(null);
+
+  // ── Copy & Paste selection state ──
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [isDrawingSelection, setIsDrawingSelection] = useState(false);
+  const [selectionRect, setSelectionRect] = useState<{
+    x1: number; y1: number; x2: number; y2: number;
+  } | null>(null);
+  const [selectedLineIds, setSelectedLineIds] = useState<Set<string>>(new Set());
+  const [clipboard, setClipboard] = useState<LineData[]>([]);
+  const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const thumbFilterRef = useRef<OneEuroFilter | null>(null);
   const indexFilterRef = useRef<OneEuroFilter | null>(null);
@@ -85,6 +97,150 @@ export default function Canvas(props: CanvasProps) {
     lastFilteredPos.current = null;
     prevPoint.current = null;
   }, [dimensions]);
+
+  // ── Copy & Paste: mouse handlers ──
+  const handleStageDoubleClick = useCallback(() => {
+    setIsSelectMode(true);
+    setIsDrawingSelection(false);
+    setSelectedLineIds(new Set());
+    setSelectionRect(null);
+  }, []);
+
+  const handleStageMouseDown = useCallback(
+    (e: any) => {
+      if (!isSelectMode) return;
+      const stage = e.target.getStage();
+      const pos = stage.getPointerPosition();
+      if (!pos) return;
+      const canvasPos = transform.current.screenToCanvas(pos.x, pos.y);
+      setIsDrawingSelection(true);
+      setSelectionRect({
+        x1: canvasPos.x,
+        y1: canvasPos.y,
+        x2: canvasPos.x,
+        y2: canvasPos.y,
+      });
+    },
+    [isSelectMode],
+  );
+
+  const handleStageMouseMove = useCallback(
+    (e: any) => {
+      const stage = e.target.getStage();
+      const pos = stage.getPointerPosition();
+      if (!pos) return;
+      const canvasPos = transform.current.screenToCanvas(pos.x, pos.y);
+      mousePosRef.current = canvasPos;
+      if (isSelectMode && isDrawingSelection) {
+        setSelectionRect((prev) =>
+          prev ? { ...prev, x2: canvasPos.x, y2: canvasPos.y } : null,
+        );
+      }
+    },
+    [isSelectMode, isDrawingSelection],
+  );
+
+  const handleStageMouseUp = useCallback(() => {
+    if (!isSelectMode || !isDrawingSelection || !selectionRect) return;
+    setIsDrawingSelection(false);
+
+    const rect = {
+      x: Math.min(selectionRect.x1, selectionRect.x2),
+      y: Math.min(selectionRect.y1, selectionRect.y2),
+      w: Math.abs(selectionRect.x2 - selectionRect.x1),
+      h: Math.abs(selectionRect.y2 - selectionRect.y1),
+    };
+
+    // Skip tiny selections (accidental clicks)
+    if (rect.w < 5 && rect.h < 5) {
+      setSelectionRect(null);
+      return;
+    }
+
+    const selected = new Set<string>();
+    props.lines.forEach((line) => {
+      for (let i = 0; i < line.points.length; i += 2) {
+        const px = line.points[i];
+        const py = line.points[i + 1];
+        if (
+          px >= rect.x &&
+          px <= rect.x + rect.w &&
+          py >= rect.y &&
+          py <= rect.y + rect.h
+        ) {
+          selected.add(line.id);
+          break;
+        }
+      }
+    });
+
+    setSelectedLineIds(selected);
+  }, [isSelectMode, isDrawingSelection, selectionRect, props.lines]);
+
+  // ── Keyboard: Ctrl+C / Ctrl+V / Escape ──
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSelectMode(false);
+        setIsDrawingSelection(false);
+        setSelectionRect(null);
+        setSelectedLineIds(new Set());
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        if (selectedLineIds.size === 0) return;
+        e.preventDefault();
+        const selectedLines = props.lines.filter((l) =>
+          selectedLineIds.has(l.id),
+        );
+        setClipboard(selectedLines);
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        if (clipboard.length === 0 || !props.onPaste) return;
+        e.preventDefault();
+
+        // Compute bounding-box center of clipboard lines
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
+        clipboard.forEach((line) => {
+          for (let i = 0; i < line.points.length; i += 2) {
+            minX = Math.min(minX, line.points[i]);
+            minY = Math.min(minY, line.points[i + 1]);
+            maxX = Math.max(maxX, line.points[i]);
+            maxY = Math.max(maxY, line.points[i + 1]);
+          }
+        });
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const dx = mousePosRef.current.x - centerX;
+        const dy = mousePosRef.current.y - centerY;
+
+        const pastedLines: LineData[] = clipboard.map((line) => ({
+          ...line,
+          id: crypto.randomUUID(),
+          points: line.points.map((val, i) =>
+            i % 2 === 0 ? val + dx : val + dy,
+          ),
+        }));
+
+        props.onPaste(pastedLines);
+
+        // Exit selection mode but keep clipboard for repeated pastes
+        setIsSelectMode(false);
+        setSelectionRect(null);
+        setSelectedLineIds(new Set());
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedLineIds, clipboard, props]);
 
   useImperativeHandle(
     props.canvasRef,
@@ -317,7 +473,11 @@ export default function Canvas(props: CanvasProps) {
   };
 
   return (
-    <div ref={containerRef} className="absolute inset-0 z-10">
+    <div
+      ref={containerRef}
+      className="absolute inset-0 z-10"
+      style={{ cursor: isSelectMode ? "crosshair" : "default" }}
+    >
       {dimensions.width > 0 && (
         <Stage
           width={dimensions.width}
@@ -326,6 +486,10 @@ export default function Canvas(props: CanvasProps) {
           scaleY={transform.current.scale}
           x={transform.current.offsetX}
           y={transform.current.offsetY}
+          onDblClick={handleStageDoubleClick}
+          onMouseDown={handleStageMouseDown}
+          onMouseMove={handleStageMouseMove}
+          onMouseUp={handleStageMouseUp}
         >
           <Layer listening={false}>
             {props.lines.map((line) => (
@@ -412,7 +576,57 @@ export default function Canvas(props: CanvasProps) {
               />
             )}
           </Layer>
+
+          {/* ── Selection overlay layer ── */}
+          <Layer listening={false}>
+            {/* Highlight selected lines */}
+            {props.lines
+              .filter((l) => selectedLineIds.has(l.id))
+              .map((line) => (
+                <Line
+                  key={`sel-${line.id}`}
+                  points={line.points}
+                  stroke="rgba(74, 144, 217, 0.5)"
+                  strokeWidth={(line.strokeWidth as number) + 4}
+                  tension={line.tension}
+                  lineCap={line.lineCap}
+                  lineJoin={line.lineJoin}
+                />
+              ))}
+            {/* Selection rectangle */}
+            {selectionRect && (
+              <Rect
+                x={Math.min(selectionRect.x1, selectionRect.x2)}
+                y={Math.min(selectionRect.y1, selectionRect.y2)}
+                width={Math.abs(selectionRect.x2 - selectionRect.x1)}
+                height={Math.abs(selectionRect.y2 - selectionRect.y1)}
+                stroke="#4A90D9"
+                strokeWidth={2 / transform.current.scale}
+                dash={[
+                  10 / transform.current.scale,
+                  5 / transform.current.scale,
+                ]}
+                fill="rgba(74, 144, 217, 0.1)"
+              />
+            )}
+          </Layer>
         </Stage>
+      )}
+
+      {/* ── Selection-mode banner ── */}
+      {isSelectMode && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 bg-blue-600/90 text-white text-sm rounded-full shadow-lg pointer-events-none select-none">
+          {selectedLineIds.size > 0
+            ? `${selectedLineIds.size} line(s) selected — Ctrl+C to copy · Ctrl+V to paste · Esc to exit`
+            : "Draw a rectangle to select lines · Esc to exit"}
+        </div>
+      )}
+
+      {/* ── Clipboard indicator (when not in selection mode) ── */}
+      {!isSelectMode && clipboard.length > 0 && (
+        <div className="absolute top-2 right-2 z-20 px-3 py-1 bg-green-600/80 text-white text-xs rounded-full shadow pointer-events-none select-none">
+          📋 {clipboard.length} line(s) copied — Ctrl+V to paste
+        </div>
       )}
     </div>
   );
