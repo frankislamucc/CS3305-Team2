@@ -6,6 +6,7 @@ import {
   useCallback,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useEffect,
@@ -51,9 +52,10 @@ export default function Canvas(props: CanvasProps) {
   const [selectionRect, setSelectionRect] = useState<{
     x1: number; y1: number; x2: number; y2: number;
   } | null>(null);
-  const [selectedLineIds, setSelectedLineIds] = useState<Set<string>>(new Set());
+  const [clippedLines, setClippedLines] = useState<LineData[]>([]);
   const [clipboard, setClipboard] = useState<LineData[]>([]);
   const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [ghostMousePos, setGhostMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const thumbFilterRef = useRef<OneEuroFilter | null>(null);
   const indexFilterRef = useRef<OneEuroFilter | null>(null);
@@ -98,11 +100,37 @@ export default function Canvas(props: CanvasProps) {
     prevPoint.current = null;
   }, [dimensions]);
 
+  // ── Ghost preview: compute offset lines that follow the cursor ──
+  const clipboardCenter = useMemo(() => {
+    if (clipboard.length === 0) return { x: 0, y: 0 };
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    clipboard.forEach((line) => {
+      for (let i = 0; i < line.points.length; i += 2) {
+        minX = Math.min(minX, line.points[i]);
+        minY = Math.min(minY, line.points[i + 1]);
+        maxX = Math.max(maxX, line.points[i]);
+        maxY = Math.max(maxY, line.points[i + 1]);
+      }
+    });
+    return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+  }, [clipboard]);
+
+  const ghostLines = useMemo(() => {
+    if (clipboard.length === 0) return [];
+    const dx = ghostMousePos.x - clipboardCenter.x;
+    const dy = ghostMousePos.y - clipboardCenter.y;
+    return clipboard.map((line) => ({
+      ...line,
+      id: `ghost-${line.id}`,
+      points: line.points.map((val, i) => (i % 2 === 0 ? val + dx : val + dy)),
+    }));
+  }, [clipboard, ghostMousePos, clipboardCenter]);
+
   // ── Copy & Paste: mouse handlers ──
   const handleStageDoubleClick = useCallback(() => {
     setIsSelectMode(true);
     setIsDrawingSelection(false);
-    setSelectedLineIds(new Set());
+    setClippedLines([]);
     setSelectionRect(null);
   }, []);
 
@@ -131,13 +159,19 @@ export default function Canvas(props: CanvasProps) {
       if (!pos) return;
       const canvasPos = transform.current.screenToCanvas(pos.x, pos.y);
       mousePosRef.current = canvasPos;
+
+      // Update reactive position for ghost preview when clipboard has content
+      if (clipboard.length > 0) {
+        setGhostMousePos(canvasPos);
+      }
+
       if (isSelectMode && isDrawingSelection) {
         setSelectionRect((prev) =>
           prev ? { ...prev, x2: canvasPos.x, y2: canvasPos.y } : null,
         );
       }
     },
-    [isSelectMode, isDrawingSelection],
+    [isSelectMode, isDrawingSelection, clipboard.length],
   );
 
   const handleStageMouseUp = useCallback(() => {
@@ -157,24 +191,44 @@ export default function Canvas(props: CanvasProps) {
       return;
     }
 
-    const selected = new Set<string>();
+    const isInside = (px: number, py: number) =>
+      px >= rect.x &&
+      px <= rect.x + rect.w &&
+      py >= rect.y &&
+      py <= rect.y + rect.h;
+
+    // Clip each line to only the contiguous sub-segments inside the box
+    const clipped: LineData[] = [];
     props.lines.forEach((line) => {
+      let segment: number[] = [];
       for (let i = 0; i < line.points.length; i += 2) {
         const px = line.points[i];
         const py = line.points[i + 1];
-        if (
-          px >= rect.x &&
-          px <= rect.x + rect.w &&
-          py >= rect.y &&
-          py <= rect.y + rect.h
-        ) {
-          selected.add(line.id);
-          break;
+        if (isInside(px, py)) {
+          segment.push(px, py);
+        } else {
+          // Point is outside — flush the current segment if it has ≥2 points
+          if (segment.length >= 4) {
+            clipped.push({
+              ...line,
+              id: crypto.randomUUID(),
+              points: [...segment],
+            });
+          }
+          segment = [];
         }
+      }
+      // Flush any remaining segment
+      if (segment.length >= 4) {
+        clipped.push({
+          ...line,
+          id: crypto.randomUUID(),
+          points: [...segment],
+        });
       }
     });
 
-    setSelectedLineIds(selected);
+    setClippedLines(clipped);
   }, [isSelectMode, isDrawingSelection, selectionRect, props.lines]);
 
   // ── Keyboard: Ctrl+C / Ctrl+V / Escape ──
@@ -184,17 +238,15 @@ export default function Canvas(props: CanvasProps) {
         setIsSelectMode(false);
         setIsDrawingSelection(false);
         setSelectionRect(null);
-        setSelectedLineIds(new Set());
+        setClippedLines([]);
+        setClipboard([]);
         return;
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-        if (selectedLineIds.size === 0) return;
+        if (clippedLines.length === 0) return;
         e.preventDefault();
-        const selectedLines = props.lines.filter((l) =>
-          selectedLineIds.has(l.id),
-        );
-        setClipboard(selectedLines);
+        setClipboard(clippedLines);
         return;
       }
 
@@ -202,24 +254,8 @@ export default function Canvas(props: CanvasProps) {
         if (clipboard.length === 0 || !props.onPaste) return;
         e.preventDefault();
 
-        // Compute bounding-box center of clipboard lines
-        let minX = Infinity,
-          minY = Infinity,
-          maxX = -Infinity,
-          maxY = -Infinity;
-        clipboard.forEach((line) => {
-          for (let i = 0; i < line.points.length; i += 2) {
-            minX = Math.min(minX, line.points[i]);
-            minY = Math.min(minY, line.points[i + 1]);
-            maxX = Math.max(maxX, line.points[i]);
-            maxY = Math.max(maxY, line.points[i + 1]);
-          }
-        });
-
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        const dx = mousePosRef.current.x - centerX;
-        const dy = mousePosRef.current.y - centerY;
+        const dx = mousePosRef.current.x - clipboardCenter.x;
+        const dy = mousePosRef.current.y - clipboardCenter.y;
 
         const pastedLines: LineData[] = clipboard.map((line) => ({
           ...line,
@@ -234,13 +270,13 @@ export default function Canvas(props: CanvasProps) {
         // Exit selection mode but keep clipboard for repeated pastes
         setIsSelectMode(false);
         setSelectionRect(null);
-        setSelectedLineIds(new Set());
+        setClippedLines([]);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedLineIds, clipboard, props]);
+  }, [clippedLines, clipboard, clipboardCenter, props]);
 
   useImperativeHandle(
     props.canvasRef,
@@ -579,20 +615,32 @@ export default function Canvas(props: CanvasProps) {
 
           {/* ── Selection overlay layer ── */}
           <Layer listening={false}>
-            {/* Highlight selected lines */}
-            {props.lines
-              .filter((l) => selectedLineIds.has(l.id))
-              .map((line) => (
-                <Line
-                  key={`sel-${line.id}`}
-                  points={line.points}
-                  stroke="rgba(74, 144, 217, 0.5)"
-                  strokeWidth={(line.strokeWidth as number) + 4}
-                  tension={line.tension}
-                  lineCap={line.lineCap}
-                  lineJoin={line.lineJoin}
-                />
-              ))}
+            {/* Highlight clipped line segments inside the selection */}
+            {clippedLines.map((line) => (
+              <Line
+                key={`sel-${line.id}`}
+                points={line.points}
+                stroke="rgba(74, 144, 217, 0.5)"
+                strokeWidth={(line.strokeWidth as number) + 4}
+                tension={line.tension}
+                lineCap={line.lineCap}
+                lineJoin={line.lineJoin}
+              />
+            ))}
+            {/* Ghost preview of clipboard lines following the cursor */}
+            {ghostLines.map((line) => (
+              <Line
+                key={line.id}
+                points={line.points}
+                stroke={typeof line.stroke === "string" ? line.stroke : "#888"}
+                strokeWidth={line.strokeWidth}
+                tension={line.tension}
+                lineCap={line.lineCap}
+                lineJoin={line.lineJoin}
+                opacity={0.35}
+                dash={[8 / transform.current.scale, 4 / transform.current.scale]}
+              />
+            ))}
             {/* Selection rectangle */}
             {selectionRect && (
               <Rect
@@ -616,8 +664,8 @@ export default function Canvas(props: CanvasProps) {
       {/* ── Selection-mode banner ── */}
       {isSelectMode && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 bg-blue-600/90 text-white text-sm rounded-full shadow-lg pointer-events-none select-none">
-          {selectedLineIds.size > 0
-            ? `${selectedLineIds.size} line(s) selected — Ctrl+C to copy · Ctrl+V to paste · Esc to exit`
+          {clippedLines.length > 0
+            ? `${clippedLines.length} segment(s) selected — Ctrl+C to copy · Ctrl+V to paste · Esc to exit`
             : "Draw a rectangle to select lines · Esc to exit"}
         </div>
       )}
