@@ -1,5 +1,5 @@
 "use client";
-import { Stage, Layer, Line, Circle, Line as KonvaLine } from "react-konva";
+import { Stage, Layer, Line, Circle } from "react-konva";
 import type { CanvasHandle, LineData, LandmarkData } from "../_types";
 import {
   RefObject,
@@ -12,7 +12,7 @@ import {
 import { Dimensions } from "../_types";
 import type { Line as LineType } from "konva/lib/shapes/Line";
 import ColourWheelSpinner from "./ColourWheelSpinner";
-import SizeSelector from "./sizeSelector";  
+import SizeSelector from "./sizeSelector";
 import { ViewTransform } from "./ViewTransform";
 import { OneEuroFilter, SimpleEMA } from "./OneEuro";
 
@@ -35,8 +35,8 @@ export default function Canvas(props: CanvasProps) {
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [sizeSelectorY, setSizeSelector] = useState(0);
-  const spinnerStartY = useRef(0); 
-  const sizeSelectorStartY = useRef(0); 
+  const spinnerStartY = useRef(0);
+  const sizeSelectorStartY = useRef(0);
   const [selectedColor, setSelectedColor] = useState("#df4b26");
   const [selectedSize, setSelectedSize] = useState(2);
   const transform = useRef(new ViewTransform());
@@ -49,14 +49,14 @@ export default function Canvas(props: CanvasProps) {
   const drawEMAFilterRef = useRef<SimpleEMA | null>(null);
 
   const isPanning = useRef(false);
-  const lastPanPosition = useRef<{x: number, y: number} | null>(null);
+  const lastPanPosition = useRef<{ x: number; y: number } | null>(null);
 
-  const lastFilteredPos = useRef<{x: number, y: number} | null>(null);
+  const lastFilteredPos = useRef<{ x: number; y: number } | null>(null);
   const lastUpdateTime = useRef<number>(0);
-  const prevPoint = useRef<{x: number, y: number} | null>(null);
+  const prevPoint = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    transform.current.setOnChangeCallback(() => forceUpdate(n => n + 1));
+    transform.current.setOnChangeCallback(() => forceUpdate((n) => n + 1));
   }, []);
 
   useLayoutEffect(() => {
@@ -86,163 +86,233 @@ export default function Canvas(props: CanvasProps) {
     prevPoint.current = null;
   }, [dimensions]);
 
-  useImperativeHandle(props.canvasRef, () => {
-    return {
-      drawPoints: (x: number, y: number, isPinching: boolean, thumbX?: number, thumbY?: number) => {
-        const lineNode = lineRef.current;
-        if (lineNode === null) return;
+  useImperativeHandle(
+    props.canvasRef,
+    () => {
+      return {
+        drawPoints: (
+          x: number,
+          y: number,
+          isPinching: boolean,
+          thumbX?: number,
+          thumbY?: number,
+        ) => {
+          const lineNode = lineRef.current;
+          if (lineNode === null) return;
 
-        const currentTime = performance.now() / 1000;
-        const currentTimeMs = performance.now();
+          const currentTime = performance.now() / 1000;
+          const currentTimeMs = performance.now();
 
-        const rawX = x * dimensions.width;
-        const rawY = y * dimensions.height;
+          const rawX = x * dimensions.width;
+          const rawY = y * dimensions.height;
 
-        if (!indexFilterRef.current) {
-          indexFilterRef.current = new OneEuroFilter(currentTime, [rawX, rawY], 0.0, 1.0, 0.05, 0.8);
-        }
-        if (!drawEMAFilterRef.current) {
-          drawEMAFilterRef.current = new SimpleEMA(0.4);
-        }
-        if (thumbX !== undefined && thumbY !== undefined && !thumbFilterRef.current) {
-          thumbFilterRef.current = new OneEuroFilter(currentTime, [thumbX * dimensions.width, thumbY * dimensions.height], 0.0, 1.0, 0.05, 0.8);
-        }
-        if (!pinchIndexFilterRef.current) {
-          pinchIndexFilterRef.current = new OneEuroFilter(currentTime, [rawX, rawY], 0.0, 1.0, 0.05, 0.8);
-        }
-
-        // Apply OneEuro filter to index for drawing
-        const filteredDrawXY = indexFilterRef.current.filter(currentTime, [rawX, rawY]);
-        
-        // Apply EMA smoothing after OneEuro
-        const smoothedDrawXY = drawEMAFilterRef.current.filter(filteredDrawXY);
-        
-        const screenX = smoothedDrawXY[0];
-        const screenY = smoothedDrawXY[1];
-        
-        const worldPos = transform.current.screenToCanvas(screenX, screenY);
-        let drawX = worldPos.x;
-        let drawY = worldPos.y;
-
-        if (isPinching) {
-          // Apply interpolation
-          if (lastFilteredPos.current && (currentTimeMs - lastUpdateTime.current < 50)) {
-            const timeDiff = currentTimeMs - lastUpdateTime.current;
-            const interpolationFactor = Math.min(0.3, timeDiff / 50);
-            
-            drawX = lastFilteredPos.current.x + (drawX - lastFilteredPos.current.x) * interpolationFactor;
-            drawY = lastFilteredPos.current.y + (drawY - lastFilteredPos.current.y) * interpolationFactor;
+          if (!indexFilterRef.current) {
+            indexFilterRef.current = new OneEuroFilter(
+              currentTime,
+              [rawX, rawY],
+              0.0,
+              1.0,
+              0.05,
+              0.8,
+            );
+          }
+          if (!drawEMAFilterRef.current) {
+            drawEMAFilterRef.current = new SimpleEMA(0.4);
+          }
+          if (
+            thumbX !== undefined &&
+            thumbY !== undefined &&
+            !thumbFilterRef.current
+          ) {
+            thumbFilterRef.current = new OneEuroFilter(
+              currentTime,
+              [thumbX * dimensions.width, thumbY * dimensions.height],
+              0.0,
+              1.0,
+              0.05,
+              0.8,
+            );
+          }
+          if (!pinchIndexFilterRef.current) {
+            pinchIndexFilterRef.current = new OneEuroFilter(
+              currentTime,
+              [rawX, rawY],
+              0.0,
+              1.0,
+              0.05,
+              0.8,
+            );
           }
 
-          // Get current points
-          let points = lineNode.points();
-          
-          if (prevPoint.current !== null) {
-            // We have a previous point, so we can draw a line
-            if (points.length === 0) {
-              points = [prevPoint.current.x, prevPoint.current.y, drawX, drawY];
-            } else {
-              points.push(drawX, drawY);
+          // Apply OneEuro filter to index for drawing
+          const filteredDrawXY = indexFilterRef.current.filter(currentTime, [
+            rawX,
+            rawY,
+          ]);
+
+          // Apply EMA smoothing after OneEuro
+          const smoothedDrawXY =
+            drawEMAFilterRef.current.filter(filteredDrawXY);
+
+          const screenX = smoothedDrawXY[0];
+          const screenY = smoothedDrawXY[1];
+
+          const worldPos = transform.current.screenToCanvas(screenX, screenY);
+          let drawX = worldPos.x;
+          let drawY = worldPos.y;
+
+          if (isPinching) {
+            // Apply interpolation
+            if (
+              lastFilteredPos.current &&
+              currentTimeMs - lastUpdateTime.current < 50
+            ) {
+              const timeDiff = currentTimeMs - lastUpdateTime.current;
+              const interpolationFactor = Math.min(0.3, timeDiff / 50);
+
+              drawX =
+                lastFilteredPos.current.x +
+                (drawX - lastFilteredPos.current.x) * interpolationFactor;
+              drawY =
+                lastFilteredPos.current.y +
+                (drawY - lastFilteredPos.current.y) * interpolationFactor;
             }
-            lineNode.points(points);
+
+            // Get current points
+            let points = lineNode.points();
+
+            if (prevPoint.current !== null) {
+              // We have a previous point, so we can draw a line
+              if (points.length === 0) {
+                points = [
+                  prevPoint.current.x,
+                  prevPoint.current.y,
+                  drawX,
+                  drawY,
+                ];
+              } else {
+                points.push(drawX, drawY);
+              }
+              lineNode.points(points);
+            }
+
+            prevPoint.current = { x: drawX, y: drawY };
+            lastFilteredPos.current = { x: drawX, y: drawY };
+            lastUpdateTime.current = currentTimeMs;
+
+            // Force a redraw
+            lineNode.getLayer()?.batchDraw();
+          } else {
+            // Not pinching - "lift pen"
+            // We want to start a new line when pinching starts again
+            prevPoint.current = null;
+            lastFilteredPos.current = null;
           }
-          
-          prevPoint.current = { x: drawX, y: drawY };
-          lastFilteredPos.current = { x: drawX, y: drawY };
-          lastUpdateTime.current = currentTimeMs;
-          
-          // Force a redraw
-          lineNode.getLayer()?.batchDraw();
-        } else {
-          // Not pinching - "lift pen"
-          // We want to start a new line when pinching starts again
+        },
+        startPan: (x: number, y: number) => {
+          isPanning.current = true;
+          lastPanPosition.current = {
+            x: x * dimensions.width,
+            y: y * dimensions.height,
+          };
+        },
+
+        updatePan: (x: number, y: number) => {
+          if (!isPanning.current || !lastPanPosition.current) return;
+
+          const screenX = x * dimensions.width;
+          const screenY = y * dimensions.height;
+
+          const deltaX = lastPanPosition.current.x - screenX;
+          const deltaY = lastPanPosition.current.y - screenY;
+
+          transform.current.pan(deltaX, deltaY);
+
+          lastPanPosition.current = { x: screenX, y: screenY };
+        },
+
+        endPan: () => {
+          isPanning.current = false;
+          lastPanPosition.current = null;
+        },
+        clear: () => {
+          lineRef.current?.points([]);
+          indexFilterRef.current = null;
+          thumbFilterRef.current = null;
+          pinchIndexFilterRef.current = null;
+          drawEMAFilterRef.current = null;
           prevPoint.current = null;
           lastFilteredPos.current = null;
-        }
-      },
-      startPan: (x: number, y: number) => {
-        isPanning.current = true;
-        lastPanPosition.current = { x: x * dimensions.width, y: y * dimensions.height };
-      },
-
-      updatePan: (x: number, y: number) => {
-        if (!isPanning.current || !lastPanPosition.current) return;
-        
-        const screenX = x * dimensions.width;
-        const screenY = y * dimensions.height;
-        
-        const deltaX = lastPanPosition.current.x - screenX;
-        const deltaY = lastPanPosition.current.y - screenY;
-        
-        transform.current.pan(deltaX, deltaY);
-        
-        lastPanPosition.current = { x: screenX, y: screenY };
-      },
-
-      endPan: () => {
-        isPanning.current = false;
-        lastPanPosition.current = null;
-      },
-      clear: () => {
-        lineRef.current?.points([]);
-        indexFilterRef.current = null;
-        thumbFilterRef.current = null;
-        pinchIndexFilterRef.current = null;
-        drawEMAFilterRef.current = null;
-        prevPoint.current = null;
-        lastFilteredPos.current = null;
-      },
-      exportLine: (): LineData | null => {
-        const lineNode = lineRef.current;
-        if (lineNode === null || lineNode.points().length === 0) return null;
-        return {
-          id: crypto.randomUUID(),
-          points: lineNode.points(),
-          stroke: lineNode.stroke(),
-          strokeWidth: lineNode.strokeWidth(),
-          tension: lineNode.tension(),
-          lineCap: lineNode.lineCap(),
-          lineJoin: lineNode.lineJoin(),
-        };
-      },
-      showSpinner: (angle: number) => {
-        setShowSpinner(true);
-        setWheelRotation(angle);
-      },
-      hideSpinner: () => setShowSpinner(false),
-      spinnerStartY: () => spinnerStartY.current,
-      setSpinnerStartY: (y: number) => { spinnerStartY.current = y; },
-      sizeSelectorStartY: () => sizeSelectorStartY.current,
-      setSizeSelectorStartY: (y: number) => { sizeSelectorStartY.current = y; },
-      showSizeSelector: (Yvalue: number) => {
-        setShowSizeSelector(true);
-        setSizeSelector(Yvalue);
-      },      
-      hideSizeSelector: () => {setShowSizeSelector(false)},
-      zoomIn: () => transform.current.zoomAtPoint(1.2, dimensions.width / 2, dimensions.height / 2),
-      zoomOut: () => transform.current.zoomAtPoint(0.8, dimensions.width / 2, dimensions.height / 2),
-      resetZoom: () => transform.current.reset(),
-      clearCanvas: () => {
-        lineRef.current?.points([]);
-        indexFilterRef.current = null;
-        thumbFilterRef.current = null;
-        pinchIndexFilterRef.current = null;
-        drawEMAFilterRef.current = null;
-        prevPoint.current = null;
-        lastFilteredPos.current = null;
-        transform.current.reset();
-      },
-      updateLandmarks: (data: LandmarkData | null) => {
-        setLandmarks(data);
-      }
-    };
-  }, [dimensions]);
+        },
+        exportLine: (): LineData | null => {
+          const lineNode = lineRef.current;
+          if (lineNode === null || lineNode.points().length === 0) return null;
+          return {
+            id: crypto.randomUUID(),
+            points: lineNode.points(),
+            stroke: lineNode.stroke(),
+            strokeWidth: lineNode.strokeWidth(),
+            tension: lineNode.tension(),
+            lineCap: lineNode.lineCap(),
+            lineJoin: lineNode.lineJoin(),
+          };
+        },
+        showSpinner: (angle: number) => {
+          setShowSpinner(true);
+          setWheelRotation(angle);
+        },
+        hideSpinner: () => setShowSpinner(false),
+        spinnerStartY: () => spinnerStartY.current,
+        setSpinnerStartY: (y: number) => {
+          spinnerStartY.current = y;
+        },
+        sizeSelectorStartY: () => sizeSelectorStartY.current,
+        setSizeSelectorStartY: (y: number) => {
+          sizeSelectorStartY.current = y;
+        },
+        showSizeSelector: (Yvalue: number) => {
+          setShowSizeSelector(true);
+          setSizeSelector(Yvalue);
+        },
+        hideSizeSelector: () => {
+          setShowSizeSelector(false);
+        },
+        zoomIn: () =>
+          transform.current.zoomAtPoint(
+            1.2,
+            dimensions.width / 2,
+            dimensions.height / 2,
+          ),
+        zoomOut: () =>
+          transform.current.zoomAtPoint(
+            0.8,
+            dimensions.width / 2,
+            dimensions.height / 2,
+          ),
+        resetZoom: () => transform.current.reset(),
+        clearCanvas: () => {
+          lineRef.current?.points([]);
+          indexFilterRef.current = null;
+          thumbFilterRef.current = null;
+          pinchIndexFilterRef.current = null;
+          drawEMAFilterRef.current = null;
+          prevPoint.current = null;
+          lastFilteredPos.current = null;
+          transform.current.reset();
+        },
+        updateLandmarks: (data: LandmarkData | null) => {
+          setLandmarks(data);
+        },
+      };
+    },
+    [dimensions],
+  );
 
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
   };
 
-   const handleSizeSelect = (size: number) => {
+  const handleSizeSelect = (size: number) => {
     setSelectedSize(size);
   };
 
@@ -290,12 +360,18 @@ export default function Canvas(props: CanvasProps) {
             {landmarks && landmarks.isPinching && (
               <>
                 <Circle
-                  x={(landmarks.thumb.x + landmarks.index.x) / 2 * dimensions.width}
-                  y={(landmarks.thumb.y + landmarks.index.y) / 2 * dimensions.height}
+                  x={
+                    ((landmarks.thumb.x + landmarks.index.x) / 2) *
+                    dimensions.width
+                  }
+                  y={
+                    ((landmarks.thumb.y + landmarks.index.y) / 2) *
+                    dimensions.height
+                  }
                   radius={8}
                   fill="rgba(255, 0, 0, 0.95)"
                 />
-                <KonvaLine
+                <Line
                   points={[
                     landmarks.thumb.x * dimensions.width,
                     landmarks.thumb.y * dimensions.height,
@@ -308,12 +384,14 @@ export default function Canvas(props: CanvasProps) {
               </>
             )}
           </Layer>
-          <Layer ref={(node) => {
-            if (node && !layerRef.current) {
-              layerRef.current = node;
-              setLayerReady(true);
-            }
-          }}>
+          <Layer
+            ref={(node) => {
+              if (node && !layerRef.current) {
+                layerRef.current = node;
+                setLayerReady(true);
+              }
+            }}
+          >
             {layerReady && layerRef.current && showSpinner && (
               <ColourWheelSpinner
                 layer={layerRef.current}
@@ -333,10 +411,10 @@ export default function Canvas(props: CanvasProps) {
                 onSizeSelect={handleSizeSelect}
               />
             )}
-            
           </Layer>
         </Stage>
       )}
     </div>
   );
 }
+

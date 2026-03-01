@@ -4,7 +4,10 @@ import Camera from "./Camera";
 import type { GestureRecognizerResult } from "@mediapipe/tasks-vision";
 import { Spinner } from "@/components/ui/spinner";
 import { useCallback } from "react";
-import { detectCustomGestures, produceHighestPriorityGesture } from "./CustomGestures";
+import {
+  detectCustomGestures,
+  produceHighestPriorityGesture,
+} from "./CustomGestures";
 import { is } from "zod/v4/locales";
 import { SimpleEMA } from "./OneEuro";
 
@@ -19,7 +22,7 @@ const INDEX_FINGER_TIP = 8;
 export default function GestureEngine({
   canvasRef,
   onDrawEnd,
-  cameraLocation
+  cameraLocation,
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -38,7 +41,6 @@ export default function GestureEngine({
   const gauntletExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spinnerAngleEMA = useRef<SimpleEMA | null>(null);
 
-
   const sizeExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Use a ref so the worker useEffect doesn't re-run when onDrawEnd changes
@@ -49,19 +51,21 @@ export default function GestureEngine({
 
   // clear canvas on unmount to prevent ghosting from the last frame
   useEffect(() => {
-  return () => {
-    if (gauntletExitTimer.current) clearTimeout(gauntletExitTimer.current);
-  };
-  }, []); 
+    return () => {
+      if (gauntletExitTimer.current) clearTimeout(gauntletExitTimer.current);
+    };
+  }, []);
 
   const onPredict = useCallback(
     (predictions: GestureRecognizerResult) => {
-      var gesture =
+      let gesture =
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
           : "";
 
-      const customGesture = produceHighestPriorityGesture(predictions.landmarks);
+      const customGesture = produceHighestPriorityGesture(
+        predictions.landmarks,
+      );
 
       // custom gestures take priority over regular ones, so we check those first
       if (customGesture) {
@@ -73,8 +77,20 @@ export default function GestureEngine({
         // Calculate palm center for panning
         const landmarks_list = predictions.landmarks[0];
         const palmCenter = {
-          x: (landmarks_list[0].x + landmarks_list[5].x + landmarks_list[9].x + landmarks_list[13].x + landmarks_list[17].x) / 5,
-          y: (landmarks_list[0].y + landmarks_list[5].y + landmarks_list[9].y + landmarks_list[13].y + landmarks_list[17].y) / 5
+          x:
+            (landmarks_list[0].x +
+              landmarks_list[5].x +
+              landmarks_list[9].x +
+              landmarks_list[13].x +
+              landmarks_list[17].x) /
+            5,
+          y:
+            (landmarks_list[0].y +
+              landmarks_list[5].y +
+              landmarks_list[9].y +
+              landmarks_list[13].y +
+              landmarks_list[17].y) /
+            5,
         };
 
         // Transform coordinates (mirror horizontally)
@@ -108,16 +124,17 @@ export default function GestureEngine({
           spinnerAngleEMA.current = new SimpleEMA();
           canvasRef.current?.showSpinner(0);
           canvasRef.current?.setSpinnerStartY(predictions.landmarks[0][16].y);
-
         } else if (gesture === "rightRingPinch" && isGauntlet.current) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
           }
-          const rawAngle = (predictions.landmarks[0][16].y - canvasRef.current!.spinnerStartY()) * 300;
+          const rawAngle =
+            (predictions.landmarks[0][16].y -
+              canvasRef.current!.spinnerStartY()) *
+            300;
           const smoothed = spinnerAngleEMA.current!.filter(rawAngle) as number;
           canvasRef.current?.showSpinner(smoothed);
-
         } else if (gesture !== "rightRingPinch" && isGauntlet.current) {
           if (!gauntletExitTimer.current) {
             gauntletExitTimer.current = setTimeout(() => {
@@ -131,21 +148,25 @@ export default function GestureEngine({
 
         // size selector logic
         if (gesture === "rightMiddlePinch" && !isSizing.current) {
-            if (sizeExitTimer.current) {
-              clearTimeout(sizeExitTimer.current);
-              gauntletExitTimer.current = null;
+          if (sizeExitTimer.current) {
+            clearTimeout(sizeExitTimer.current);
+            gauntletExitTimer.current = null;
           }
           canvasRef.current?.showSizeSelector(0);
-          canvasRef.current?.setSizeSelectorStartY(predictions.landmarks[0][12].y)
+          canvasRef.current?.setSizeSelectorStartY(
+            predictions.landmarks[0][12].y,
+          );
           isSizing.current = true;
-
         } else if (gesture === "rightMiddlePinch" && isSizing.current) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
           }
-          canvasRef.current?.showSizeSelector((predictions.landmarks[0][12].y - canvasRef.current?.sizeSelectorStartY()) * 2);
-
+          canvasRef.current?.showSizeSelector(
+            (predictions.landmarks[0][12].y -
+              canvasRef.current?.sizeSelectorStartY()) *
+              2,
+          );
         } else if (gesture !== "rightMiddlePinch" && isSizing.current) {
           if (!sizeExitTimer.current) {
             sizeExitTimer.current = setTimeout(() => {
@@ -195,7 +216,7 @@ export default function GestureEngine({
       // Draw if pinching (and not panning)
       if (
         isDrawing.current &&
-        !isPanning.current &&  // Don't draw while panning
+        !isPanning.current && // Don't draw while panning
         canvasRef.current !== null &&
         predictions.landmarks[0]?.[0]
       ) {
@@ -210,7 +231,7 @@ export default function GestureEngine({
           indexPoints.y,
           isDrawing.current,
           transformedThumbX,
-          thumbPoints.y
+          thumbPoints.y,
         );
       }
     },
@@ -295,19 +316,27 @@ export default function GestureEngine({
   }, [predict]);
 
   return (
-    <div className={
-      cameraLocation === "front"
-        ? "absolute inset-0 opacity-30 pointer-events-none z-0"
-        : "absolute bottom-4 left-4 w-64 h-48 z-20 rounded-lg overflow-hidden shadow-lg"
-    }>
+    <div
+      className={
+        cameraLocation === "front"
+          ? "absolute inset-0 opacity-30 pointer-events-none z-0"
+          : "absolute bottom-4 left-4 w-64 h-48 z-20 rounded-lg overflow-hidden shadow-lg"
+      }
+    >
       {isLoading && <Spinner className="size-8" />}
       {error.length > 0 && <p className="accent-red-500">{error}</p>}
       <Camera
         videoRef={videoRef}
         width="640"
         height="480"
-        style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: "scaleX(-1)",
+        }}
       />
     </div>
   );
 }
+

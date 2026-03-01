@@ -20,7 +20,8 @@ import {
 import WhiteboardName from "./_components/ui/WhiteboardName";
 import WhiteboardSidebar from "./_components/ui/WhiteboardSidebar";
 import ShareDialog from "./_components/ui/ShareDialog";
-import ToastContainer, { type ToastData } from "./_components/ui/Toast";
+import ToastContainer from "./_components/ui/Toast";
+import { ToastData } from "./_types";
 import { useUser } from "./_components/UserContext";
 import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 import OptionButton from "./_components/ui/OptionButton";

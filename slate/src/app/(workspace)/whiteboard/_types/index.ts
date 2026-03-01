@@ -28,12 +28,18 @@ export interface LandmarkData {
 }
 
 export interface CanvasHandle {
-  drawPoints: (x: number, y: number, isPinching: boolean, thumbX?: number, thumbY?: number) => void;
+  drawPoints: (
+    x: number,
+    y: number,
+    isPinching: boolean,
+    thumbX?: number,
+    thumbY?: number,
+  ) => void;
   clear: () => void;
   exportLine: () => LineData | null;
   showSpinner: (angle: number) => void;
   hideSpinner: () => void;
-  showSizeSelector: () => void;
+  showSizeSelector: (Yvalue: number) => void;
   hideSizeSelector: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -62,4 +68,12 @@ export interface WorkerResponse {
 
 export interface AuthError {
   errorMessages: string[];
+}
+
+export interface ToastData {
+  id: string;
+  message: string;
+  type: "success" | "info" | "error";
+  /** Auto-dismiss in ms (default 5000) */
+  duration?: number;
 }
