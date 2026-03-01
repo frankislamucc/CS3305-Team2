@@ -33,7 +33,9 @@ export default function WhiteboardPage() {
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [canvasName, setCanvasName] = useState<string>("Untitled");
   const canvasRef = useRef<CanvasHandle>(null);
-  const [cameraLocation, setCameraLocation] = useState<"front" | "back">("front");
+  const [cameraLocation, setCameraLocation] = useState<"front" | "back">(
+    "front",
+  );
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
 
   // Sharing state
@@ -54,10 +56,13 @@ export default function WhiteboardPage() {
   const user = useUser();
 
   // ── Toast helpers ──
-  const addToast = useCallback((message: string, type: ToastData["type"] = "info") => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev, { id, message, type }]);
-  }, []);
+  const addToast = useCallback(
+    (message: string, type: ToastData["type"] = "info") => {
+      const id = crypto.randomUUID();
+      setToasts((prev) => [...prev, { id, message, type }]);
+    },
+    [],
+  );
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -102,7 +107,10 @@ export default function WhiteboardPage() {
         // Always read the latest shared state from the ref
         const shared = viewingSharedRef.current;
         if (shared) {
-          const result = await saveSharedCanvasAction(shared.sharedId, currentLines);
+          const result = await saveSharedCanvasAction(
+            shared.sharedId,
+            currentLines,
+          );
           if (result.success && result.copyCanvasId) {
             setViewingShared((prev) =>
               prev ? { ...prev, copyCanvasId: result.copyCanvasId! } : prev,
@@ -221,7 +229,10 @@ export default function WhiteboardPage() {
       />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-2 px-4 py-2">
-          <WhiteboardName name={canvasName} onRename={isViewOnly ? undefined : handleRename} />
+          <WhiteboardName
+            name={canvasName}
+            onRename={isViewOnly ? undefined : handleRename}
+          />
 
           {/* Shared-from indicator + view-only badge */}
           {viewingShared && (
@@ -243,8 +254,18 @@ export default function WhiteboardPage() {
               onClick={() => setShowShareDialog(true)}
               className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 cursor-pointer flex items-center gap-1.5"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 8a3 3 0 100-6 3 3 0 000 6zm-6 6a3 3 0 100-6 3 3 0 000 6zm6 6a3 3 0 100-6 3 3 0 000 6zm-2.5-8.5l-5-3m0 6l5-3" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 8a3 3 0 100-6 3 3 0 000 6zm-6 6a3 3 0 100-6 3 3 0 000 6zm6 6a3 3 0 100-6 3 3 0 000 6zm-2.5-8.5l-5-3m0 6l5-3"
+                />
               </svg>
               Share
             </button>
@@ -262,7 +283,9 @@ export default function WhiteboardPage() {
             disabled={isViewOnly}
             className={`px-3 py-1 text-sm rounded ${isViewOnly ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"}`}
           >
-            {cameraLocation === "front" ? "Switch to Back Camera" : "Switch to Front Camera"}
+            {cameraLocation === "front"
+              ? "Switch to Back Camera"
+              : "Switch to Front Camera"}
           </button>
           <button
             onClick={() => canvasRef.current?.zoomOut()}
@@ -296,7 +319,11 @@ export default function WhiteboardPage() {
         </div>
         <div className="relative flex-1">
           {!isViewOnly && (
-            <GestureEngine canvasRef={canvasRef} onDrawEnd={handleDrawEnd} cameraLocation={cameraLocation} />
+            <GestureEngine
+              canvasRef={canvasRef}
+              onDrawEnd={handleDrawEnd}
+              cameraLocation={cameraLocation}
+            />
           )}
           <Canvas lines={lines} canvasRef={canvasRef} />
         </div>
