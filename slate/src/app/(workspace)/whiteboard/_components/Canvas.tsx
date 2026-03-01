@@ -56,6 +56,7 @@ export default function Canvas(props: CanvasProps) {
   const [clipboard, setClipboard] = useState<LineData[]>([]);
   const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [ghostMousePos, setGhostMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastMouseDownTimeRef = useRef<number>(0);
 
   const thumbFilterRef = useRef<OneEuroFilter | null>(null);
   const indexFilterRef = useRef<OneEuroFilter | null>(null);
@@ -127,16 +128,23 @@ export default function Canvas(props: CanvasProps) {
   }, [clipboard, ghostMousePos, clipboardCenter]);
 
   // ── Copy & Paste: mouse handlers ──
-  const handleStageDoubleClick = useCallback(() => {
-    setIsSelectMode(true);
-    setIsDrawingSelection(false);
-    setClippedLines([]);
-    setSelectionRect(null);
-  }, []);
-
   const handleStageMouseDown = useCallback(
     (e: any) => {
-      if (!isSelectMode) return;
+      // Custom double-click detection (works even while moving the mouse)
+      const now = Date.now();
+      const isDoubleClick =
+        now - lastMouseDownTimeRef.current < 400 && !isSelectMode;
+      lastMouseDownTimeRef.current = isDoubleClick ? 0 : now;
+
+      if (isDoubleClick) {
+        setIsSelectMode(true);
+        setClippedLines([]);
+      }
+
+      if (!isDoubleClick && !isSelectMode) return;
+
+      // Start drawing the selection rectangle immediately (including on the
+      // double-click itself so the user can keep dragging without letting go)
       const stage = e.target.getStage();
       const pos = stage.getPointerPosition();
       if (!pos) return;
@@ -522,7 +530,6 @@ export default function Canvas(props: CanvasProps) {
           scaleY={transform.current.scale}
           x={transform.current.offsetX}
           y={transform.current.offsetY}
-          onDblClick={handleStageDoubleClick}
           onMouseDown={handleStageMouseDown}
           onMouseMove={handleStageMouseMove}
           onMouseUp={handleStageMouseUp}
