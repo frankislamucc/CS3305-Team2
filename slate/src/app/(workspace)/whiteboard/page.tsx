@@ -153,26 +153,22 @@ export default function WhiteboardPage() {
   const performUndo = useCallback(() => {
     const line = undoRedo.current.undo();
     if (line) {
-      setLines((prev) => {
-        const newLines = prev.slice(0, -1);
-        saveCanvas(newLines, canvasId);
-        return newLines;
-      });
+      const newLines = lines.slice(0, -1);
+      setLines(newLines);
+      saveCanvas(newLines, canvasId);
       updateHistoryFlags();
     }
-  }, [canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
   const performRedo = useCallback(() => {
     const line = undoRedo.current.redo();
     if (line) {
-      setLines((prev) => {
-        const newLines = [...prev, line];
-        saveCanvas(newLines, canvasId);
-        return newLines;
-      });
+      const newLines = [...lines, line];
+      setLines(newLines);
+      saveCanvas(newLines, canvasId);
       updateHistoryFlags();
     }
-  }, [canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
   const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
