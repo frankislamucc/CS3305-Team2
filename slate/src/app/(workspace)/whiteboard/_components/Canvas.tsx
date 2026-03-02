@@ -555,6 +555,15 @@ export default function Canvas(props: CanvasProps) {
     setSelectedSize(size);
   };
 
+  // Helper to transform landmark screen coordinates to canvas coordinates
+  const getLandmarkCanvasCoords = useMemo(() => {
+    return (x: number, y: number) => {
+      const screenX = x * dimensions.width;
+      const screenY = y * dimensions.height;
+      return transform.current.screenToCanvas(screenX, screenY);
+    };
+  }, [dimensions]);
+
   return (
     <div
       ref={containerRef}
@@ -587,48 +596,54 @@ export default function Canvas(props: CanvasProps) {
             />
           </Layer>
           <Layer listening={false}>
-            {landmarks && !landmarks.isPinching && (
-              <>
-                <Circle
-                  x={landmarks.thumb.x * dimensions.width}
-                  y={landmarks.thumb.y * dimensions.height}
-                  radius={6}
-                  fill={hslToRgba(selectedColor, 0.3)}
-                />
-                <Circle
-                  x={landmarks.index.x * dimensions.width}
-                  y={landmarks.index.y * dimensions.height}
-                  radius={6}
-                  fill={hslToRgba(selectedColor, 0.3)}
-                />
-              </>
-            )}
-            {landmarks && landmarks.isPinching && (
-              <>
-                <Circle
-                  x={
-                    ((landmarks.thumb.x + landmarks.index.x) / 2) *
-                    dimensions.width
-                  }
-                  y={
-                    ((landmarks.thumb.y + landmarks.index.y) / 2) *
-                    dimensions.height
-                  }
-                  radius={8}
-                  fill={hslToRgba(selectedColor, 0.95)}
-                />
-                <Line
-                  points={[
-                    landmarks.thumb.x * dimensions.width,
-                    landmarks.thumb.y * dimensions.height,
-                    landmarks.index.x * dimensions.width,
-                    landmarks.index.y * dimensions.height,
-                  ]}
-                  stroke={hslToRgba(selectedColor, 0.5)}
-                  strokeWidth={2}
-                />
-              </>
-            )}
+            {landmarks && !landmarks.isPinching && (() => {
+              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
+              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
+              return (
+                <>
+                  <Circle
+                    x={thumbCoords.x}
+                    y={thumbCoords.y}
+                    radius={6}
+                    fill={hslToRgba(selectedColor, 0.3)}
+                  />
+                  <Circle
+                    x={indexCoords.x}
+                    y={indexCoords.y}
+                    radius={6}
+                    fill={hslToRgba(selectedColor, 0.3)}
+                  />
+                </>
+              );
+            })()}
+            {landmarks && landmarks.isPinching && (() => {
+              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
+              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
+              const midCoords = getLandmarkCanvasCoords(
+                (landmarks.thumb.x + landmarks.index.x) / 2,
+                (landmarks.thumb.y + landmarks.index.y) / 2
+              );
+              return (
+                <>
+                  <Circle
+                    x={midCoords.x}
+                    y={midCoords.y}
+                    radius={8}
+                    fill={hslToRgba(selectedColor, 0.95)}
+                  />
+                  <Line
+                    points={[
+                      thumbCoords.x,
+                      thumbCoords.y,
+                      indexCoords.x,
+                      indexCoords.y,
+                    ]}
+                    stroke={hslToRgba(selectedColor, 0.5)}
+                    strokeWidth={2}
+                  />
+                </>
+              );
+            })()}
           </Layer>
           <Layer
             ref={(node) => {
