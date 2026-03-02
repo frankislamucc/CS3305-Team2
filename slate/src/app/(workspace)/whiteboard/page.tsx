@@ -25,6 +25,7 @@ import { ToastData } from "./_types";
 import { useUser } from "./_components/UserContext";
 import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 import OptionButton from "./_components/ui/OptionButton";
+import { UndoRedo } from "./_components/UndoRedo";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -39,6 +40,15 @@ export default function WhiteboardPage() {
     "front",
   );
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+
+  // undo/redo tracking
+  const undoRedo = useRef<UndoRedo>(new UndoRedo());
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const updateHistoryFlags = useCallback(() => {
+    setCanUndo(undoRedo.current.getUndoCount() > 0);
+    setCanRedo(undoRedo.current.getRedoCount() > 0);
+  }, []);
 
   // Sharing state
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -140,26 +150,59 @@ export default function WhiteboardPage() {
     setCameraLocation(currentLocation === "front" ? "back" : "front");
   };
 
+  const performUndo = useCallback(() => {
+    const line = undoRedo.current.undo();
+    if (line) {
+      setLines((prev) => {
+        const newLines = prev.slice(0, -1);
+        saveCanvas(newLines, canvasId);
+        return newLines;
+      });
+      updateHistoryFlags();
+    }
+  }, [canvasId, saveCanvas, updateHistoryFlags]);
+
+  const performRedo = useCallback(() => {
+    const line = undoRedo.current.redo();
+    if (line) {
+      setLines((prev) => {
+        const newLines = [...prev, line];
+        saveCanvas(newLines, canvasId);
+        return newLines;
+      });
+      updateHistoryFlags();
+    }
+  }, [canvasId, saveCanvas, updateHistoryFlags]);
+
   const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
     if (canvasHandler === null) return;
     const curLine: LineData | null = canvasHandler.exportLine();
     if (curLine) {
+      // Add line to undo/redo history
+      undoRedo.current.addLine(curLine);
+      updateHistoryFlags();
+
       const updated = [...lines, curLine];
       setLines(updated);
       saveCanvas(updated, canvasId);
       canvasHandler.clear();
     }
-  }, [lines, canvasId, saveCanvas]);
+  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
   // ── Copy & Paste: add pasted lines to the canvas ──
   const handlePaste = useCallback(
     (pastedLines: LineData[]) => {
+      pastedLines.forEach((l) => {
+        undoRedo.current.addLine(l);
+      });
+      updateHistoryFlags();
+
       const updated = [...lines, ...pastedLines];
       setLines(updated);
       saveCanvas(updated, canvasId);
     },
-    [lines, canvasId, saveCanvas],
+    [lines, canvasId, saveCanvas, updateHistoryFlags],
   );
 
   const handleRename = useCallback(
@@ -189,12 +232,14 @@ export default function WhiteboardPage() {
           setCanvasName(result.name ?? "Untitled");
           setViewingShared(null);
           canvasRef.current?.clearCanvas();
+          undoRedo.current.clear();
+          updateHistoryFlags();
         }
       } catch (err) {
         console.error("Failed to load canvas:", err);
       }
     },
-    [canvasId],
+    [canvasId, updateHistoryFlags],
   );
 
   const handleSelectSharedCanvas = useCallback(
@@ -211,12 +256,14 @@ export default function WhiteboardPage() {
             copyCanvasId: result.copyCanvasId ?? null,
           });
           canvasRef.current?.clearCanvas();
+          undoRedo.current.clear();
+          updateHistoryFlags();
         }
       } catch (err) {
         console.error("Failed to load shared canvas:", err);
       }
     },
-    [],
+    [updateHistoryFlags],
   );
 
   const handleNewCanvas = useCallback(() => {
@@ -225,7 +272,9 @@ export default function WhiteboardPage() {
     setCanvasName("Untitled");
     setViewingShared(null);
     canvasRef.current?.clearCanvas();
-  }, []);
+    undoRedo.current.clear();
+    updateHistoryFlags();
+  }, [updateHistoryFlags]);
 
   const isViewOnly = !!viewingShared;
 
@@ -289,6 +338,16 @@ export default function WhiteboardPage() {
             text="Save"
           />
           <OptionButton
+            onClick={performUndo}
+            isDisabled={isViewOnly || !canUndo}
+            text="Undo"
+          />
+          <OptionButton
+            onClick={performRedo}
+            isDisabled={isViewOnly || !canRedo}
+            text="Redo"
+          />
+          <OptionButton
             onClick={() => toggleCamera(cameraLocation)}
             isDisabled={isViewOnly}
             text={
@@ -315,6 +374,8 @@ export default function WhiteboardPage() {
               canvasRef.current?.clearCanvas();
               setLines([]);
               saveCanvas([], canvasId);
+              undoRedo.current.clear();
+              updateHistoryFlags();
             }}
             isDisabled={isViewOnly}
             text="Clear Canvas"
