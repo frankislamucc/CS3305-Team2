@@ -123,15 +123,15 @@ export default function GestureEngine({
           isGauntlet.current = true;
           spinnerAngleEMA.current = new SimpleEMA();
           canvasRef.current?.showSpinner(0);
-          canvasRef.current?.setSpinnerStartY(predictions.landmarks[0][16].y);
+          canvasRef.current?.setSpinnerStartX(predictions.landmarks[0][16].x);
         } else if (gesture === "rightRingPinch" && isGauntlet.current) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
           }
           const rawAngle =
-            (predictions.landmarks[0][16].y -
-              canvasRef.current!.spinnerStartY()) *
+            (predictions.landmarks[0][16].x -
+              canvasRef.current!.spinnerStartX()) *
             300;
           const smoothed = spinnerAngleEMA.current!.filter(rawAngle) as number;
           canvasRef.current?.showSpinner(smoothed);
@@ -339,4 +339,3 @@ export default function GestureEngine({
     </div>
   );
 }
-
