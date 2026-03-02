@@ -97,12 +97,10 @@ export default function GestureEngine({
         const transformedX = 1 - palmCenter.x;
 
         if (!isPanning.current) {
-          // Start panning
-          canvasRef.current?.startPan(transformedX, palmCenter.y);
+          canvasRef.current?.startPan(-transformedX, -palmCenter.y);
           isPanning.current = true;
         } else {
-          // Update pan
-          canvasRef.current?.updatePan(transformedX, palmCenter.y);
+          canvasRef.current?.updatePan(-transformedX, -palmCenter.y);
         }
 
         // Ensure we're not drawing while panning
