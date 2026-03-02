@@ -72,24 +72,24 @@ export default function GestureEngine({
         gesture = customGesture;
       }
 
-      // Handle fist for panning
-      if (gesture === "rightFist" || gesture === "leftFist") {
-        // Calculate palm center for panning
-        const landmarks_list = predictions.landmarks[0];
+      // Handle middle pinch for panning
+      if (gesture === "rightMiddlePinch") {
+        // Calculate palm center for panning using middle finger tip
+        const middleTip = predictions.landmarks[0][12];
         const palmCenter = {
           x:
-            (landmarks_list[0].x +
-              landmarks_list[5].x +
-              landmarks_list[9].x +
-              landmarks_list[13].x +
-              landmarks_list[17].x) /
+            (predictions.landmarks[0][0].x +
+              predictions.landmarks[0][5].x +
+              predictions.landmarks[0][9].x +
+              predictions.landmarks[0][13].x +
+              predictions.landmarks[0][17].x) /
             5,
           y:
-            (landmarks_list[0].y +
-              landmarks_list[5].y +
-              landmarks_list[9].y +
-              landmarks_list[13].y +
-              landmarks_list[17].y) /
+            (predictions.landmarks[0][0].y +
+              predictions.landmarks[0][5].y +
+              predictions.landmarks[0][9].y +
+              predictions.landmarks[0][13].y +
+              predictions.landmarks[0][17].y) /
             5,
         };
 
@@ -146,28 +146,28 @@ export default function GestureEngine({
           }
         }
 
-        // size selector logic
-        if (gesture === "rightMiddlePinch" && !isSizing.current) {
+        // size selector logic (pinky pinch)
+        if (gesture === "rightPinkyPinch" && !isSizing.current) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
-            gauntletExitTimer.current = null;
+            sizeExitTimer.current = null;
           }
           canvasRef.current?.showSizeSelector(0);
           canvasRef.current?.setSizeSelectorStartY(
-            predictions.landmarks[0][12].y,
+            predictions.landmarks[0][20].y,
           );
           isSizing.current = true;
-        } else if (gesture === "rightMiddlePinch" && isSizing.current) {
+        } else if (gesture === "rightPinkyPinch" && isSizing.current) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
           }
           canvasRef.current?.showSizeSelector(
-            (predictions.landmarks[0][12].y -
+            (predictions.landmarks[0][20].y -
               canvasRef.current?.sizeSelectorStartY()) *
               2,
           );
-        } else if (gesture !== "rightMiddlePinch" && isSizing.current) {
+        } else if (gesture !== "rightPinkyPinch" && isSizing.current) {
           if (!sizeExitTimer.current) {
             sizeExitTimer.current = setTimeout(() => {
               canvasRef.current?.hideSizeSelector();
