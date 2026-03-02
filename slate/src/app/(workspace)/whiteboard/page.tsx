@@ -182,6 +182,10 @@ export default function WhiteboardPage() {
       }
     };
 
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [performUndo, performRedo]);
+
   const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
     if (canvasHandler === null) return;
