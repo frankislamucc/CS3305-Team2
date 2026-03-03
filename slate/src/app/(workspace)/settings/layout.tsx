@@ -6,19 +6,15 @@ export default async function SettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   const user = await getAuthenticatedUser();
-
 
   return (
     <main className="min-h-screen">
       <div className="relative w-full px-4 py-3">
         <HomeNavbar username={user ? user.username : ""} />
       </div>
-
-      <div className="pt-16">
-        {children}
-      </div>
+      <div style={{ height: "var(--nav-height, 0px)" }} aria-hidden="true" />
+      {children}
     </main>
   );
 }

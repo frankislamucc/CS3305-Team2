@@ -24,8 +24,8 @@ export default function HomeNavbar({ username }: HomeNavbarProps) {
       link: "/whiteboard",
     },
     {
-      name: "About us",
-      link: "",
+      name: "Settings",
+      link: "/settings",
     },
   ];
 
