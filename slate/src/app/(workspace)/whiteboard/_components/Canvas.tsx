@@ -73,6 +73,8 @@ export default function Canvas(props: CanvasProps) {
 
   const layerRef = useRef<any>(null);
   const [layerReady, setLayerReady] = useState(false);
+  const hudLayerRef = useRef<any>(null);
+  const [hudLayerReady, setHudLayerReady] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -500,7 +502,11 @@ export default function Canvas(props: CanvasProps) {
           setShowSpinner(true);
           setWheelRotation(angle);
         },
-        hideSpinner: () => setShowSpinner(false),
+        hideSpinner: () => {
+          setShowSpinner(false);
+          hudLayerRef.current = null;
+          setHudLayerReady(false);
+        },
         spinnerStartX: () => spinnerStartX.current,
         setSpinnerStartX: (x: number) => {
           spinnerStartX.current = x;
@@ -515,6 +521,8 @@ export default function Canvas(props: CanvasProps) {
         },
         hideSizeSelector: () => {
           setShowSizeSelector(false);
+          hudLayerRef.current = null;
+          setHudLayerReady(false);
         },
         zoomIn: () =>
           transform.current.zoomAtPoint(
@@ -652,27 +660,7 @@ export default function Canvas(props: CanvasProps) {
                 setLayerReady(true);
               }
             }}
-          >
-            {layerReady && layerRef.current && showSpinner && (
-              <ColourWheelSpinner
-                layer={layerRef.current}
-                x={dimensions.width / 2}
-                y={dimensions.height / 2}
-                rotationAngle={wheelRotation}
-                onColourSelect={handleColorSelect}
-              />
-            )}
-
-            {layerReady && layerRef.current && showSizeSelector && (
-              <SizeSelector
-                layer={layerRef.current}
-                x={dimensions.width / 2}
-                y={dimensions.height / 2}
-                normalisedY={sizeSelectorY}
-                onSizeSelect={handleSizeSelect}
-              />
-            )}
-          </Layer>
+          />
 
           {/* ── Selection overlay layer ── */}
           <Layer listening={false}>
@@ -720,6 +708,45 @@ export default function Canvas(props: CanvasProps) {
             )}
           </Layer>
         </Stage>
+      )}
+
+      {/* ── HUD overlay for colour wheel & size selector (not affected by pan/zoom) ── */}
+      {dimensions.width > 0 && (showSpinner || showSizeSelector) && (
+        <div
+          className="absolute bottom-6 right-6 z-30 pointer-events-none"
+          style={{ width: 200, height: 220 }}
+        >
+          <Stage width={200} height={220}>
+            <Layer
+              ref={(node) => {
+                if (node && !hudLayerRef.current) {
+                  hudLayerRef.current = node;
+                  setHudLayerReady(true);
+                }
+              }}
+            >
+              {hudLayerReady && hudLayerRef.current && showSpinner && (
+                <ColourWheelSpinner
+                  layer={hudLayerRef.current}
+                  x={100}
+                  y={110}
+                  rotationAngle={wheelRotation}
+                  onColourSelect={handleColorSelect}
+                />
+              )}
+
+              {hudLayerReady && hudLayerRef.current && showSizeSelector && (
+                <SizeSelector
+                  layer={hudLayerRef.current}
+                  x={10}
+                  y={10}
+                  normalisedY={sizeSelectorY}
+                  onSizeSelect={handleSizeSelect}
+                />
+              )}
+            </Layer>
+          </Stage>
+        </div>
       )}
 
       {/* ── Selection-mode banner ── */}
