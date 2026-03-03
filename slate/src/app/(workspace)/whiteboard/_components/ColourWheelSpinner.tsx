@@ -10,6 +10,7 @@ const COLOURS = [
   { hsl: "hsl(240, 100%, 50%)", label: "Blue" },
   { hsl: "hsl(270, 100%, 50%)", label: "Purple" },
   { hsl: "hsl(300, 100%, 50%)", label: "Pink" },
+  { hsl: "hsl(0, 0%, 100%)", label: "White" },
 ];
 
 const SEGMENT_COUNT = COLOURS.length;
@@ -58,6 +59,8 @@ export default function ColourWheelSpinner({
         angle: SEGMENT_ANGLE - GAP,
         fill: colour.hsl,
         rotation: i * SEGMENT_ANGLE - 110 + GAP / 2,
+        stroke: colour.hsl === "hsl(0, 0%, 100%)" ? "#000" : undefined,
+        strokeWidth: colour.hsl === "hsl(0, 0%, 100%)" ? 1.5 : 0,
       });
       segmentsRef.current.push(arc);
       group.add(arc);
@@ -68,7 +71,7 @@ export default function ColourWheelSpinner({
       y: 0,
       radius: radius * 0.35,
       fill: COLOURS[0].hsl,
-      stroke: "#fff",
+      stroke: COLOURS[0].hsl === "hsl(0, 0%, 100%)" ? "#000" : "#fff",
       strokeWidth: 2,
     });
     centerRef.current = center;
@@ -121,6 +124,7 @@ export default function ColourWheelSpinner({
     });
 
     centerRef.current.fill(selected.hsl);
+    centerRef.current.stroke(selected.hsl === "hsl(0, 0%, 100%)" ? "#000" : "#fff");
     labelRef.current.text(selected.label);
     labelRef.current.offsetX(labelRef.current.width() / 2);
     
