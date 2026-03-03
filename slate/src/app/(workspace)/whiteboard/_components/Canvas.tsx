@@ -24,6 +24,45 @@ interface CanvasProps {
   onPaste?: (lines: LineData[]) => void;
 }
 
+// Helper function to convert HSL string to RGBA string
+// Expects input like "hsl(0, 100%, 50%)"
+function hslToRgba(hslString: string, alpha: number): string {
+  // Parse HSL string
+  const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!match) return `rgba(255, 0, 0, ${alpha})`; // fallback to red
+  
+  const h = parseInt(match[1]) / 360;
+  const s = parseInt(match[2]) / 100;
+  const l = parseInt(match[3]) / 100;
+  
+  // HSL to RGB conversion
+  let r = 0, g = 0, b = 0;
+  
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  
+  const rInt = Math.round(r * 255);
+  const gInt = Math.round(g * 255);
+  const bInt = Math.round(b * 255);
+  
+  return `rgba(${rInt}, ${gInt}, ${bInt}, ${alpha})`;
+}
 export default function Canvas(props: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<LineType>(null);
@@ -34,11 +73,13 @@ export default function Canvas(props: CanvasProps) {
 
   const layerRef = useRef<any>(null);
   const [layerReady, setLayerReady] = useState(false);
+  const hudLayerRef = useRef<any>(null);
+  const [hudLayerReady, setHudLayerReady] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [sizeSelectorY, setSizeSelector] = useState(0);
-  const spinnerStartY = useRef(0);
+  const spinnerStartX = useRef(0);
   const sizeSelectorStartY = useRef(0);
   const [selectedColor, setSelectedColor] = useState("#df4b26");
   const [selectedSize, setSelectedSize] = useState(2);
@@ -461,10 +502,14 @@ export default function Canvas(props: CanvasProps) {
           setShowSpinner(true);
           setWheelRotation(angle);
         },
-        hideSpinner: () => setShowSpinner(false),
-        spinnerStartY: () => spinnerStartY.current,
-        setSpinnerStartY: (y: number) => {
-          spinnerStartY.current = y;
+        hideSpinner: () => {
+          setShowSpinner(false);
+          hudLayerRef.current = null;
+          setHudLayerReady(false);
+        },
+        spinnerStartX: () => spinnerStartX.current,
+        setSpinnerStartX: (x: number) => {
+          spinnerStartX.current = x;
         },
         sizeSelectorStartY: () => sizeSelectorStartY.current,
         setSizeSelectorStartY: (y: number) => {
@@ -476,6 +521,8 @@ export default function Canvas(props: CanvasProps) {
         },
         hideSizeSelector: () => {
           setShowSizeSelector(false);
+          hudLayerRef.current = null;
+          setHudLayerReady(false);
         },
         zoomIn: () =>
           transform.current.zoomAtPoint(
@@ -516,6 +563,15 @@ export default function Canvas(props: CanvasProps) {
     setSelectedSize(size);
   };
 
+  // Helper to transform landmark screen coordinates to canvas coordinates
+  const getLandmarkCanvasCoords = useMemo(() => {
+    return (x: number, y: number) => {
+      const screenX = x * dimensions.width;
+      const screenY = y * dimensions.height;
+      return transform.current.screenToCanvas(screenX, screenY);
+    };
+  }, [dimensions]);
+
   return (
     <div
       ref={containerRef}
@@ -548,48 +604,54 @@ export default function Canvas(props: CanvasProps) {
             />
           </Layer>
           <Layer listening={false}>
-            {landmarks && !landmarks.isPinching && (
-              <>
-                <Circle
-                  x={landmarks.thumb.x * dimensions.width}
-                  y={landmarks.thumb.y * dimensions.height}
-                  radius={6}
-                  fill="rgba(255, 0, 0, 0.3)"
-                />
-                <Circle
-                  x={landmarks.index.x * dimensions.width}
-                  y={landmarks.index.y * dimensions.height}
-                  radius={6}
-                  fill="rgba(255, 0, 0, 0.3)"
-                />
-              </>
-            )}
-            {landmarks && landmarks.isPinching && (
-              <>
-                <Circle
-                  x={
-                    ((landmarks.thumb.x + landmarks.index.x) / 2) *
-                    dimensions.width
-                  }
-                  y={
-                    ((landmarks.thumb.y + landmarks.index.y) / 2) *
-                    dimensions.height
-                  }
-                  radius={8}
-                  fill="rgba(255, 0, 0, 0.95)"
-                />
-                <Line
-                  points={[
-                    landmarks.thumb.x * dimensions.width,
-                    landmarks.thumb.y * dimensions.height,
-                    landmarks.index.x * dimensions.width,
-                    landmarks.index.y * dimensions.height,
-                  ]}
-                  stroke="rgba(255, 0, 0, 0.5)"
-                  strokeWidth={2}
-                />
-              </>
-            )}
+            {landmarks && !landmarks.isPinching && (() => {
+              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
+              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
+              return (
+                <>
+                  <Circle
+                    x={thumbCoords.x}
+                    y={thumbCoords.y}
+                    radius={6}
+                    fill={hslToRgba(selectedColor, 0.3)}
+                  />
+                  <Circle
+                    x={indexCoords.x}
+                    y={indexCoords.y}
+                    radius={6}
+                    fill={hslToRgba(selectedColor, 0.3)}
+                  />
+                </>
+              );
+            })()}
+            {landmarks && landmarks.isPinching && (() => {
+              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
+              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
+              const midCoords = getLandmarkCanvasCoords(
+                (landmarks.thumb.x + landmarks.index.x) / 2,
+                (landmarks.thumb.y + landmarks.index.y) / 2
+              );
+              return (
+                <>
+                  <Circle
+                    x={midCoords.x}
+                    y={midCoords.y}
+                    radius={8}
+                    fill={hslToRgba(selectedColor, 0.95)}
+                  />
+                  <Line
+                    points={[
+                      thumbCoords.x,
+                      thumbCoords.y,
+                      indexCoords.x,
+                      indexCoords.y,
+                    ]}
+                    stroke={hslToRgba(selectedColor, 0.5)}
+                    strokeWidth={2}
+                  />
+                </>
+              );
+            })()}
           </Layer>
           <Layer
             ref={(node) => {
@@ -598,27 +660,7 @@ export default function Canvas(props: CanvasProps) {
                 setLayerReady(true);
               }
             }}
-          >
-            {layerReady && layerRef.current && showSpinner && (
-              <ColourWheelSpinner
-                layer={layerRef.current}
-                x={dimensions.width / 2}
-                y={dimensions.height / 2}
-                rotationAngle={wheelRotation}
-                onColourSelect={handleColorSelect}
-              />
-            )}
-
-            {layerReady && layerRef.current && showSizeSelector && (
-              <SizeSelector
-                layer={layerRef.current}
-                x={dimensions.width / 2}
-                y={dimensions.height / 2}
-                normalisedY={sizeSelectorY}
-                onSizeSelect={handleSizeSelect}
-              />
-            )}
-          </Layer>
+          />
 
           {/* ── Selection overlay layer ── */}
           <Layer listening={false}>
@@ -668,6 +710,45 @@ export default function Canvas(props: CanvasProps) {
         </Stage>
       )}
 
+      {/* ── HUD overlay for colour wheel & size selector (not affected by pan/zoom) ── */}
+      {dimensions.width > 0 && (showSpinner || showSizeSelector) && (
+        <div
+          className="absolute bottom-6 right-6 z-30 pointer-events-none"
+          style={{ width: 200, height: 220 }}
+        >
+          <Stage width={200} height={220}>
+            <Layer
+              ref={(node) => {
+                if (node && !hudLayerRef.current) {
+                  hudLayerRef.current = node;
+                  setHudLayerReady(true);
+                }
+              }}
+            >
+              {hudLayerReady && hudLayerRef.current && showSpinner && (
+                <ColourWheelSpinner
+                  layer={hudLayerRef.current}
+                  x={100}
+                  y={110}
+                  rotationAngle={wheelRotation}
+                  onColourSelect={handleColorSelect}
+                />
+              )}
+
+              {hudLayerReady && hudLayerRef.current && showSizeSelector && (
+                <SizeSelector
+                  layer={hudLayerRef.current}
+                  x={10}
+                  y={10}
+                  normalisedY={sizeSelectorY}
+                  onSizeSelect={handleSizeSelect}
+                />
+              )}
+            </Layer>
+          </Stage>
+        </div>
+      )}
+
       {/* ── Selection-mode banner ── */}
       {isSelectMode && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 bg-blue-600/90 text-white text-sm rounded-full shadow-lg pointer-events-none select-none">
@@ -686,4 +767,5 @@ export default function Canvas(props: CanvasProps) {
     </div>
   );
 }
+
 

@@ -6,7 +6,7 @@ import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 
 // Configuration Options - Should maybe be in a separate file!
 
-const PINCH_THRESHOLD = 0.05;
+const PINCH_THRESHOLD = 0.065;
 
 // this function just lets us use the shorthand in this file
 function getLandmarks(landmarks: NormalizedLandmark[][]) {
@@ -82,29 +82,26 @@ function distance(a: NormalizedLandmark, b: NormalizedLandmark) {
 
 export function detectRightPinkyPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { RIGHT_THUMB_TIP, RIGHT_PINKY_TIP } = getLandmarks(landmarks);
-  // check if they are available first, if not return false
   if (!RIGHT_THUMB_TIP || !RIGHT_PINKY_TIP) return false;
-  // Check if thumb and index are close enough to be considered "pinching"
-  // Check if both X and Y distances are below threshold
-  return Math.abs(RIGHT_THUMB_TIP.x - RIGHT_PINKY_TIP.x) < PINCH_THRESHOLD && Math.abs(RIGHT_THUMB_TIP.y - RIGHT_PINKY_TIP.y) < PINCH_THRESHOLD
+  return distance(RIGHT_THUMB_TIP, RIGHT_PINKY_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectRightRingPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { RIGHT_THUMB_TIP, RIGHT_RING_TIP } = getLandmarks(landmarks);
   if (!RIGHT_THUMB_TIP || !RIGHT_RING_TIP) return false;
-  return Math.abs(RIGHT_THUMB_TIP.x - RIGHT_RING_TIP.x) < PINCH_THRESHOLD && Math.abs(RIGHT_THUMB_TIP.y - RIGHT_RING_TIP.y) < PINCH_THRESHOLD
+  return distance(RIGHT_THUMB_TIP, RIGHT_RING_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectRightMiddlePinch(landmarks: NormalizedLandmark[][]): boolean {
   const { RIGHT_THUMB_TIP, RIGHT_MIDDLE_TIP } = getLandmarks(landmarks);
   if (!RIGHT_THUMB_TIP || !RIGHT_MIDDLE_TIP) return false;
-  return Math.abs(RIGHT_THUMB_TIP.x - RIGHT_MIDDLE_TIP.x) < PINCH_THRESHOLD && Math.abs(RIGHT_THUMB_TIP.y - RIGHT_MIDDLE_TIP.y) < PINCH_THRESHOLD
+  return distance(RIGHT_THUMB_TIP, RIGHT_MIDDLE_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectRightIndexPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { RIGHT_THUMB_TIP, RIGHT_INDEX_TIP } = getLandmarks(landmarks);
   if (!RIGHT_THUMB_TIP || !RIGHT_INDEX_TIP) return false;
-  return Math.abs(RIGHT_THUMB_TIP.x - RIGHT_INDEX_TIP.x) < PINCH_THRESHOLD && Math.abs(RIGHT_THUMB_TIP.y - RIGHT_INDEX_TIP.y) < PINCH_THRESHOLD
+  return distance(RIGHT_THUMB_TIP, RIGHT_INDEX_TIP) < PINCH_THRESHOLD;
 }
 
 // Left Hand
@@ -114,25 +111,25 @@ export function detectRightIndexPinch(landmarks: NormalizedLandmark[][]): boolea
 export function detectLeftPinkyPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { LEFT_THUMB_TIP, LEFT_PINKY_TIP } = getLandmarks(landmarks);
   if (!LEFT_THUMB_TIP || !LEFT_PINKY_TIP) return false;
-  return Math.abs(LEFT_THUMB_TIP.x - LEFT_PINKY_TIP.x) < PINCH_THRESHOLD && Math.abs(LEFT_THUMB_TIP.y - LEFT_PINKY_TIP.y) < PINCH_THRESHOLD
+  return distance(LEFT_THUMB_TIP, LEFT_PINKY_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectLeftRingPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { LEFT_THUMB_TIP, LEFT_RING_TIP } = getLandmarks(landmarks);
   if (!LEFT_THUMB_TIP || !LEFT_RING_TIP) return false;
-  return Math.abs(LEFT_THUMB_TIP.x - LEFT_RING_TIP.x) < PINCH_THRESHOLD && Math.abs(LEFT_THUMB_TIP.y - LEFT_RING_TIP.y) < PINCH_THRESHOLD
+  return distance(LEFT_THUMB_TIP, LEFT_RING_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectLeftMiddlePinch(landmarks: NormalizedLandmark[][]): boolean {
   const { LEFT_THUMB_TIP, LEFT_MIDDLE_TIP } = getLandmarks(landmarks);
   if (!LEFT_THUMB_TIP || !LEFT_MIDDLE_TIP) return false;
-  return Math.abs(LEFT_THUMB_TIP.x - LEFT_MIDDLE_TIP.x) < PINCH_THRESHOLD && Math.abs(LEFT_THUMB_TIP.y - LEFT_MIDDLE_TIP.y) < PINCH_THRESHOLD
+  return distance(LEFT_THUMB_TIP, LEFT_MIDDLE_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectLeftIndexPinch(landmarks: NormalizedLandmark[][]): boolean {
   const { LEFT_THUMB_TIP, LEFT_INDEX_TIP } = getLandmarks(landmarks);
   if (!LEFT_THUMB_TIP || !LEFT_INDEX_TIP) return false;
-  return Math.abs(LEFT_THUMB_TIP.x - LEFT_INDEX_TIP.x) < PINCH_THRESHOLD && Math.abs(LEFT_THUMB_TIP.y - LEFT_INDEX_TIP.y) < PINCH_THRESHOLD
+  return distance(LEFT_THUMB_TIP, LEFT_INDEX_TIP) < PINCH_THRESHOLD;
 }
 
 export function detectRightFist(landmarks: NormalizedLandmark[][]): boolean {
@@ -179,17 +176,68 @@ export function detectCustomGestures(landmarks: NormalizedLandmark[][]) {
   }
 }
 
+/**
+ * When multiple right-hand pinches fire at once (common because adjacent
+ * fingers are close to the thumb), pick the finger whose tip is actually
+ * nearest to the thumb tip.  This prevents e.g. an index-pinch from
+ * stealing the middle-pinch (pan) gesture.
+ */
+function closestRightPinch(landmarks: NormalizedLandmark[][]): string | null {
+  const hand = landmarks[0];
+  if (!hand) return null;
+
+  const thumb = hand[4]; // THUMB_TIP
+  if (!thumb) return null;
+
+  const candidates: { name: string; dist: number }[] = [
+    { name: "rightIndexPinch",  dist: distance(thumb, hand[8]) },   // INDEX_TIP
+    { name: "rightMiddlePinch", dist: distance(thumb, hand[12]) },  // MIDDLE_TIP
+    { name: "rightRingPinch",   dist: distance(thumb, hand[16]) },  // RING_TIP
+    { name: "rightPinkyPinch",  dist: distance(thumb, hand[20]) },  // PINKY_TIP
+  ];
+
+  // Only keep fingers that are within the pinch threshold
+  const active = candidates.filter(c => c.dist < PINCH_THRESHOLD);
+  if (active.length === 0) return null;
+
+  // Return the one with the smallest distance
+  active.sort((a, b) => a.dist - b.dist);
+  return active[0].name;
+}
+
+function closestLeftPinch(landmarks: NormalizedLandmark[][]): string | null {
+  const hand = landmarks[1];
+  if (!hand) return null;
+
+  const thumb = hand[4]; // THUMB_TIP
+  if (!thumb) return null;
+
+  const candidates: { name: string; dist: number }[] = [
+    { name: "leftIndexPinch",  dist: distance(thumb, hand[8]) },
+    { name: "leftMiddlePinch", dist: distance(thumb, hand[12]) },
+    { name: "leftRingPinch",   dist: distance(thumb, hand[16]) },
+    { name: "leftPinkyPinch",  dist: distance(thumb, hand[20]) },
+  ];
+
+  const active = candidates.filter(c => c.dist < PINCH_THRESHOLD);
+  if (active.length === 0) return null;
+
+  active.sort((a, b) => a.dist - b.dist);
+  return active[0].name;
+}
+
 export function produceHighestPriorityGesture(landmarks: NormalizedLandmark[][]) {
   const gestures = detectCustomGestures(landmarks);
-  // priority list - random rn
+
+  // Fist is always highest priority
   if (gestures.rightFist) return "rightFist";
-  if (gestures.rightIndexPinch) return "rightIndexPinch";
-  if (gestures.rightPinkyPinch) return "rightPinkyPinch";
-  if (gestures.rightRingPinch) return "rightRingPinch";
-  if (gestures.rightMiddlePinch) return "rightMiddlePinch";
-  if (gestures.leftPinkyPinch) return "leftPinkyPinch";
-  if (gestures.leftRingPinch) return "leftRingPinch";
-  if (gestures.leftMiddlePinch) return "leftMiddlePinch";
-  if (gestures.leftIndexPinch) return "leftIndexPinch";
-  else return false;
+
+  // For pinches, use distance-based selection so the *closest* finger wins
+  const rightPinch = closestRightPinch(landmarks);
+  if (rightPinch) return rightPinch;
+
+  const leftPinch = closestLeftPinch(landmarks);
+  if (leftPinch) return leftPinch;
+
+  return false;
 }
