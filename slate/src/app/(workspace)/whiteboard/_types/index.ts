@@ -43,6 +43,9 @@ export interface CanvasHandle {
   hideSizeSelector: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
+  startZoom: (startX: number, startY: number) => void;
+  updateZoom: (x: number, y: number) => void;
+  endZoom: () => void;
   resetZoom: () => void;
   clearCanvas: () => void;
   updateLandmarks: (data: LandmarkData | null) => void;
@@ -77,3 +80,4 @@ export interface ToastData {
   /** Auto-dismiss in ms (default 5000) */
   duration?: number;
 }
+
