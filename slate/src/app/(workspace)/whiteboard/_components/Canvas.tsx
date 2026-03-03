@@ -25,10 +25,8 @@ interface CanvasProps {
   onCut?: (remainingLines: LineData[]) => void;
 }
 
-// Helper function to convert HSL string to RGBA string
 // Expects input like "hsl(0, 100%, 50%)"
 function hslToRgba(hslString: string, alpha: number): string {
-  // Parse HSL string
   const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (!match) return `rgba(255, 0, 0, ${alpha})`; // fallback to red
   
@@ -64,6 +62,15 @@ function hslToRgba(hslString: string, alpha: number): string {
   
   return `rgba(${rInt}, ${gInt}, ${bInt}, ${alpha})`;
 }
+
+function isColourWhite(col: string) {
+  if (!col) return false;
+  const c = col.trim().toLowerCase();
+  if (c === "white") return true;
+  if (c.startsWith("#")) return /^#f{3,6}$/i.test(c.replace(/\s+/g, ""));
+  return c.includes("100%");
+}
+
 export default function Canvas(props: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<LineType>(null);
@@ -662,19 +669,26 @@ export default function Canvas(props: CanvasProps) {
             {landmarks && !landmarks.isPinching && (() => {
               const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
               const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
+              const smallAlpha = 0.3;
+              const smallFill = hslToRgba(selectedColor, smallAlpha);
+              const smallStroke = `rgba(0,0,0,${smallAlpha})`;
               return (
                 <>
                   <Circle
                     x={thumbCoords.x}
                     y={thumbCoords.y}
                     radius={6}
-                    fill={hslToRgba(selectedColor, 0.3)}
+                    fill={smallFill}
+                    stroke={smallStroke}
+                    strokeWidth={1.2}
                   />
                   <Circle
                     x={indexCoords.x}
                     y={indexCoords.y}
                     radius={6}
-                    fill={hslToRgba(selectedColor, 0.3)}
+                    fill={smallFill}
+                    stroke={smallStroke}
+                    strokeWidth={1.2}
                   />
                 </>
               );
@@ -693,6 +707,8 @@ export default function Canvas(props: CanvasProps) {
                     y={midCoords.y}
                     radius={8}
                     fill={hslToRgba(selectedColor, 0.95)}
+                    stroke={`rgba(0,0,0,${Math.min(0.95, 0.95)})`}
+                    strokeWidth={1.6}
                   />
                   <Line
                     points={[
@@ -701,7 +717,7 @@ export default function Canvas(props: CanvasProps) {
                       indexCoords.x,
                       indexCoords.y,
                     ]}
-                    stroke={hslToRgba(selectedColor, 0.5)}
+                    stroke={isColourWhite(selectedColor) ? "rgba(0,0,0,0.5)" : hslToRgba(selectedColor, 0.5)}
                     strokeWidth={2}
                   />
                 </>
