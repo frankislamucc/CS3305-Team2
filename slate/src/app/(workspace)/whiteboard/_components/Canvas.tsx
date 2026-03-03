@@ -88,6 +88,8 @@ export default function Canvas(props: CanvasProps) {
   const [, forceUpdate] = useState(0);
   const [landmarks, setLandmarks] = useState<LandmarkData | null>(null);
 
+
+
   // ── Copy & Paste selection state ──
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [isDrawingSelection, setIsDrawingSelection] = useState(false);
@@ -767,9 +769,9 @@ export default function Canvas(props: CanvasProps) {
       {dimensions.width > 0 && (showSpinner || showSizeSelector) && (
         <div
           className="absolute bottom-6 right-6 z-30 pointer-events-none"
-          style={{ width: 200, height: 220 }}
+          style={{ width: 250, height: 220 }}
         >
-          <Stage width={200} height={220}>
+          <Stage width={250} height={220}>
             <Layer
               ref={(node) => {
                 if (node && !hudLayerRef.current) {

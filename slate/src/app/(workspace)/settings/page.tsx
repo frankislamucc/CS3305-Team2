@@ -5,9 +5,12 @@ import SettingsMenuOption from "./_components/SettingsMenuOption";
 import { saveSettingsAction, loadSettingsAction } from "./actions/settings";
 
 export default function SettingsPage() {
-  const actions = ["Draw", "Pan", "Zoom"];
+  const actions = ["Draw", "Pan", "Colour_Wheel", "Select_Size"];
+  const customGestures = ["rightIndexPinch", "rightMiddlePinch", "rightRingPinch", "rightPinkyPinch", "leftIndexPinch", "leftMiddlePinch", "leftRingPinch", "leftPinkyPinch", "[UNBOUND]"]
+  const defaultGestures = ["Closed_Fist", "Open_Palm", "Thumb_Up", "Thumb_Down", "Pointing_Up"]
 
-  const totalGestures = ["Closed_Fist", "Open_Palm", "Pinch", "Thumb_Up", "Thumb_Down", "[UNBOUND]"];
+  const totalGestures = [...customGestures, ...defaultGestures];
+
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({});
@@ -17,7 +20,12 @@ export default function SettingsPage() {
       if (result.success && result.settings && Object.keys(result.settings).length > 0) {
         setBindingsSelections(result.settings);
       } else {
-        setBindingsSelections({ Draw: "Closed_Fist", Pan: "Open_Palm", Zoom: "Pinch" });
+        setBindingsSelections({ 
+          Draw: "rightIndexPinch", 
+          Pan: "rightMiddlePinch", 
+          Colour_Wheel: "rightRingPinch", 
+          Select_Size: "rightPinkyPinch"
+        });
       }
     });
   }, []);

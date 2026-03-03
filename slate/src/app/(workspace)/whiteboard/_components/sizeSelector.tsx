@@ -41,16 +41,16 @@ export default function SizeSelector({ layer, x, y, normalisedY, onSizeSelect }:
         cornerRadius: 5,
       });
 
-      const label = new Konva.Text({
+      const label = new Konva.Rect({
         x: 10,
-        y: i * (BAR_HEIGHT + BAR_SPACING) + 8,
-        text: `Size ${s}`,
-        fontSize: 14,
+        y: i * (BAR_HEIGHT + BAR_SPACING) + (BAR_HEIGHT - s) / 2,
+        width: barWidth - 20,
+        height: s,
         fill: "#333",
       });
 
       barsRef.current.push(bar);
-      labelsRef.current.push(label);
+      // labelsRef.current.push(label);
       group.add(bar);
       group.add(label);
     });
@@ -87,7 +87,7 @@ export default function SizeSelector({ layer, x, y, normalisedY, onSizeSelect }:
     labelsRef.current.forEach((label, i) => {
       const isSelected = i === selectedIndex;
       label.fill(isSelected ? "white" : "#333");
-      label.fontStyle(isSelected ? "bold" : "normal");
+      // label.fontStyle(isSelected ? "bold" : "normal");
     });
 
     onSizeSelect?.(SIZES[selectedIndex]);
