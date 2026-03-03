@@ -151,32 +151,62 @@ export default function WhiteboardPage() {
   };
 
   const performUndo = useCallback(() => {
-    const line = undoRedo.current.undo();
-    if (line) {
-      const newLines = lines.slice(0, -1);
-      setLines(newLines);
-      saveCanvas(newLines, canvasId);
-      updateHistoryFlags();
+    const action = undoRedo.current.undo();
+    if (!action) return;
+
+    let newLines: LineData[];
+    switch (action.type) {
+      case "addLine":
+        newLines = lines.slice(0, -1);
+        break;
+      case "addLines":
+        newLines = lines.slice(0, -action.lines.length);
+        break;
+      case "clearCanvas":
+        newLines = action.lines;
+        break;
+      case "replaceAll":
+        newLines = action.oldLines;
+        break;
     }
+
+    setLines(newLines);
+    saveCanvas(newLines, canvasId);
+    updateHistoryFlags();
   }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
   const performRedo = useCallback(() => {
-    const line = undoRedo.current.redo();
-    if (line) {
-      const newLines = [...lines, line];
-      setLines(newLines);
-      saveCanvas(newLines, canvasId);
-      updateHistoryFlags();
+    const action = undoRedo.current.redo();
+    if (!action) return;
+
+    let newLines: LineData[];
+    switch (action.type) {
+      case "addLine":
+        newLines = [...lines, action.line];
+        break;
+      case "addLines":
+        newLines = [...lines, ...action.lines];
+        break;
+      case "clearCanvas":
+        newLines = [];
+        break;
+      case "replaceAll":
+        newLines = action.newLines;
+        break;
     }
+
+    setLines(newLines);
+    saveCanvas(newLines, canvasId);
+    updateHistoryFlags();
   }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
-  // Keyboard shortcuts for undo (Ctrl+Z) and redo (Ctrl+X)
+  // Keyboard shortcuts for undo (Ctrl+Z) and redo (Ctrl+Y)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         performUndo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
         e.preventDefault();
         performRedo();
       }
@@ -205,14 +235,22 @@ export default function WhiteboardPage() {
   // ── Copy & Paste: add pasted lines to the canvas ──
   const handlePaste = useCallback(
     (pastedLines: LineData[]) => {
-      pastedLines.forEach((l) => {
-        undoRedo.current.addLine(l);
-      });
+      undoRedo.current.addLines(pastedLines);
       updateHistoryFlags();
 
       const updated = [...lines, ...pastedLines];
       setLines(updated);
       saveCanvas(updated, canvasId);
+    },
+    [lines, canvasId, saveCanvas, updateHistoryFlags],
+  );
+
+  const handleCut = useCallback(
+    (remainingLines: LineData[]) => {
+      undoRedo.current.replaceAll(lines, remainingLines);
+      updateHistoryFlags();
+      setLines(remainingLines);
+      saveCanvas(remainingLines, canvasId);
     },
     [lines, canvasId, saveCanvas, updateHistoryFlags],
   );
@@ -384,9 +422,9 @@ export default function WhiteboardPage() {
           <OptionButton
             onClick={() => {
               canvasRef.current?.clearCanvas();
+              undoRedo.current.clearCanvas(lines);
               setLines([]);
               saveCanvas([], canvasId);
-              undoRedo.current.clear();
               updateHistoryFlags();
             }}
             isDisabled={isViewOnly}
@@ -405,6 +443,7 @@ export default function WhiteboardPage() {
             lines={lines}
             canvasRef={canvasRef}
             onPaste={isViewOnly ? undefined : handlePaste}
+            onCut={isViewOnly ? undefined : handleCut}
           />
         </div>
       </div>
