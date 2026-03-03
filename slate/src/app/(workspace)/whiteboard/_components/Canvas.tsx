@@ -113,6 +113,7 @@ export default function Canvas(props: CanvasProps) {
   const indexFilterRef = useRef<OneEuroFilter | null>(null);
   const pinchIndexFilterRef = useRef<OneEuroFilter | null>(null);
   const drawEMAFilterRef = useRef<SimpleEMA | null>(null);
+  const zoomEMARef = useRef<SimpleEMA | null>(null);
 
   const isPanning = useRef(false);
   const lastPanPosition = useRef<{ x: number; y: number } | null>(null);
@@ -148,6 +149,7 @@ export default function Canvas(props: CanvasProps) {
     indexFilterRef.current = null;
     pinchIndexFilterRef.current = null;
     drawEMAFilterRef.current = null;
+    zoomEMARef.current = null;
     lastFilteredPos.current = null;
     prevPoint.current = null;
   }, [dimensions]);
@@ -586,6 +588,37 @@ export default function Canvas(props: CanvasProps) {
           hudLayerRef.current = null;
           setHudLayerReady(false);
         },
+        // Zooming via gesture: start/update/end allow continuous zoom based on hand movement
+        startZoom: (startX: number, startY: number) => {
+          lastPanPosition.current = {
+            x: startX * dimensions.width,
+            y: startY * dimensions.height,
+          };
+        },
+        updateZoom: (x: number, y: number) => {
+          const screenX = x * dimensions.width;
+          const screenY = y * dimensions.height;
+          const last = lastPanPosition.current;
+          if (!last) {
+            lastPanPosition.current = { x: screenX, y: screenY };
+            return;
+          }
+          const deltaY = last.y - screenY;
+          const norm = deltaY / Math.max(1, dimensions.height);
+          const deadZone = 0.02;
+          const adjustedNorm = Math.abs(norm) < deadZone ? 0 : norm;
+          const rawFactor = 1 + Math.max(-0.03, Math.min(0.03, adjustedNorm * 3));
+          if (!zoomEMARef.current) {
+            zoomEMARef.current = new SimpleEMA(0.5); 
+          }
+          const smoothedFactor = zoomEMARef.current.filter(rawFactor) as number;
+          transform.current.zoomAtPoint(smoothedFactor, screenX, screenY);
+          lastPanPosition.current = { x: screenX, y: screenY };
+        },
+        endZoom: () => {
+          lastPanPosition.current = null;
+          zoomEMARef.current = null; // reset EMA smoothing
+        },
         zoomIn: () =>
           transform.current.zoomAtPoint(
             1.2,
@@ -838,5 +871,3 @@ export default function Canvas(props: CanvasProps) {
     </div>
   );
 }
-
-
