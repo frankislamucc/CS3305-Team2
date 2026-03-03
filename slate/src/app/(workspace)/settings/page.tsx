@@ -129,56 +129,6 @@ function Kbd({ children }: { children: React.ReactNode }) {
 }
 
 export default function SettingsPage() {
-  const actions = ["Draw", "Pan", "Colour_Wheel", "Select_Size"];
-  const customGestures = ["rightIndexPinch", "rightMiddlePinch", "rightRingPinch", "rightPinkyPinch", "leftIndexPinch", "leftMiddlePinch", "leftRingPinch", "leftPinkyPinch", "[UNBOUND]"]
-  const defaultGestures = ["Closed_Fist", "Open_Palm", "Thumb_Up", "Thumb_Down", "Pointing_Up"]
-
-  const totalGestures = [...customGestures, ...defaultGestures];
-
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
-
-  const [bindingsSelections, setBindingsSelections] = React.useState<Record<string, string>>({});
-
-  React.useEffect(() => {
-    loadSettingsAction().then((result) => {
-      if (result.success && result.settings && Object.keys(result.settings).length > 0) {
-        setBindingsSelections(result.settings);
-      } else {
-        setBindingsSelections({ 
-          Draw: "rightIndexPinch", 
-          Pan: "rightMiddlePinch", 
-          Colour_Wheel: "rightRingPinch", 
-          Select_Size: "rightPinkyPinch"
-        });
-      }
-    });
-  }, []);
-
-  const handleGestureChange = (action: string, newGesture: string) => {
-    setBindingsSelections((prev) => {
-      const updated = { ...prev };
-      for (const key in updated) {
-        if (updated[key] === newGesture) delete updated[key];
-      }
-      updated[action] = newGesture;
-      return updated;
-    });
-  };
-
-  const saveSettings = useCallback(async () => {
-    setIsSavingSettings(true);
-    try {
-      const result = await saveSettingsAction(bindingsSelections);
-      if (!result.success) {
-        console.error("Failed to save settings:", result.errorMessage);
-      }
-    } catch (err) {
-      console.error("Failed to save settings:", err);
-    } finally {
-      setIsSavingSettings(false);
-    }
-  }, [bindingsSelections]);
-
   return (
     <>
       {/* Animated background — same as landing page */}
