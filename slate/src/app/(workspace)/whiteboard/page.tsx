@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LineData } from "./_types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CanvasHandle } from "./_types";
 import GestureEngine from "./_components/GestureEngine";
 import {
@@ -201,7 +202,8 @@ export default function WhiteboardPage() {
     updateHistoryFlags();
   }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
-  // Keyboard shortcuts for undo (Ctrl+Z) and redo (Ctrl+Y)
+  // Keyboard shortcuts for undo (Ctrl+Z), redo (Ctrl+Y), help (Ctrl+H)
+  const router = useRouter();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -210,12 +212,15 @@ export default function WhiteboardPage() {
       } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
         e.preventDefault();
         performRedo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "h") {
+        e.preventDefault();
+        router.push("/settings");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [performUndo, performRedo]);
+  }, [performUndo, performRedo, router]);
 
   const handleDrawEnd = useCallback(() => {
     const canvasHandler = canvasRef.current;
