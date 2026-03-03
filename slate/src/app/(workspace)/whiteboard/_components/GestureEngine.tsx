@@ -33,6 +33,8 @@ export default function GestureEngine({
   const isGauntlet = useRef(false);
   const isSizing = useRef(false);
   const isPanning = useRef(false);
+  const isZooming = useRef(false);
+  const zoomStartY = useRef<number | null>(null);
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -173,6 +175,54 @@ export default function GestureEngine({
               sizeExitTimer.current = null;
             }, 500);
           }
+        }
+
+        // gun gesture for zooming (right hand)
+        if (gesture === "rightGun" && !isZooming.current) {
+          const palmCenter = {
+            x:
+              (predictions.landmarks[0][0].x +
+                predictions.landmarks[0][5].x +
+                predictions.landmarks[0][9].x +
+                predictions.landmarks[0][13].x +
+                predictions.landmarks[0][17].x) /
+              5,
+            y:
+              (predictions.landmarks[0][0].y +
+                predictions.landmarks[0][5].y +
+                predictions.landmarks[0][9].y +
+                predictions.landmarks[0][13].y +
+                predictions.landmarks[0][17].y) /
+              5,
+          };
+          isZooming.current = true;
+          zoomStartY.current = palmCenter.y;
+          console.debug("rightGun START", { palmCenter });
+          canvasRef.current?.startZoom(palmCenter.x, palmCenter.y);
+        } else if (gesture === "rightGun" && isZooming.current) {
+          const palmCenter = {
+            x:
+              (predictions.landmarks[0][0].x +
+                predictions.landmarks[0][5].x +
+                predictions.landmarks[0][9].x +
+                predictions.landmarks[0][13].x +
+                predictions.landmarks[0][17].x) /
+              5,
+            y:
+              (predictions.landmarks[0][0].y +
+                predictions.landmarks[0][5].y +
+                predictions.landmarks[0][9].y +
+                predictions.landmarks[0][13].y +
+                predictions.landmarks[0][17].y) /
+              5,
+          };
+          console.debug("rightGun UPDATE", { palmCenter });
+          canvasRef.current?.updateZoom(palmCenter.x, palmCenter.y);
+        } else if (gesture !== "rightGun" && isZooming.current) {
+          console.debug("rightGun END");
+          isZooming.current = false;
+          zoomStartY.current = null;
+          canvasRef.current?.endZoom();
         }
 
         // Handle pinch for drawing
