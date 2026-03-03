@@ -22,6 +22,7 @@ interface CanvasProps {
   lines: LineData[];
   canvasRef: RefObject<CanvasHandle | null>;
   onPaste?: (lines: LineData[]) => void;
+  onCut?: (remainingLines: LineData[]) => void;
 }
 
 // Helper function to convert HSL string to RGBA string
@@ -299,6 +300,58 @@ export default function Canvas(props: CanvasProps) {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+        if (clippedLines.length === 0 || !props.onCut || !selectionRect) return;
+        e.preventDefault();
+        setClipboard(clippedLines);
+
+        // Compute remaining lines (points outside the selection rect)
+        const rect = {
+          x: Math.min(selectionRect.x1, selectionRect.x2),
+          y: Math.min(selectionRect.y1, selectionRect.y2),
+          w: Math.abs(selectionRect.x2 - selectionRect.x1),
+          h: Math.abs(selectionRect.y2 - selectionRect.y1),
+        };
+        const isInside = (px: number, py: number) =>
+          px >= rect.x && px <= rect.x + rect.w &&
+          py >= rect.y && py <= rect.y + rect.h;
+
+        const remaining: LineData[] = [];
+        props.lines.forEach((line) => {
+          let segment: number[] = [];
+          for (let i = 0; i < line.points.length; i += 2) {
+            const px = line.points[i];
+            const py = line.points[i + 1];
+            if (!isInside(px, py)) {
+              segment.push(px, py);
+            } else {
+              if (segment.length >= 4) {
+                remaining.push({
+                  ...line,
+                  id: crypto.randomUUID(),
+                  points: [...segment],
+                });
+              }
+              segment = [];
+            }
+          }
+          if (segment.length >= 4) {
+            remaining.push({
+              ...line,
+              id: crypto.randomUUID(),
+              points: [...segment],
+            });
+          }
+        });
+
+        props.onCut(remaining);
+
+        setIsSelectMode(false);
+        setSelectionRect(null);
+        setClippedLines([]);
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         if (clipboard.length === 0 || !props.onPaste) return;
         e.preventDefault();
@@ -325,7 +378,7 @@ export default function Canvas(props: CanvasProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [clippedLines, clipboard, clipboardCenter, props]);
+  }, [clippedLines, clipboard, clipboardCenter, selectionRect, props]);
 
   useImperativeHandle(
     props.canvasRef,
@@ -753,7 +806,7 @@ export default function Canvas(props: CanvasProps) {
       {isSelectMode && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 bg-blue-600/90 text-white text-sm rounded-full shadow-lg pointer-events-none select-none">
           {clippedLines.length > 0
-            ? `${clippedLines.length} segment(s) selected — Ctrl+C to copy · Ctrl+V to paste · Esc to exit`
+            ? `${clippedLines.length} segment(s) selected — Ctrl+C to copy · Ctrl+X to cut · Ctrl+V to paste · Esc to exit`
             : "Draw a rectangle to select lines · Esc to exit"}
         </div>
       )}

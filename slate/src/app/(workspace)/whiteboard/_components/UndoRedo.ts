@@ -3,7 +3,8 @@ import { LineData } from "../_types";
 export type UndoAction =
   | { type: "addLine"; line: LineData }
   | { type: "addLines"; lines: LineData[] }
-  | { type: "clearCanvas"; lines: LineData[] };
+  | { type: "clearCanvas"; lines: LineData[] }
+  | { type: "replaceAll"; oldLines: LineData[]; newLines: LineData[] };
 
 /**
  * Action-based undo/redo system.
@@ -34,6 +35,12 @@ export class UndoRedo {
   clearCanvas(currentLines: LineData[]) {
     if (currentLines.length === 0) return;
     this.undoStack.push({ type: "clearCanvas", lines: [...currentLines] });
+    this.redoStack.length = 0;
+  }
+
+  /** Record a bulk replacement (e.g. cut). */
+  replaceAll(oldLines: LineData[], newLines: LineData[]) {
+    this.undoStack.push({ type: "replaceAll", oldLines: [...oldLines], newLines: [...newLines] });
     this.redoStack.length = 0;
   }
 

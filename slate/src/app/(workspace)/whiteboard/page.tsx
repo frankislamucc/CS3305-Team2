@@ -165,6 +165,9 @@ export default function WhiteboardPage() {
       case "clearCanvas":
         newLines = action.lines;
         break;
+      case "replaceAll":
+        newLines = action.oldLines;
+        break;
     }
 
     setLines(newLines);
@@ -186,6 +189,9 @@ export default function WhiteboardPage() {
         break;
       case "clearCanvas":
         newLines = [];
+        break;
+      case "replaceAll":
+        newLines = action.newLines;
         break;
     }
 
@@ -235,6 +241,16 @@ export default function WhiteboardPage() {
       const updated = [...lines, ...pastedLines];
       setLines(updated);
       saveCanvas(updated, canvasId);
+    },
+    [lines, canvasId, saveCanvas, updateHistoryFlags],
+  );
+
+  const handleCut = useCallback(
+    (remainingLines: LineData[]) => {
+      undoRedo.current.replaceAll(lines, remainingLines);
+      updateHistoryFlags();
+      setLines(remainingLines);
+      saveCanvas(remainingLines, canvasId);
     },
     [lines, canvasId, saveCanvas, updateHistoryFlags],
   );
@@ -427,6 +443,7 @@ export default function WhiteboardPage() {
             lines={lines}
             canvasRef={canvasRef}
             onPaste={isViewOnly ? undefined : handlePaste}
+            onCut={isViewOnly ? undefined : handleCut}
           />
         </div>
       </div>
