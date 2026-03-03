@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LineData } from "./_types";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { CanvasHandle } from "./_types";
 import GestureEngine from "./_components/GestureEngine";
 import {
@@ -430,6 +431,26 @@ export default function WhiteboardPage() {
             isDisabled={isViewOnly}
             text="Clear Canvas"
           />
+          <Link
+            href="/settings"
+            className="px-3 py-1 text-sm rounded bg-gray-600 text-white hover:bg-gray-500 cursor-pointer flex items-center gap-1.5"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01"
+              />
+              <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Help
+          </Link>
         </div>
         <div className="relative flex-1">
           {!isViewOnly && (
