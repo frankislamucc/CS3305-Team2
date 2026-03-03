@@ -162,12 +162,71 @@ export function detectRightFist(landmarks: NormalizedLandmark[][]): boolean {
   );
 }
 
+export function detectRightGun(landmarks: NormalizedLandmark[][]): boolean {
+  const {
+    WRIST,
+    RIGHT_THUMB_TIP,
+    RIGHT_INDEX_MCP,
+    RIGHT_INDEX_PIP,
+    RIGHT_INDEX_TIP,
+    RIGHT_MIDDLE_TIP,
+    RIGHT_RING_TIP,
+    RIGHT_PINKY_TIP,
+  } = getLandmarks(landmarks);
+
+  // Require all key landmarks to be present
+  if (
+    !WRIST ||
+    !RIGHT_THUMB_TIP ||
+    !RIGHT_INDEX_TIP ||
+    !RIGHT_INDEX_MCP ||
+    !RIGHT_INDEX_PIP ||
+    !RIGHT_MIDDLE_TIP ||
+    !RIGHT_RING_TIP ||
+    !RIGHT_PINKY_TIP
+  ) {
+    return false;
+  }
+
+  // Use an approximate palm center: average of wrist and index MCP
+  const palmCenter = {
+    x: (WRIST.x + RIGHT_INDEX_MCP.x) / 2,
+    y: (WRIST.y + RIGHT_INDEX_MCP.y) / 2,
+  };
+
+  // Index should be extended away from the palm (very lenient)
+  const indexDist = Math.hypot(RIGHT_INDEX_TIP.x - palmCenter.x, RIGHT_INDEX_TIP.y - palmCenter.y);
+  if (indexDist < 0.10) return false; // even more relaxed
+
+  // Middle, ring and pinky should be relatively close to the palm (curled) - very lenient
+  const curledThreshold = 0.16; // much more forgiving
+  if (
+    Math.hypot(RIGHT_MIDDLE_TIP.x - palmCenter.x, RIGHT_MIDDLE_TIP.y - palmCenter.y) > curledThreshold ||
+    Math.hypot(RIGHT_RING_TIP.x - palmCenter.x, RIGHT_RING_TIP.y - palmCenter.y) > curledThreshold ||
+    Math.hypot(RIGHT_PINKY_TIP.x - palmCenter.x, RIGHT_PINKY_TIP.y - palmCenter.y) > curledThreshold
+  ) {
+    return false;
+  }
+
+  // Thumb should be raised (thumb tip above wrist in image coordinates) - very lenient
+  if (!(RIGHT_THUMB_TIP.y < WRIST.y)) return false;
+
+  // Index direction: pointing generally right relative to MCP (allow lots of tolerance)
+  if (RIGHT_INDEX_TIP.x <= RIGHT_INDEX_MCP.x) return false;
+
+  // Optional debug: uncomment to log detection
+  // console.debug("detectRightGun: passed", { indexDist, palmCenter });
+
+  return true;
+}
+
 export function detectCustomGestures(landmarks: NormalizedLandmark[][]) {
   return {
     rightPinkyPinch: detectRightPinkyPinch(landmarks),
     rightRingPinch: detectRightRingPinch(landmarks),
     rightMiddlePinch: detectRightMiddlePinch(landmarks),
     rightIndexPinch: detectRightIndexPinch(landmarks),
+    rightGun: detectRightGun(landmarks),
     leftPinkyPinch: detectLeftPinkyPinch(landmarks),
     leftRingPinch: detectLeftRingPinch(landmarks),
     leftMiddlePinch: detectLeftMiddlePinch(landmarks),
@@ -229,8 +288,8 @@ function closestLeftPinch(landmarks: NormalizedLandmark[][]): string | null {
 export function produceHighestPriorityGesture(landmarks: NormalizedLandmark[][]) {
   const gestures = detectCustomGestures(landmarks);
 
-  // Fist is always highest priority
-  if (gestures.rightFist) return "rightFist";
+  // Gun gesture should take priority over pinches
+  if (gestures.rightGun) return "rightGun";
 
   // For pinches, use distance-based selection so the *closest* finger wins
   const rightPinch = closestRightPinch(landmarks);
