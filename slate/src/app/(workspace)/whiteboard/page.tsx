@@ -170,13 +170,13 @@ export default function WhiteboardPage() {
     }
   }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
 
-  // Keyboard shortcuts for undo (Ctrl+Z) and redo (Ctrl+X)
+  // Keyboard shortcuts for undo (Ctrl+Z) and redo (Ctrl+Y)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         performUndo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
         e.preventDefault();
         performRedo();
       }
