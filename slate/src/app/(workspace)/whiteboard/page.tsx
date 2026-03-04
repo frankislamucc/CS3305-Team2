@@ -405,7 +405,7 @@ export default function WhiteboardPage() {
           />
           <OptionButton
             onClick={() => toggleCamera(cameraLocation)}
-            isDisabled={isViewOnly}
+            isDisabled={false}
             text={
               cameraLocation === "front"
                 ? "Switch to Back Camera"
@@ -458,13 +458,12 @@ export default function WhiteboardPage() {
           </Link>
         </div>
         <div className="relative flex-1">
-          {!isViewOnly && (
-            <GestureEngine
-              canvasRef={canvasRef}
-              onDrawEnd={handleDrawEnd}
-              cameraLocation={cameraLocation}
-            />
-          )}
+          <GestureEngine
+            canvasRef={canvasRef}
+            onDrawEnd={handleDrawEnd}
+            cameraLocation={cameraLocation}
+            viewOnly={isViewOnly}
+          />
           <Canvas
             lines={lines}
             canvasRef={canvasRef}

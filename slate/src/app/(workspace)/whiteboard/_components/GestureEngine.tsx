@@ -15,6 +15,7 @@ interface GestureEngineProps {
   canvasRef: RefObject<CanvasHandle | null>;
   onDrawEnd: () => void;
   cameraLocation: "front" | "back";
+  viewOnly?: boolean;
 }
 
 const INDEX_FINGER_TIP = 8;
@@ -23,6 +24,7 @@ export default function GestureEngine({
   canvasRef,
   onDrawEnd,
   cameraLocation,
+  viewOnly = false,
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -114,8 +116,8 @@ export default function GestureEngine({
           isPanning.current = false;
         }
 
-        // colour wheel logic for ring pinch
-        if (gesture === "rightRingPinch" && !isGauntlet.current) {
+        // colour wheel logic for ring pinch (disabled in view-only mode)
+        if (!viewOnly && gesture === "rightRingPinch" && !isGauntlet.current) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
@@ -124,7 +126,7 @@ export default function GestureEngine({
           spinnerAngleEMA.current = new SimpleEMA();
           canvasRef.current?.showSpinner(0);
           canvasRef.current?.setSpinnerStartX(predictions.landmarks[0][16].x);
-        } else if (gesture === "rightRingPinch" && isGauntlet.current) {
+        } else if (!viewOnly && gesture === "rightRingPinch" && isGauntlet.current) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
@@ -135,7 +137,7 @@ export default function GestureEngine({
             300;
           const smoothed = spinnerAngleEMA.current!.filter(rawAngle) as number;
           canvasRef.current?.showSpinner(smoothed);
-        } else if (gesture !== "rightRingPinch" && isGauntlet.current) {
+        } else if (!viewOnly && gesture !== "rightRingPinch" && isGauntlet.current) {
           if (!gauntletExitTimer.current) {
             gauntletExitTimer.current = setTimeout(() => {
               canvasRef.current?.hideSpinner();
@@ -146,8 +148,8 @@ export default function GestureEngine({
           }
         }
 
-        // size selector logic (pinky pinch)
-        if (gesture === "rightPinkyPinch" && !isSizing.current) {
+        // size selector logic (pinky pinch — disabled in view-only mode)
+        if (!viewOnly && gesture === "rightPinkyPinch" && !isSizing.current) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
@@ -157,7 +159,7 @@ export default function GestureEngine({
             predictions.landmarks[0][20].y,
           );
           isSizing.current = true;
-        } else if (gesture === "rightPinkyPinch" && isSizing.current) {
+        } else if (!viewOnly && gesture === "rightPinkyPinch" && isSizing.current) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
@@ -167,7 +169,7 @@ export default function GestureEngine({
               canvasRef.current?.sizeSelectorStartY()) *
               2,
           );
-        } else if (gesture !== "rightPinkyPinch" && isSizing.current) {
+        } else if (!viewOnly && gesture !== "rightPinkyPinch" && isSizing.current) {
           if (!sizeExitTimer.current) {
             sizeExitTimer.current = setTimeout(() => {
               canvasRef.current?.hideSizeSelector();
@@ -225,11 +227,11 @@ export default function GestureEngine({
           canvasRef.current?.endZoom();
         }
 
-        // Handle pinch for drawing
-        if (gesture === "rightIndexPinch") {
+        // Handle pinch for drawing (disabled in view-only mode)
+        if (!viewOnly && gesture === "rightIndexPinch") {
           isDrawing.current = true;
           console.log("pinch detected! STARTING TO DRAW");
-        } else {
+        } else if (!viewOnly) {
           isDrawing.current = false;
           onDrawEndRef.current();
         }
@@ -261,8 +263,9 @@ export default function GestureEngine({
         canvasRef.current?.updateLandmarks(null);
       }
 
-      // Draw if pinching (and not panning)
+      // Draw if pinching (and not panning, and not view-only)
       if (
+        !viewOnly &&
         isDrawing.current &&
         !isPanning.current && // Don't draw while panning
         canvasRef.current !== null &&
@@ -283,7 +286,7 @@ export default function GestureEngine({
         );
       }
     },
-    [canvasRef],
+    [canvasRef, viewOnly],
   );
 
   // Date.now() is seen as dynamically changing
