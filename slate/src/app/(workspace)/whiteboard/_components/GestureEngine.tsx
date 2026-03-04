@@ -77,7 +77,6 @@ export default function GestureEngine({
 
   const onPredict = useCallback(
     (predictions: GestureRecognizerResult) => {
-      console.log(predictions)
       let gesture =
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
@@ -217,7 +216,6 @@ export default function GestureEngine({
           };
           isZooming.current = true;
           zoomStartY.current = palmCenter.y;
-          console.debug("rightGun START", { palmCenter });
           canvasRef.current?.startZoom(palmCenter.x, palmCenter.y);
         } else if (gesture === "rightGun" && isZooming.current) {
           const palmCenter = {
@@ -236,10 +234,8 @@ export default function GestureEngine({
                 predictions.landmarks[0][17].y) /
               5,
           };
-          console.debug("rightGun UPDATE", { palmCenter });
           canvasRef.current?.updateZoom(palmCenter.x, palmCenter.y);
         } else if (gesture !== "rightGun" && isZooming.current) {
-          console.debug("rightGun END");
           isZooming.current = false;
           zoomStartY.current = null;
           canvasRef.current?.endZoom();
@@ -248,7 +244,6 @@ export default function GestureEngine({
         // Handle pinch for drawing (disabled in view-only mode)
         if (!viewOnly && gesture === "rightIndexPinch") {
           isDrawing.current = true;
-          console.log("pinch detected! STARTING TO DRAW");
         } else if (!viewOnly) {
           isDrawing.current = false;
           onDrawEndRef.current();
@@ -362,8 +357,6 @@ export default function GestureEngine({
   }, []);
 
   useEffect(() => {
-    console.log("worker useEffect running — onPredict changed");
-
     workerRef.current = new Worker(
       new URL("@/workers/gesture.worker.ts", import.meta.url),
     );

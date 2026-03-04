@@ -93,6 +93,65 @@ const gestureBindings = [
       </svg>
     ),
   },
+  {
+    gesture: "Left Index Pinch",
+    action: "Undo",
+    description:
+      "With both hands visible, pinch your left thumb and index finger together to undo the last action.",
+    icon: (
+      <svg
+        viewBox="0 0 64 64"
+        className="w-10 h-10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path d="M20 32c0-8 6-14 14-14s14 6 14 14" className="stroke-amber-400" strokeLinecap="round" />
+        <path d="M20 32l-5-5M20 32l5-5" className="stroke-amber-400" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="26" y="50" className="fill-amber-400" fontSize="14" fontWeight="bold" fontFamily="sans-serif">↩</text>
+      </svg>
+    ),
+  },
+  {
+    gesture: "Left Ring Pinch",
+    action: "Redo",
+    description:
+      "With both hands visible, pinch your left thumb and ring finger together to redo a previously undone action.",
+    icon: (
+      <svg
+        viewBox="0 0 64 64"
+        className="w-10 h-10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path d="M44 32c0-8-6-14-14-14s-14 6-14 14" className="stroke-teal-400" strokeLinecap="round" />
+        <path d="M44 32l5-5M44 32l-5-5" className="stroke-teal-400" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="26" y="50" className="fill-teal-400" fontSize="14" fontWeight="bold" fontFamily="sans-serif">↪</text>
+      </svg>
+    ),
+  },
+  {
+    gesture: "Gun Gesture",
+    action: "Zoom In / Out",
+    description:
+      "Make a gun shape with your right hand (index extended, others curled, thumb up) and move your hand up to zoom in or down to zoom out.",
+    icon: (
+      <svg
+        viewBox="0 0 64 64"
+        className="w-10 h-10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <circle cx="32" cy="32" r="14" className="stroke-emerald-400" />
+        <line x1="32" y1="22" x2="32" y2="18" className="stroke-emerald-400" strokeLinecap="round" />
+        <line x1="32" y1="42" x2="32" y2="46" className="stroke-emerald-400" strokeLinecap="round" />
+        <path d="M28 28l4-4 4 4" className="stroke-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M28 36l4 4 4-4" className="stroke-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ];
 
 const keybindSections = [
