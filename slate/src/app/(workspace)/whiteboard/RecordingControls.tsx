@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { saveRecordingAction } from "./actions/recording";
 
 export interface RecordingControlsProps {
   onRecordingStart?: () => void;
@@ -64,12 +63,23 @@ export default function RecordingControls({
         setIsSaving(true);
         try {
           const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.webm`;
-          const result = await saveRecordingAction(
-            filename,
-            base64,
-            blob.type
-          );
+          const response = await fetch("/api/recordings/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filename,
+              base64Data: base64,
+              mimeType: blob.type,
+            }),
+          });
 
+          if (!response.ok) {
+            const errorData = await response.json();
+            onError?.(errorData.errorMessage || "Failed to save recording");
+            return;
+          }
+
+          const result = await response.json();
           if (result.success && result.recordingId) {
             onRecordingSaved?.(result.recordingId);
           } else {
