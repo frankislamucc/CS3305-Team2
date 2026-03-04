@@ -67,7 +67,7 @@ export async function loginAction(
     });
   } catch (error: unknown) {
     console.log(error);
-    return { errorMessages: ["Uknown error occurred, please try again"] };
+    return { errorMessages: ["Unknown error occurred, please try again"] };
   }
   // succesfull redirect throws an error
   // so keep out of try catch
