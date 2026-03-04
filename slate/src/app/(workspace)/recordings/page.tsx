@@ -54,7 +54,13 @@ export default function RecordingsPage() {
     try {
       const result = await getRecordingDataAction(recordingId);
       if (result.success && result.data) {
-        const blob = new Blob([result.data], { type: mimeType });
+        // Convert base64 back to binary
+        const binaryString = atob(result.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: mimeType });
         const url = URL.createObjectURL(blob);
         setPreviews((prev) => ({ ...prev, [recordingId]: url }));
       } else {
@@ -71,7 +77,13 @@ export default function RecordingsPage() {
     try {
       const result = await getRecordingDataAction(recordingId);
       if (result.success && result.data) {
-        const blob = new Blob([result.data], { type: result.mimeType });
+        // Convert base64 back to binary
+        const binaryString = atob(result.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: result.mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

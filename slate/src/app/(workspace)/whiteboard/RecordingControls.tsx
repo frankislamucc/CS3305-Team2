@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { saveRecordingAction } from "../actions/recording";
+import { saveRecordingAction } from "./actions/recording";
 
 export interface RecordingControlsProps {
   onRecordingStart?: () => void;
@@ -38,6 +38,7 @@ export default function RecordingControls({
         mimeType: "video/webm;codecs=vp9,opus",
       });
 
+      mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -49,7 +50,15 @@ export default function RecordingControls({
       mediaRecorder.onstop = async () => {
         // Combine chunks into a single blob
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
-        const buffer = await blob.arrayBuffer();
+        const arrayBuffer = await blob.arrayBuffer();
+        
+        // Convert ArrayBuffer to base64
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binaryString = "";
+        for (let i = 0; i < uint8Array.length; i++) {
+          binaryString += String.fromCharCode(uint8Array[i]);
+        }
+        const base64 = btoa(binaryString);
 
         // Save recording
         setIsSaving(true);
@@ -57,7 +66,7 @@ export default function RecordingControls({
           const filename = `recording_${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.webm`;
           const result = await saveRecordingAction(
             filename,
-            Buffer.from(buffer),
+            base64,
             blob.type
           );
 
@@ -105,7 +114,7 @@ export default function RecordingControls({
         <button
           onClick={startRecording}
           disabled={isSaving}
-          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
           title="Start screen recording"
         >
           <span className="w-2 h-2 bg-white rounded-full"></span>
@@ -114,7 +123,7 @@ export default function RecordingControls({
       ) : (
         <button
           onClick={stopRecording}
-          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors animate-pulse"
+          className="flex items-center gap-2 px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors animate-pulse"
           title="Stop recording"
         >
           <span className="w-2 h-2 bg-white rounded-full"></span>

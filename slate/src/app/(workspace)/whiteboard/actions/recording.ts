@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/auth";
-import { dbConnect } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import Recording from "@/app/models/Recording";
 
 export interface RecordingSummary {
@@ -20,7 +20,7 @@ export interface FetchRecordingsResult {
 
 export interface RecordingData {
   success: boolean;
-  data?: Buffer;
+  data?: string; // base64 encoded data
   mimeType?: string;
   filename?: string;
   errorMessage?: string;
@@ -82,9 +82,12 @@ export async function getRecordingDataAction(
       return { success: false, errorMessage: "Recording not found" };
     }
 
+    // Convert Buffer to base64 for transmission
+    const base64Data = (recording.data as any).toString("base64");
+
     return {
       success: true,
-      data: recording.data,
+      data: base64Data,
       mimeType: recording.mimeType,
       filename: recording.filename,
     };
@@ -99,7 +102,7 @@ export async function getRecordingDataAction(
  */
 export async function saveRecordingAction(
   filename: string,
-  data: Buffer,
+  base64Data: string,
   mimeType: string = "video/webm"
 ): Promise<{ success: boolean; errorMessage?: string; recordingId?: string }> {
   try {
@@ -110,12 +113,15 @@ export async function saveRecordingAction(
 
     await dbConnect();
 
+    // Convert base64 back to Buffer
+    const buffer = Buffer.from(base64Data, "base64");
+
     const recording = new Recording({
       userId: session.userId,
       filename,
       mimeType,
-      sizeBytes: data.length,
-      data,
+      sizeBytes: buffer.length,
+      data: buffer,
     });
 
     await recording.save();
