@@ -23,6 +23,7 @@ interface CanvasProps {
   canvasRef: RefObject<CanvasHandle | null>;
   onPaste?: (lines: LineData[]) => void;
   onCut?: (remainingLines: LineData[]) => void;
+  viewOnly?: boolean;
 }
 
 // Expects input like "hsl(0, 100%, 50%)"
@@ -183,6 +184,9 @@ export default function Canvas(props: CanvasProps) {
   // ── Copy & Paste: mouse handlers ──
   const handleStageMouseDown = useCallback(
     (e: any) => {
+      // Disable all mouse interactions in view-only mode
+      if (props.viewOnly) return;
+
       // Custom double-click detection (works even while moving the mouse)
       const now = Date.now();
       const isDoubleClick =
@@ -295,6 +299,9 @@ export default function Canvas(props: CanvasProps) {
   // ── Keyboard: Ctrl+C / Ctrl+V / Escape ──
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Disable all keyboard interactions in view-only mode
+      if (props.viewOnly) return;
+
       if (e.key === "Escape") {
         setIsSelectMode(false);
         setIsDrawingSelection(false);
@@ -402,6 +409,9 @@ export default function Canvas(props: CanvasProps) {
           thumbX?: number,
           thumbY?: number,
         ) => {
+          // Block drawing in view-only mode
+          if (props.viewOnly) return;
+
           const lineNode = lineRef.current;
           if (lineNode === null) return;
 
@@ -699,7 +709,7 @@ export default function Canvas(props: CanvasProps) {
             />
           </Layer>
           <Layer listening={false}>
-            {landmarks && !landmarks.isPinching && (() => {
+            {!props.viewOnly && landmarks && !landmarks.isPinching && (() => {
               const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
               const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
               const smallAlpha = 0.3;
@@ -726,7 +736,7 @@ export default function Canvas(props: CanvasProps) {
                 </>
               );
             })()}
-            {landmarks && landmarks.isPinching && (() => {
+            {!props.viewOnly && landmarks && landmarks.isPinching && (() => {
               const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
               const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
               const midCoords = getLandmarkCanvasCoords(

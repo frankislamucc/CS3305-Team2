@@ -469,6 +469,7 @@ export default function WhiteboardPage() {
             canvasRef={canvasRef}
             onPaste={isViewOnly ? undefined : handlePaste}
             onCut={isViewOnly ? undefined : handleCut}
+            viewOnly={isViewOnly}
           />
         </div>
       </div>

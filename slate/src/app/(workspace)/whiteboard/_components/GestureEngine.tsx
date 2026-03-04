@@ -248,8 +248,8 @@ export default function GestureEngine({
         // }
       }
 
-      // Update landmark dots (thumb + index finger)
-      if (canvasRef.current !== null && predictions.landmarks[0]) {
+      // Update landmark dots (thumb + index finger) — hidden in view-only mode
+      if (!viewOnly && canvasRef.current !== null && predictions.landmarks[0]) {
         const THUMB_TIP = 4;
         const thumbPoint = predictions.landmarks[0][THUMB_TIP];
         const indexPoint = predictions.landmarks[0][INDEX_FINGER_TIP];
@@ -259,7 +259,7 @@ export default function GestureEngine({
           index: { x: 1 - indexPoint.x, y: indexPoint.y },
           isPinching: isDrawing.current,
         });
-      } else {
+      } else if (!viewOnly) {
         canvasRef.current?.updateLandmarks(null);
       }
 
