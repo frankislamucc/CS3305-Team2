@@ -15,6 +15,7 @@ function formatBytes(bytes: number): string {
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ColorBends from "@/components/ui/ColorBends";
 import {
   fetchRecordingsAction,
   getRecordingDataAction,
@@ -130,98 +131,150 @@ export default function RecordingsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center">
-        <p className="text-gray-600">Loading recordings...</p>
-      </div>
+      <>
+        <ColorBends
+          className="fixed inset-0 -z-10"
+          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+          rotation={0}
+          speed={0.2}
+          scale={1}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={1}
+          parallax={0.5}
+          noise={0.1}
+          transparent
+          autoRotate={0}
+        />
+        <div className="flex flex-col flex-1 items-center justify-center min-h-screen">
+          <div className="backdrop-blur-xl bg-white/60 border border-neutral-200 rounded-2xl px-8 py-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+            <p className="text-neutral-600 text-lg">Loading recordings...</p>
+          </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">My Recordings</h1>
-        <Link
-          href="/whiteboard"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Back to Whiteboard
-        </Link>
-      </div>
+    <>
+      {/* Animated background — same as settings / landing page */}
+      <ColorBends
+        className="fixed inset-0 -z-10"
+        colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+        rotation={0}
+        speed={0.2}
+        scale={1}
+        frequency={1}
+        warpStrength={1}
+        mouseInfluence={1}
+        parallax={0.5}
+        noise={0.1}
+        transparent
+        autoRotate={0}
+      />
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
+      <div className="min-h-screen flex flex-col items-center px-4 pb-16 pt-8">
+        {/* Page header */}
+        <div className="text-center mb-10 max-w-2xl">
+          <h1 className="text-4xl font-bold text-neutral-900 mb-3 tracking-tight">
+            My Recordings
+          </h1>
+          <p className="text-neutral-500 text-sm">
+            View, preview, and download your screen recordings
+          </p>
         </div>
-      )}
 
-      {recordings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-gray-500">
-          <p className="text-lg">No recordings yet</p>
-          <p className="text-sm">Create and save a screen recording from the whiteboard</p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {recordings.map((rec) => (
-            <div
-              key={rec.id}
-              className="flex flex-col gap-2 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+        <div className="w-full max-w-4xl">
+          {/* Back to whiteboard */}
+          <div className="flex justify-end mb-6">
+            <Link
+              href="/whiteboard"
+              className="backdrop-blur-xl bg-white/60 border border-neutral-200 rounded-xl px-5 py-2.5 text-sm font-medium text-neutral-700 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:bg-white/80 hover:border-neutral-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.1)]"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">{rec.filename}</p>
-                  <p className="text-sm text-gray-600">
-                    {formatBytes(rec.sizeBytes)} · {new Date(rec.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleDownload(rec.id, rec.filename)}
-                    disabled={downloading === rec.id}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    {downloading === rec.id ? "Downloading..." : "Download"}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(rec.id)}
-                    disabled={deleting === rec.id}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
-                  >
-                    {deleting === rec.id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-              {rec.mimeType.startsWith("video") && (
-                <div className="mt-2">
-                  {!!previews[rec.id] ? (
-                    <video src={previews[rec.id]} controls className="w-full max-w-md rounded shadow cursor-pointer" />
-                  ) : (
-                    <img
-                      src="/icons/video-thumbnail.png"
-                      alt="Preview"
-                      className="w-32 h-20 object-cover rounded shadow cursor-pointer"
-                      onClick={() => handlePreview(rec.id, rec.mimeType)}
-                    />
-                  )}
-                </div>
-              )}
-              {rec.mimeType.startsWith("audio") && (
-                <div className="mt-2">
-                  {!!previews[rec.id] ? (
-                    <audio src={previews[rec.id]} controls className="w-full max-w-md rounded shadow" />
-                  ) : (
-                    <button
-                      onClick={() => handlePreview(rec.id, rec.mimeType)}
-                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
-                    >
-                      Load Audio Preview
-                    </button>
-                  )}
-                </div>
-              )}
+              ← Back to Whiteboard
+            </Link>
+          </div>
+
+          {error && (
+            <div className="mb-6 backdrop-blur-xl bg-red-50/60 border border-red-200 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] text-red-700 text-sm">
+              {error}
             </div>
-          ))}
+          )}
+
+          {recordings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="backdrop-blur-xl bg-white/60 border border-neutral-200 rounded-2xl px-10 py-10 shadow-[0_8px_32px_rgba(0,0,0,0.08)] text-center">
+                <p className="text-lg font-semibold text-neutral-700 mb-2">No recordings yet</p>
+                <p className="text-sm text-neutral-500">
+                  Create and save a screen recording from the whiteboard
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recordings.map((rec) => (
+                <div
+                  key={rec.id}
+                  className="backdrop-blur-xl bg-white/60 border border-neutral-200 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-white/80 hover:border-neutral-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.12)]"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-neutral-900 text-base">{rec.filename}</p>
+                      <p className="text-sm text-neutral-500 mt-0.5">
+                        {formatBytes(rec.sizeBytes)} · {new Date(rec.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => handleDownload(rec.id, rec.filename)}
+                        disabled={downloading === rec.id}
+                        className="px-4 py-2 text-sm font-medium rounded-xl bg-neutral-900/10 border border-neutral-300 text-neutral-700 shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-neutral-900/20 hover:border-neutral-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {downloading === rec.id ? "Downloading..." : "Download"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(rec.id)}
+                        disabled={deleting === rec.id}
+                        className="px-4 py-2 text-sm font-medium rounded-xl bg-red-500/10 border border-red-300 text-red-700 shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-red-500/20 hover:border-red-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {deleting === rec.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                  {rec.mimeType.startsWith("video") && (
+                    <div className="mt-4">
+                      {!!previews[rec.id] ? (
+                        <video src={previews[rec.id]} controls className="w-full max-w-md rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.1)] cursor-pointer" />
+                      ) : (
+                        <img
+                          src="/icons/video-thumbnail.png"
+                          alt="Preview"
+                          className="w-32 h-20 object-cover rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.1)] cursor-pointer transition-all duration-200 hover:shadow-[0_4px_24px_rgba(0,0,0,0.15)]"
+                          onClick={() => handlePreview(rec.id, rec.mimeType)}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {rec.mimeType.startsWith("audio") && (
+                    <div className="mt-4">
+                      {!!previews[rec.id] ? (
+                        <audio src={previews[rec.id]} controls className="w-full max-w-md rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.1)]" />
+                      ) : (
+                        <button
+                          onClick={() => handlePreview(rec.id, rec.mimeType)}
+                          className="px-4 py-2 text-sm font-medium rounded-xl bg-neutral-900/10 border border-neutral-300 text-neutral-700 shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-neutral-900/20 hover:border-neutral-400 cursor-pointer"
+                        >
+                          Load Audio Preview
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
