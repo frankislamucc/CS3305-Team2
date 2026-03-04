@@ -16,6 +16,8 @@ interface GestureEngineProps {
   onDrawEnd: () => void;
   cameraLocation: "front" | "back";
   viewOnly?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 const INDEX_FINGER_TIP = 8;
@@ -25,6 +27,8 @@ export default function GestureEngine({
   onDrawEnd,
   cameraLocation,
   viewOnly = false,
+  onUndo,
+  onRedo,
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -47,6 +51,17 @@ export default function GestureEngine({
 
   const sizeExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Refs for undo/redo callbacks so they're always fresh
+  const onUndoRef = useRef(onUndo);
+  const onRedoRef = useRef(onRedo);
+  useEffect(() => { onUndoRef.current = onUndo; }, [onUndo]);
+  useEffect(() => { onRedoRef.current = onRedo; }, [onRedo]);
+
+  // Debounce: prevent undo/redo from firing every frame
+  const lastUndoTime = useRef(0);
+  const lastRedoTime = useRef(0);
+  const UNDO_REDO_COOLDOWN = 500; // ms
+
   // Use a ref so the worker useEffect doesn't re-run when onDrawEnd changes
   const onDrawEndRef = useRef(onDrawEnd);
   useEffect(() => {
@@ -62,6 +77,7 @@ export default function GestureEngine({
 
   const onPredict = useCallback(
     (predictions: GestureRecognizerResult) => {
+      console.log(predictions)
       let gesture =
         predictions.gestures && predictions.gestures[0]
           ? predictions.gestures[0][0].categoryName
@@ -69,7 +85,9 @@ export default function GestureEngine({
 
       const customGesture = produceHighestPriorityGesture(
         predictions.landmarks,
+        predictions.handedness,
       );
+
 
       // custom gestures take priority over regular ones, so we check those first
       if (customGesture) {
@@ -236,16 +254,22 @@ export default function GestureEngine({
           onDrawEndRef.current();
         }
 
-        // // Handle other gestures
-        // if (gesture === "rightMiddlePinch") {
-        //   console.log("middle pinch detected! zooming in");
-        //   canvasRef.current?.zoomIn();
-        // }
+        // Left hand gestures: undo/redo (disabled in view-only mode)
+        if (!viewOnly && gesture === "leftIndexPinch") {
+          const now = Date.now();
+          if (now - lastUndoTime.current > UNDO_REDO_COOLDOWN) {
+            lastUndoTime.current = now;
+            onUndoRef.current?.();
+          }
+        }
 
-        // if (gesture === "rightRingPinch") {
-        //   console.log("ring pinch detected! zooming out");
-        //   canvasRef.current?.zoomOut();
-        // }
+        if (!viewOnly && gesture === "leftRingPinch") {
+          const now = Date.now();
+          if (now - lastRedoTime.current > UNDO_REDO_COOLDOWN) {
+            lastRedoTime.current = now;
+            onRedoRef.current?.();
+          }
+        }
       }
 
       // Update landmark dots (thumb + index finger) — hidden in view-only mode

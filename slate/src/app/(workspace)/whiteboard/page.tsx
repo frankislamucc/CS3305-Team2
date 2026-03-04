@@ -393,7 +393,7 @@ export default function WhiteboardPage() {
             isDisabled={isViewOnly}
             text="Save"
           />
-          <OptionButton
+          {/* <OptionButton
             onClick={performUndo}
             isDisabled={isViewOnly || !canUndo}
             text="Undo"
@@ -402,7 +402,7 @@ export default function WhiteboardPage() {
             onClick={performRedo}
             isDisabled={isViewOnly || !canRedo}
             text="Redo"
-          />
+          /> */}
           <OptionButton
             onClick={() => toggleCamera(cameraLocation)}
             isDisabled={false}
@@ -463,6 +463,8 @@ export default function WhiteboardPage() {
             onDrawEnd={handleDrawEnd}
             cameraLocation={cameraLocation}
             viewOnly={isViewOnly}
+            onUndo={performUndo}
+            onRedo={performRedo}
           />
           <Canvas
             lines={lines}
