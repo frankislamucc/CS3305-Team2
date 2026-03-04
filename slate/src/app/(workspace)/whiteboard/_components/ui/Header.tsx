@@ -20,14 +20,8 @@ export default function Header({ username }: HeaderProps) {
     <header className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white">
       <span className="text-lg font-semibold">Slate</span>
       <div className="flex items-center gap-4">
-        <Link href="/whiteboard" className="text-sm hover:text-gray-300 transition-colors">
-          Whiteboard
-        </Link>
         <Link href="/recordings" className="text-sm hover:text-gray-300 transition-colors">
           Recordings
-        </Link>
-        <Link href="/settings" className="text-sm hover:text-gray-300 transition-colors">
-          Settings
         </Link>
         {username && (
           <span className="text-sm text-gray-300">
