@@ -5,7 +5,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "default-secret-change-me"
 );
 
-const protectedRoutes = ["/whiteboard", "/home", "/settings"];
+const protectedRoutes = ["/whiteboard", "/home", "/settings", "/recordings"];
 const publicRoutes = ["/login"];
 
 export async function middleware(req: NextRequest) {
