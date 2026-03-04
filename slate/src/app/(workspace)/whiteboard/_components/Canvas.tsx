@@ -1,6 +1,13 @@
 "use client";
-import { Stage, Layer, Line, Circle, Rect } from "react-konva";
-import type { CanvasHandle, LineData, LandmarkData } from "../_types";
+import { Stage, Layer, Line, Circle, Rect, Text, Arrow } from "react-konva";
+import type {
+  CanvasHandle,
+  LineData,
+  LandmarkData,
+  CircleData,
+  TextData,
+  ArrowData,
+} from "../_types";
 import {
   RefObject,
   useCallback,
@@ -20,6 +27,9 @@ import { OneEuroFilter, SimpleEMA } from "./OneEuro";
 
 interface CanvasProps {
   lines: LineData[];
+  circles: CircleData[];
+  text: TextData[];
+  arrows: ArrowData[];
   canvasRef: RefObject<CanvasHandle | null>;
   onPaste?: (lines: LineData[]) => void;
   onCut?: (remainingLines: LineData[]) => void;
@@ -30,37 +40,39 @@ interface CanvasProps {
 function hslToRgba(hslString: string, alpha: number): string {
   const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (!match) return `rgba(255, 0, 0, ${alpha})`; // fallback to red
-  
+
   const h = parseInt(match[1]) / 360;
   const s = parseInt(match[2]) / 100;
   const l = parseInt(match[3]) / 100;
-  
+
   // HSL to RGB conversion
-  let r = 0, g = 0, b = 0;
-  
+  let r = 0,
+    g = 0,
+    b = 0;
+
   if (s === 0) {
     r = g = b = l;
   } else {
     const hue2rgb = (p: number, q: number, t: number) => {
       if (t < 0) t += 1;
       if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
       return p;
     };
-    
+
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1/3);
+    r = hue2rgb(p, q, h + 1 / 3);
     g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1/3);
+    b = hue2rgb(p, q, h - 1 / 3);
   }
-  
+
   const rInt = Math.round(r * 255);
   const gInt = Math.round(g * 255);
   const bInt = Math.round(b * 255);
-  
+
   return `rgba(${rInt}, ${gInt}, ${bInt}, ${alpha})`;
 }
 
@@ -96,18 +108,22 @@ export default function Canvas(props: CanvasProps) {
   const [, forceUpdate] = useState(0);
   const [landmarks, setLandmarks] = useState<LandmarkData | null>(null);
 
-
-
   // ── Copy & Paste selection state ──
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [isDrawingSelection, setIsDrawingSelection] = useState(false);
   const [selectionRect, setSelectionRect] = useState<{
-    x1: number; y1: number; x2: number; y2: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
   } | null>(null);
   const [clippedLines, setClippedLines] = useState<LineData[]>([]);
   const [clipboard, setClipboard] = useState<LineData[]>([]);
   const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [ghostMousePos, setGhostMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [ghostMousePos, setGhostMousePos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const lastMouseDownTimeRef = useRef<number>(0);
 
   const thumbFilterRef = useRef<OneEuroFilter | null>(null);
@@ -158,7 +174,10 @@ export default function Canvas(props: CanvasProps) {
   // ── Ghost preview: compute offset lines that follow the cursor ──
   const clipboardCenter = useMemo(() => {
     if (clipboard.length === 0) return { x: 0, y: 0 };
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     clipboard.forEach((line) => {
       for (let i = 0; i < line.points.length; i += 2) {
         minX = Math.min(minX, line.points[i]);
@@ -331,8 +350,10 @@ export default function Canvas(props: CanvasProps) {
           h: Math.abs(selectionRect.y2 - selectionRect.y1),
         };
         const isInside = (px: number, py: number) =>
-          px >= rect.x && px <= rect.x + rect.w &&
-          py >= rect.y && py <= rect.y + rect.h;
+          px >= rect.x &&
+          px <= rect.x + rect.w &&
+          py >= rect.y &&
+          py <= rect.y + rect.h;
 
         const remaining: LineData[] = [];
         props.lines.forEach((line) => {
@@ -619,9 +640,10 @@ export default function Canvas(props: CanvasProps) {
           const norm = deltaY / Math.max(1, dimensions.height);
           const deadZone = 0.02;
           const adjustedNorm = Math.abs(norm) < deadZone ? 0 : norm;
-          const rawFactor = 1 + Math.max(-0.03, Math.min(0.03, adjustedNorm * 3));
+          const rawFactor =
+            1 + Math.max(-0.03, Math.min(0.03, adjustedNorm * 3));
           if (!zoomEMARef.current) {
-            zoomEMARef.current = new SimpleEMA(0.5); 
+            zoomEMARef.current = new SimpleEMA(0.5);
           }
           const smoothedFactor = zoomEMARef.current.filter(rawFactor) as number;
           transform.current.zoomAtPoint(smoothedFactor, screenX, screenY);
@@ -709,8 +731,19 @@ export default function Canvas(props: CanvasProps) {
               lineCap="round"
               lineJoin="round"
             />
+            {props.circles.map((circle) => (
+              <Circle key={circle.id} {...circle} />
+            ))}
+
+            {props.text.map((text) => (
+              <Text key={text.id} {...text} />
+            ))}
+            {props.arrows.map((arrow) => (
+              <Arrow key={arrow.id} {...arrow} />
+            ))}
           </Layer>
           <Layer listening={false}>
+<<<<<<< HEAD
             {!props.viewOnly && landmarks && !landmarks.isPinching && (() => {
               const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
               const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
@@ -768,6 +801,85 @@ export default function Canvas(props: CanvasProps) {
                 </>
               );
             })()}
+=======
+            {landmarks &&
+              !landmarks.isPinching &&
+              (() => {
+                const thumbCoords = getLandmarkCanvasCoords(
+                  landmarks.thumb.x,
+                  landmarks.thumb.y,
+                );
+                const indexCoords = getLandmarkCanvasCoords(
+                  landmarks.index.x,
+                  landmarks.index.y,
+                );
+                const smallAlpha = 0.3;
+                const smallFill = hslToRgba(selectedColor, smallAlpha);
+                const smallStroke = `rgba(0,0,0,${smallAlpha})`;
+                return (
+                  <>
+                    <Circle
+                      x={thumbCoords.x}
+                      y={thumbCoords.y}
+                      radius={6}
+                      fill={smallFill}
+                      stroke={smallStroke}
+                      strokeWidth={1.2}
+                    />
+                    <Circle
+                      x={indexCoords.x}
+                      y={indexCoords.y}
+                      radius={6}
+                      fill={smallFill}
+                      stroke={smallStroke}
+                      strokeWidth={1.2}
+                    />
+                  </>
+                );
+              })()}
+            {landmarks &&
+              landmarks.isPinching &&
+              (() => {
+                const thumbCoords = getLandmarkCanvasCoords(
+                  landmarks.thumb.x,
+                  landmarks.thumb.y,
+                );
+                const indexCoords = getLandmarkCanvasCoords(
+                  landmarks.index.x,
+                  landmarks.index.y,
+                );
+                const midCoords = getLandmarkCanvasCoords(
+                  (landmarks.thumb.x + landmarks.index.x) / 2,
+                  (landmarks.thumb.y + landmarks.index.y) / 2,
+                );
+                return (
+                  <>
+                    <Circle
+                      x={midCoords.x}
+                      y={midCoords.y}
+                      radius={8}
+                      fill={hslToRgba(selectedColor, 0.95)}
+                      stroke={`rgba(0,0,0,${Math.min(0.95, 0.95)})`}
+                      strokeWidth={1.6}
+                    />
+                    <Line
+                      points={[
+                        thumbCoords.x,
+                        thumbCoords.y,
+                        indexCoords.x,
+                        indexCoords.y,
+                      ]}
+                      stroke={
+                        isColourWhite(selectedColor)
+                          ? "rgba(0,0,0,0.5)"
+                          : hslToRgba(selectedColor, 0.5)
+                      }
+                      strokeWidth={2}
+                    />
+                  </>
+                );
+              })()}
+
           </Layer>
           <Layer
             ref={(node) => {
@@ -803,7 +915,10 @@ export default function Canvas(props: CanvasProps) {
                 lineCap={line.lineCap}
                 lineJoin={line.lineJoin}
                 opacity={0.35}
-                dash={[8 / transform.current.scale, 4 / transform.current.scale]}
+                dash={[
+                  8 / transform.current.scale,
+                  4 / transform.current.scale,
+                ]}
               />
             ))}
             {/* Selection rectangle */}

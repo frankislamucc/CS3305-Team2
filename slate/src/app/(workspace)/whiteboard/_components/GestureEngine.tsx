@@ -15,9 +15,13 @@ interface GestureEngineProps {
   canvasRef: RefObject<CanvasHandle | null>;
   onDrawEnd: () => void;
   cameraLocation: "front" | "back";
+<<<<<<< HEAD
   viewOnly?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+=======
+  inAiWindow: boolean;
+>>>>>>> 5a7e833 (gemini llm integration with added shapes)
 }
 
 const INDEX_FINGER_TIP = 8;
@@ -26,9 +30,13 @@ export default function GestureEngine({
   canvasRef,
   onDrawEnd,
   cameraLocation,
+<<<<<<< HEAD
   viewOnly = false,
   onUndo,
   onRedo,
+=======
+  inAiWindow,
+>>>>>>> 5a7e833 (gemini llm integration with added shapes)
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -284,12 +292,17 @@ export default function GestureEngine({
 
       // Draw if pinching (and not panning, and not view-only)
       if (
+<<<<<<< HEAD
         !viewOnly &&
+=======
+        !inAiWindow &&
+>>>>>>> 5a7e833 (gemini llm integration with added shapes)
         isDrawing.current &&
         !isPanning.current && // Don't draw while panning
         canvasRef.current !== null &&
         predictions.landmarks[0]?.[0]
       ) {
+        console.log(inAiWindow);
         const thumbPoints = predictions.landmarks[0][4];
         const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
 
