@@ -2,6 +2,7 @@
 
 import dbConnect from "@/lib/mongodb";
 import Canvas from "@/app/models/Canvas";
+import SharedCanvas from "@/app/models/SharedCanvas";
 import { getSession } from "@/lib/auth";
 import type { LineData } from "@/app/(workspace)/whiteboard/_types";
 
@@ -207,6 +208,9 @@ export async function deleteCanvasAction(
     if (!result) {
       return { success: false, errorMessage: "Canvas not found" };
     }
+
+    // Cascade: remove all SharedCanvas records that reference this canvas
+    await SharedCanvas.deleteMany({ canvasId });
 
     return { success: true };
   } catch (error) {
