@@ -28,6 +28,7 @@ import { useUser } from "./_components/UserContext";
 import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 import OptionButton from "./_components/ui/OptionButton";
 import { UndoRedo } from "./_components/UndoRedo";
+import RecordingControls from "./RecordingControls";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -435,6 +436,15 @@ export default function WhiteboardPage() {
             }}
             isDisabled={isViewOnly}
             text="Clear Canvas"
+          />
+          <div className="w-px h-5 bg-gray-600" />
+          <RecordingControls
+            onRecordingStart={() => addToast("Recording started", "info")}
+            onRecordingStop={() => addToast("Recording stopped", "info")}
+            onRecordingSaved={(recordingId) =>
+              addToast("Recording saved successfully", "success")
+            }
+            onError={(error) => addToast(`Recording error: ${error}`, "error")}
           />
           <Link
             href="/settings"
