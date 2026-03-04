@@ -573,6 +573,7 @@ export default function Canvas(props: CanvasProps) {
           };
         },
         showSpinner: (angle: number) => {
+          if (props.viewOnly) return;
           setShowSpinner(true);
           setWheelRotation(angle);
         },
@@ -590,6 +591,7 @@ export default function Canvas(props: CanvasProps) {
           sizeSelectorStartY.current = y;
         },
         showSizeSelector: (Yvalue: number) => {
+          if (props.viewOnly) return;
           setShowSizeSelector(true);
           setSizeSelector(Yvalue);
         },
@@ -825,7 +827,7 @@ export default function Canvas(props: CanvasProps) {
       )}
 
       {/* ── HUD overlay for colour wheel & size selector (not affected by pan/zoom) ── */}
-      {dimensions.width > 0 && (showSpinner || showSizeSelector) && (
+      {!props.viewOnly && dimensions.width > 0 && (showSpinner || showSizeSelector) && (
         <div
           className="absolute bottom-6 right-6 z-30 pointer-events-none"
           style={{ width: 250, height: 220 }}
