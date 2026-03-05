@@ -56,12 +56,17 @@ export default function GestureEngine({
   // Refs for undo/redo callbacks so they're always fresh
   const onUndoRef = useRef(onUndo);
   const onRedoRef = useRef(onRedo);
+  const inAiWindowRef = useRef(inAiWindow);
   useEffect(() => {
     onUndoRef.current = onUndo;
   }, [onUndo]);
   useEffect(() => {
     onRedoRef.current = onRedo;
   }, [onRedo]);
+  useEffect(() => {
+    inAiWindowRef.current = inAiWindow;
+    console.log(inAiWindow);
+  }, [inAiWindow]);
 
   // Debounce: prevent undo/redo from firing every frame
   const lastUndoTime = useRef(0);
@@ -313,10 +318,11 @@ export default function GestureEngine({
         canvasRef.current?.updateLandmarks(null);
       }
 
+      console.log(inAiWindowRef.current);
       // Draw if pinching (and not panning, and not view-only)
       if (
         !viewOnly &&
-        !inAiWindow &&
+        !inAiWindowRef.current &&
         isDrawing.current &&
         !isPanning.current && // Don't draw while panning
         canvasRef.current !== null &&
