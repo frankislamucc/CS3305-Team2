@@ -344,6 +344,11 @@ export default function WhiteboardPage() {
         refreshKey={sidebarRefreshKey}
         onSelectSharedCanvas={handleSelectSharedCanvas}
         viewingSharedId={viewingShared?.sharedId ?? null}
+        onRemoveSharedCanvas={(sharedId) => {
+          if (viewingShared?.sharedId === sharedId) {
+            handleNewCanvas();
+          }
+        }}
       />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-2 px-4 py-2">

@@ -296,6 +296,44 @@ export async function saveSharedCanvasAction(
   }
 }
 
+/* ─── Remove a shared canvas from the recipient's account ─── */
+
+export async function removeSharedCanvasAction(
+  sharedId: string,
+): Promise<{ success: boolean; errorMessage?: string }> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, errorMessage: "Not authenticated" };
+    }
+
+    await dbConnect();
+
+    // Find the share record addressed to this user
+    const share = await SharedCanvas.findOne({
+      _id: sharedId,
+      toUserId: session.userId,
+    });
+
+    if (!share) {
+      return { success: false, errorMessage: "Shared canvas not found" };
+    }
+
+    // If the recipient had a personal copy, delete it too
+    if (share.copyCanvasId) {
+      await Canvas.findByIdAndDelete(share.copyCanvasId);
+    }
+
+    // Remove the share record
+    await SharedCanvas.findByIdAndDelete(sharedId);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Remove shared canvas error:", error);
+    return { success: false, errorMessage: "Failed to remove shared canvas" };
+  }
+}
+
 /* ─── Mark a shared canvas as seen ─── */
 
 export async function markSharedSeenAction(

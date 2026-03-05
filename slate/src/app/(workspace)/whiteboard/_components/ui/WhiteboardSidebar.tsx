@@ -8,6 +8,7 @@ import {
 } from "../../actions/canvas";
 import {
   listSharedCanvasesAction,
+  removeSharedCanvasAction,
   type SharedCanvasSummary,
 } from "../../actions/share";
 
@@ -21,6 +22,8 @@ interface WhiteboardSidebarProps {
   onSelectSharedCanvas?: (shared: SharedCanvasSummary) => void;
   /** The id of the currently-viewed shared record (for highlight) */
   viewingSharedId?: string | null;
+  /** Called after a shared canvas is removed so the parent can clear viewing state */
+  onRemoveSharedCanvas?: (sharedId: string) => void;
 }
 
 export default function WhiteboardSidebar({
@@ -30,6 +33,7 @@ export default function WhiteboardSidebar({
   refreshKey,
   onSelectSharedCanvas,
   viewingSharedId,
+  onRemoveSharedCanvas,
 }: WhiteboardSidebarProps) {
   const [canvases, setCanvases] = useState<CanvasSummary[]>([]);
   const [sharedCanvases, setSharedCanvases] = useState<SharedCanvasSummary[]>(
@@ -72,6 +76,16 @@ export default function WhiteboardSidebar({
       if (id === activeCanvasId) {
         onNewCanvas();
       }
+    }
+  };
+
+  const handleRemoveShared = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("Remove this shared whiteboard?")) return;
+    const result = await removeSharedCanvasAction(id);
+    if (result.success) {
+      setSharedCanvases((prev) => prev.filter((s) => s.id !== id));
+      onRemoveSharedCanvas?.(id);
     }
   };
 
@@ -286,6 +300,25 @@ export default function WhiteboardSidebar({
                   from {shared.fromUsername} · {formatDate(shared.sharedAt)}
                 </div>
               </div>
+              <button
+                onClick={(e) => handleRemoveShared(e, shared.id)}
+                title="Remove shared whiteboard"
+                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-900/50 text-gray-500 hover:text-red-400 transition-all cursor-pointer"
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
           ))}
         </div>
