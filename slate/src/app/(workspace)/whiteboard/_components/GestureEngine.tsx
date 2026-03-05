@@ -134,7 +134,7 @@ export default function GestureEngine({
         }
 
         // colour wheel logic for ring pinch (disabled in view-only mode)
-        if (!viewOnly && gesture === "rightRingPinch" && !isGauntlet.current) {
+        if (!viewOnly && gesture === "rightRingPinch" && !isGauntlet.current && sizeExitTimer.current === null) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
@@ -166,7 +166,7 @@ export default function GestureEngine({
         }
 
         // size selector logic (pinky pinch — disabled in view-only mode)
-        if (!viewOnly && gesture === "rightPinkyPinch" && !isSizing.current) {
+        if (!viewOnly && gesture === "rightPinkyPinch" && !isSizing.current && gauntletExitTimer.current === null) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
