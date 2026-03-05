@@ -743,65 +743,85 @@ export default function Canvas(props: CanvasProps) {
             ))}
           </Layer>
           <Layer listening={false}>
-<<<<<<< HEAD
-            {!props.viewOnly && landmarks && !landmarks.isPinching && (() => {
-              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
-              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
-              const smallAlpha = 0.3;
-              const smallFill = hslToRgba(selectedColor, smallAlpha);
-              const smallStroke = `rgba(0,0,0,${smallAlpha})`;
-              return (
-                <>
-                  <Circle
-                    x={thumbCoords.x}
-                    y={thumbCoords.y}
-                    radius={6}
-                    fill={smallFill}
-                    stroke={smallStroke}
-                    strokeWidth={1.2}
-                  />
-                  <Circle
-                    x={indexCoords.x}
-                    y={indexCoords.y}
-                    radius={6}
-                    fill={smallFill}
-                    stroke={smallStroke}
-                    strokeWidth={1.2}
-                  />
-                </>
-              );
-            })()}
-            {!props.viewOnly && landmarks && landmarks.isPinching && (() => {
-              const thumbCoords = getLandmarkCanvasCoords(landmarks.thumb.x, landmarks.thumb.y);
-              const indexCoords = getLandmarkCanvasCoords(landmarks.index.x, landmarks.index.y);
-              const midCoords = getLandmarkCanvasCoords(
-                (landmarks.thumb.x + landmarks.index.x) / 2,
-                (landmarks.thumb.y + landmarks.index.y) / 2
-              );
-              return (
-                <>
-                  <Circle
-                    x={midCoords.x}
-                    y={midCoords.y}
-                    radius={8}
-                    fill={hslToRgba(selectedColor, 0.95)}
-                    stroke={`rgba(0,0,0,${Math.min(0.95, 0.95)})`}
-                    strokeWidth={1.6}
-                  />
-                  <Line
-                    points={[
-                      thumbCoords.x,
-                      thumbCoords.y,
-                      indexCoords.x,
-                      indexCoords.y,
-                    ]}
-                    stroke={isColourWhite(selectedColor) ? "rgba(0,0,0,0.5)" : hslToRgba(selectedColor, 0.5)}
-                    strokeWidth={2}
-                  />
-                </>
-              );
-            })()}
-=======
+            {!props.viewOnly &&
+              landmarks &&
+              !landmarks.isPinching &&
+              (() => {
+                const thumbCoords = getLandmarkCanvasCoords(
+                  landmarks.thumb.x,
+                  landmarks.thumb.y,
+                );
+                const indexCoords = getLandmarkCanvasCoords(
+                  landmarks.index.x,
+                  landmarks.index.y,
+                );
+                const smallAlpha = 0.3;
+                const smallFill = hslToRgba(selectedColor, smallAlpha);
+                const smallStroke = `rgba(0,0,0,${smallAlpha})`;
+                return (
+                  <>
+                    <Circle
+                      x={thumbCoords.x}
+                      y={thumbCoords.y}
+                      radius={6}
+                      fill={smallFill}
+                      stroke={smallStroke}
+                      strokeWidth={1.2}
+                    />
+                    <Circle
+                      x={indexCoords.x}
+                      y={indexCoords.y}
+                      radius={6}
+                      fill={smallFill}
+                      stroke={smallStroke}
+                      strokeWidth={1.2}
+                    />
+                  </>
+                );
+              })()}
+            {!props.viewOnly &&
+              landmarks &&
+              landmarks.isPinching &&
+              (() => {
+                const thumbCoords = getLandmarkCanvasCoords(
+                  landmarks.thumb.x,
+                  landmarks.thumb.y,
+                );
+                const indexCoords = getLandmarkCanvasCoords(
+                  landmarks.index.x,
+                  landmarks.index.y,
+                );
+                const midCoords = getLandmarkCanvasCoords(
+                  (landmarks.thumb.x + landmarks.index.x) / 2,
+                  (landmarks.thumb.y + landmarks.index.y) / 2,
+                );
+                return (
+                  <>
+                    <Circle
+                      x={midCoords.x}
+                      y={midCoords.y}
+                      radius={8}
+                      fill={hslToRgba(selectedColor, 0.95)}
+                      stroke={`rgba(0,0,0,${Math.min(0.95, 0.95)})`}
+                      strokeWidth={1.6}
+                    />
+                    <Line
+                      points={[
+                        thumbCoords.x,
+                        thumbCoords.y,
+                        indexCoords.x,
+                        indexCoords.y,
+                      ]}
+                      stroke={
+                        isColourWhite(selectedColor)
+                          ? "rgba(0,0,0,0.5)"
+                          : hslToRgba(selectedColor, 0.5)
+                      }
+                      strokeWidth={2}
+                    />
+                  </>
+                );
+              })()}
             {landmarks &&
               !landmarks.isPinching &&
               (() => {
@@ -879,7 +899,6 @@ export default function Canvas(props: CanvasProps) {
                   </>
                 );
               })()}
-
           </Layer>
           <Layer
             ref={(node) => {
@@ -942,43 +961,45 @@ export default function Canvas(props: CanvasProps) {
       )}
 
       {/* ── HUD overlay for colour wheel & size selector (not affected by pan/zoom) ── */}
-      {!props.viewOnly && dimensions.width > 0 && (showSpinner || showSizeSelector) && (
-        <div
-          className="absolute bottom-6 right-6 z-30 pointer-events-none"
-          style={{ width: 250, height: 220 }}
-        >
-          <Stage width={250} height={220}>
-            <Layer
-              ref={(node) => {
-                if (node && !hudLayerRef.current) {
-                  hudLayerRef.current = node;
-                  setHudLayerReady(true);
-                }
-              }}
-            >
-              {hudLayerReady && hudLayerRef.current && showSpinner && (
-                <ColourWheelSpinner
-                  layer={hudLayerRef.current}
-                  x={100}
-                  y={110}
-                  rotationAngle={wheelRotation}
-                  onColourSelect={handleColorSelect}
-                />
-              )}
+      {!props.viewOnly &&
+        dimensions.width > 0 &&
+        (showSpinner || showSizeSelector) && (
+          <div
+            className="absolute bottom-6 right-6 z-30 pointer-events-none"
+            style={{ width: 250, height: 220 }}
+          >
+            <Stage width={250} height={220}>
+              <Layer
+                ref={(node) => {
+                  if (node && !hudLayerRef.current) {
+                    hudLayerRef.current = node;
+                    setHudLayerReady(true);
+                  }
+                }}
+              >
+                {hudLayerReady && hudLayerRef.current && showSpinner && (
+                  <ColourWheelSpinner
+                    layer={hudLayerRef.current}
+                    x={100}
+                    y={110}
+                    rotationAngle={wheelRotation}
+                    onColourSelect={handleColorSelect}
+                  />
+                )}
 
-              {hudLayerReady && hudLayerRef.current && showSizeSelector && (
-                <SizeSelector
-                  layer={hudLayerRef.current}
-                  x={10}
-                  y={10}
-                  normalisedY={sizeSelectorY}
-                  onSizeSelect={handleSizeSelect}
-                />
-              )}
-            </Layer>
-          </Stage>
-        </div>
-      )}
+                {hudLayerReady && hudLayerRef.current && showSizeSelector && (
+                  <SizeSelector
+                    layer={hudLayerRef.current}
+                    x={10}
+                    y={10}
+                    normalisedY={sizeSelectorY}
+                    onSizeSelect={handleSizeSelect}
+                  />
+                )}
+              </Layer>
+            </Stage>
+          </div>
+        )}
 
       {/* ── Selection-mode banner ── */}
       {isSelectMode && (

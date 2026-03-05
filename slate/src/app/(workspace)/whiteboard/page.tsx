@@ -28,11 +28,8 @@ import { useUser } from "./_components/UserContext";
 import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 import OptionButton from "./_components/ui/OptionButton";
 import { UndoRedo } from "./_components/UndoRedo";
-<<<<<<< HEAD
 import RecordingControls from "./RecordingControls";
-=======
 import ChatEngine from "./_components/ChatEngine";
->>>>>>> 5a7e833 (gemini llm integration with added shapes)
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
@@ -454,7 +451,6 @@ export default function WhiteboardPage() {
             isDisabled={isViewOnly}
             text="Clear Canvas"
           />
-<<<<<<< HEAD
           <div className="w-px h-5 bg-gray-600" />
           <RecordingControls
             onRecordingStart={() => addToast("Recording started", "info")}
@@ -463,7 +459,7 @@ export default function WhiteboardPage() {
               addToast("Recording saved successfully", "success")
             }
             onError={(error) => addToast(`Recording error: ${error}`, "error")}
-=======
+          />
 
           <OptionButton
             onClick={() => {
@@ -471,7 +467,6 @@ export default function WhiteboardPage() {
             }}
             isDisabled={isViewOnly}
             text={inAiWindow ? "Normal Mode" : "AI Mode"}
->>>>>>> 5a7e833 (gemini llm integration with added shapes)
           />
           <Link
             href="/settings"
@@ -501,7 +496,6 @@ export default function WhiteboardPage() {
           </Link>
         </div>
         <div className="relative flex-1">
-<<<<<<< HEAD
           <GestureEngine
             canvasRef={canvasRef}
             onDrawEnd={handleDrawEnd}
@@ -510,7 +504,6 @@ export default function WhiteboardPage() {
             onUndo={performUndo}
             onRedo={performRedo}
           />
-=======
           {!isViewOnly && (
             <GestureEngine
               canvasRef={canvasRef}
@@ -527,7 +520,6 @@ export default function WhiteboardPage() {
               setArrows={setArrows}
             />
           )}
->>>>>>> 5a7e833 (gemini llm integration with added shapes)
           <Canvas
             lines={lines}
             circles={circles}
