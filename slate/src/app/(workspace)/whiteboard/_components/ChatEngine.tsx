@@ -57,14 +57,8 @@ export default function ChatEngine({
           content: message,
         },
       ]);
-      console.log(
-        "--------------------------calling chatAction--------------------------",
-      );
       const response = await chatAction({ history: messages, prompt: message });
-      console.log("response is ------------");
-      console.log(response);
       const responseMessage = response.text_explanation as string;
-      console.log("responseMessage is ------- " + responseMessage);
       setMessages((messages) => [
         ...messages,
         {
@@ -73,10 +67,10 @@ export default function ChatEngine({
           content: responseMessage,
         },
       ]);
-      setLines((lines: LineData[]) => [...response.lines]);
-      setCircles((circles) => [...response.circles]);
-      setText((text) => [...response.text]);
-      setArrows((arrows) => [...response.arrows]);
+      setLines((lines: LineData[]) => [...lines, ...response.lines]);
+      setCircles((circles) => [...circles, ...response.circles]);
+      setText((text) => [...text, ...response.text]);
+      setArrows((arrows) => [...arrows, ...response.arrows]);
     } catch (error) {
       console.log(error);
     }
