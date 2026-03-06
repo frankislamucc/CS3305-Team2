@@ -1,0 +1,10 @@
+services:
+  slate:
+    build:
+      context: ./slate
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./slate/.env.local
+    restart: unless-stopped

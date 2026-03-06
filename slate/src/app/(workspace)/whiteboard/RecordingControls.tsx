@@ -27,7 +27,7 @@ export default function RecordingControls({
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
           cursor: "always",
-        },
+        } as MediaTrackConstraints,
         audio: true,
       });
 
