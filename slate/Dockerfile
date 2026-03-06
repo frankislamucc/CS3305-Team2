@@ -2,13 +2,14 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ── Stage 2: Build the Next.js app ──
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV MONGODB_URI=mongodb://placeholder
 RUN npm run build
 
 # ── Stage 3: Production image ──
