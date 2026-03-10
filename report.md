@@ -103,11 +103,58 @@ What is missing is a free browser-based whiteboard that works with just a webcam
 
 ---
 
-## 6. Deployment & DevOps 
+## 6. Deployment
 ### 6.1 Docker Containerization
+
+We used Docker to containerise Slate so the application builds and runs the same way regardless of the host machine. This avoided issues like having to manually install all dependencies and packages.
+
+The Dockerfile uses a multi-stage build with three stages:
+
+1. **deps** - Installs npm dependencies on a `node:20-alpine` base image using `npm ci --legacy-peer-deps`. The flag was needed because some dependencies (React 19 and framer-motion) had conflicting peer requirements.
+
+2. **builder** - Copies `node_modules` from the first stage along with the source code and runs `npm run build` to produce the Next.js production build.
+
+3. **runner** - The final image. Only copies what is needed to run: `node_modules`, `.next`, `public`, `server.mjs`, `package.json` and `next.config.ts`. It exposes port 3000 and starts the app with `node server.mjs`.
+
+This multi-stage approach keeps the final image small by discarding source code and build tooling.
+
 ### 6.2 Docker Compose Configuration
+
+Docker Compose wraps this into a single command. The `docker-compose.yml` defines one service:
+
+```yaml
+services:
+  slate:
+    build:
+      context: ./slate
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./slate/.env.local
+    restart: unless-stopped
+```
+
+- **ports** maps container port 3000 to the host so the app is available at `http://localhost:3000`.
+- **env_file** loads secrets from `.env.local` which is not committed to the repo.
+- **restart: unless-stopped** automatically restarts the container oif it crashes.
+
+To deploy the application:
+
+```bash
+docker compose up --build
+```
+
 ### 6.3 Environment Configuration
-### 6.4 CI/CD Pipeline (if applicable)
+
+Slate uses a `.env.local` file in the `slate/` directory for environment specific config. The required variables are:
+
+`MONGODB_URI`:Connection string for the MongoDB Atlas cluster.
+
+`JWT_SECRET`:Secret key used to sign and verify JWT session tokens 
+
+MongoDB Atlas handles database hosting externally so the Docker setup only needs to run the Next.js app itself. If either variable is missing the app falls back to hardcoded defaults which is fine for local development but would need to be changed for a real deployment.
+
 
 ---
 
