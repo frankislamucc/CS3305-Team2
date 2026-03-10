@@ -52,8 +52,12 @@ What is missing is a free browser-based whiteboard that works with just a webcam
 
 ---
 
-## 2.Background Research 
+## 2.Background Research  [Darragh]
 ### 2.1 Existing Collaborative Whiteboard Tools
+
+With the rise of remote and hybrid working structures, along with the ever-increasing public reliance on the Internet, the demand for a collaborative whiteboard tool has never been higher, and naturally several suppliers have stepped up to try and meet this need. Chief among these tools is Miro, a sort of pseudo-standard canvas tool that incorporates "sticky-note" widgets along with a host of other features to encourage free-form visual collaboration.
+
+
 ### 2.2 Real-Time Communication Technologies (WebSockets, Socket.IO)
 ### 2.3 Gesture Recognition in Web Applications
 
