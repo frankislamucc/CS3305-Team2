@@ -1,10 +1,54 @@
 # Slate – Hands Free Gesture Based Whiteboard
 
-## 1. Introduction 
+## 1. Introduction
+
 ### 1.1 Project Overview
+
+Slate is a web-based collaborative whiteboard controlled entirely through hand gestures. Rather than using a mouse or pen, users draw, pan, zoom and select tools by moving their hands in front of a standard webcam. The application tracks hand landmarks using Google's MediaPipe library and translates gestures such as a pinch to draw or an open palm to stop, into canvas actions in real time.
+
+The project is built with Next.js 16 (React 19, TypeScript) on the frontend, using Konva for canvas rendering and a Web Worker to run gesture recognition without blocking the UI. The backend is a custom Node.js server with Socket.IO for real-time collaboration, MongoDB for data storage using JSON and JWT authentication. The whole app is containerised with Docker Compose.
+
+Key features include gesture-driven colour and brush size selection, undo/redo, whiteboard sharing with live notifications and screen recording.
+
 ### 1.2 Problem Statement
+
+Existing digital whiteboards all rely on conventional input like mouse, trackpad or stylus. This presents several issues:
+
+- **Accessibility** — users with motor impairments or repetitive strain injuries may struggle with these input methods.
+- **Unnatural interaction** — drawing with a mouse feels disconnected from the natural act of sketching on a real whiteboard.
+- **Hardware cost** — devices like SMART Boards or drawing tablets address some of these issues but are expensive and impractical for most individuals.
+
+What is missing is a free browser-based whiteboard that works with just a webcam that nearly every laptop already has. Slate was built to fill this gap: a hands-free, gesture-controlled whiteboard that requires no additional equipment.
+
 ### 1.3 Objectives & Goals
+
+**Primary Objectives:**
+
+1. **Gesture-controlled drawing** — use webcam-based hand tracking as the sole input for drawing on the canvas.
+2. **Real-time collaboration** — allow multiple users to work on the same whiteboard simultaneously via WebSockets.
+3. **User authentication** — registration, login and JWT session management so whiteboards are linked to user accounts.
+4. **Canvas persistence** — save whiteboard state to MongoDB so users can reload their whiteboards.
+5. **Core whiteboard tools** — colour selection, brush sizing, undo/redo, panning and clearing.
+6. **Containerised deployment** — package the app with Docker Compose for an easy and lightweight deployment.
+
+**Secondary Objectives:**
+
+7. **Whiteboard sharing** — share boards with other users with real-time Socket.IO notifications.
+8. **Session recording** — screen recordings that can be uploaded, replayed and downloaded.
+9. **Smooth tracking** — apply a smoothing algortihm to hand landmark data to reduce jitter.
+10. **Performant processing** — run MediaPipe in a Web Worker to keep the main thread responsive.
+
 ### 1.4 Scope & Limitations
+
+**In scope:** A fully functional, deployable web application covering the complete development lifecycle — requirements, design, implementation, testing, deployment, and this report.
+
+**Limitations:**
+
+- **Mobile** — designed and tested for desktop browsers only.
+- **Offline mode** — an internet connection is required for authentication, persistence and collaboration.
+- **Security hardening** — JWT auth and httpOnly cookies are implemented but no formal security audit, rate limiting or CSRF protection was carried out. The app is not fully ready yet for large scale production.
+- **Browser compatibility** — tested primarily in Chrome and Safari. Other browsers were not formally verified.
+- **Scalability** — tested with a small number of concurrent users and no load testing was performed.
 
 ---
 
