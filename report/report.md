@@ -150,6 +150,8 @@ The system will  allow new users to create an account using a unique username an
 
 #### 4.2.1 Frontend
 
+The frontend of this application is rendered using Next.js version 16. Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
+
 #### 4.2.2 Backend
 
 #### 4.2.3 Deployment
