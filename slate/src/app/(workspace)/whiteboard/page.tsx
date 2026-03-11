@@ -538,6 +538,7 @@ export default function WhiteboardPage() {
             viewOnly={isViewOnly}
             onUndo={performUndo}
             onRedo={performRedo}
+            inAiWindow={inAiWindow}
           />
           {!isViewOnly && (
             <GestureEngine

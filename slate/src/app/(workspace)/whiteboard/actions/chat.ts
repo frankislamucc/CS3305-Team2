@@ -161,6 +161,9 @@ export async function chatAction({ history, prompt }: ChatActionProps) {
 
     console.log(rawJsonString);
     // 3. Parse and return
+    if (!rawJsonString) {
+      return { error: "No text content in AI response" };
+    }
     const parsedData = JSON.parse(rawJsonString);
     console.log("Success:", parsedData.text_explanation);
     return parsedData;
