@@ -52,7 +52,8 @@ What is missing is a free browser-based whiteboard that works with just a webcam
 
 ---
 
-## 2.Background Research  [Darragh]
+## 2.Background Research [Darragh]
+
 ### 2.1 Existing Collaborative Whiteboard Tools
 
 With the rise of remote and hybrid working structures, along with the ever-increasing public reliance on the Internet, the demand for a collaborative whiteboard tool has never been higher. Essential to beginning this project was understanding the landscape in which we are bringing it to birth, otherwise we risk positioning ourselves as a redundant imitator rather than a distinct tool.
@@ -63,10 +64,9 @@ In contrast, the Microsoft Whiteboard tool benefits from foundational integratio
 
 Across these tools, and the many others that become available year-on-year, we see certain patterns emerge. All provide infinite canvases with basic drawing tools. All offer collaboration with others, whether synchronously or asynchronously. Many now offer templates for common workflows and integrations with other prevalent tools.
 
-However, the focus of this project is the gap we see across all of these tools; they all rely exclusively on conventional input methods. For the vast majority of users, this means a mouse or trackpad, which, while ubiquitous tools, provide little utility as implements for drawing. Drawing with a mouse feels disconnected from the natural gesture of drawing with pen or pencil, and similarly drawing with a trackpad feels unintuitive and awkward. While users could utilise a stylus with a tablet-like touchscreen, the requirement for external hardware is a significant barrier to entry for the basic function of these tools. 
+However, the focus of this project is the gap we see across all of these tools; they all rely exclusively on conventional input methods. For the vast majority of users, this means a mouse or trackpad, which, while ubiquitous tools, provide little utility as implements for drawing. Drawing with a mouse feels disconnected from the natural gesture of drawing with pen or pencil, and similarly drawing with a trackpad feels unintuitive and awkward. While users could utilise a stylus with a tablet-like touchscreen, the requirement for external hardware is a significant barrier to entry for the basic function of these tools.
 
 Therefore, what is missing is a whiteboard tool which, without need for external hardware, allows for natural and intuitive interaction. It is from this standpoint that we approach the concept of gesture recognition. Though deep learning models for gesture recognition improve year-on-year, there are no mainstream collaborative whiteboard tools utilising this new technology, despite the ubiquity of laptop webcams. Using only that basic webcam of a laptop, we can use the deep learning MediaPipe framework provided by Google to track on-screen hands and recognise the motions made, which are then mapped to basic drawing functions. This is the niche that Slate aims to fill. A collaborative whitebaord where users draw, pan, and zoom through natural hand movements, requiring no costly additional hardware. By combining this nascent technology with capabilities akin to existing products, we open whiteboarding to new use cases.
-
 
 ### 2.2 Real-Time Communication Technologies (WebSockets, Socket.IO)
 
@@ -86,7 +86,9 @@ Therefore, what is missing is a whiteboard tool which, without need for external
 
 ## 4. System Architecture & Design [Naoise]
 
-### 4.1 High-Level Architecture Diagram
+### 4.1 High-Level C4 Architecture Diagram
+
+![C4 architecture Diagram](./images/slateDiagram.png)
 
 ### 4.2 Tech Stack
 
@@ -352,4 +354,3 @@ The primary collaboration tool used was Git as detailed above facilitating the d
 ### Appendix D: Meeting Minutes / Sprint Logs
 
 ### Appendix E: Individual Contributions
-
