@@ -6,7 +6,7 @@ import SharedCanvas from "@/app/models/SharedCanvas";
 import User from "@/app/models/User";
 import { getSession } from "@/lib/auth";
 import { notifyUser } from "@/lib/socket";
-import type { LineData } from "@/app/(workspace)/whiteboard/_types";
+import type { LineData, CircleData, TextData, ArrowData } from "@/app/(workspace)/whiteboard/_types";
 
 /* ─── Result types ─── */
 
@@ -38,6 +38,9 @@ export interface LoadSharedCanvasResult {
   name?: string;
   fromUsername?: string;
   lines?: LineData[];
+  circles?: CircleData[];
+  texts?: TextData[];
+  arrows?: ArrowData[];
   errorMessage?: string;
 }
 
@@ -193,6 +196,9 @@ export async function loadSharedCanvasAction(
           name: (copy as any).name ?? (share.canvasName ?? "Untitled"),
           fromUsername: share.fromUsername,
           lines: copy.lines as LineData[],
+          circles: ((copy as any).circles ?? []) as CircleData[],
+          texts: ((copy as any).texts ?? []) as TextData[],
+          arrows: ((copy as any).arrows ?? []) as ArrowData[],
         };
       }
     }
@@ -210,6 +216,9 @@ export async function loadSharedCanvasAction(
       name: (canvas as any).name ?? "Untitled",
       fromUsername: share.fromUsername,
       lines: canvas.lines as LineData[],
+      circles: ((canvas as any).circles ?? []) as CircleData[],
+      texts: ((canvas as any).texts ?? []) as TextData[],
+      arrows: ((canvas as any).arrows ?? []) as ArrowData[],
     };
   } catch (error) {
     console.error("Load shared canvas error:", error);
@@ -222,6 +231,9 @@ export async function loadSharedCanvasAction(
 export async function saveSharedCanvasAction(
   sharedId: string,
   lines: LineData[],
+  circles?: CircleData[],
+  texts?: TextData[],
+  arrows?: ArrowData[],
 ): Promise<{ success: boolean; copyCanvasId?: string; errorMessage?: string }> {
   try {
     const session = await getSession();
@@ -251,6 +263,20 @@ export async function saveSharedCanvasAction(
       lineJoin: line.lineJoin,
     }));
 
+    const serializedCircles = (circles ?? []).map((c) => ({
+      id: c.id, x: c.x, y: c.y, radius: c.radius,
+      fill: c.fill, stroke: c.stroke, strokeWidth: c.strokeWidth,
+    }));
+    const serializedTexts = (texts ?? []).map((t) => ({
+      id: t.id, x: t.x, y: t.y, text: t.text,
+      fill: t.fill, fontSize: t.fontSize, fontFamily: t.fontFamily,
+    }));
+    const serializedArrows = (arrows ?? []).map((a) => ({
+      id: a.id, x: a.x, y: a.y, points: a.points,
+      pointerLength: a.pointerLength, pointerWidth: a.pointerWidth,
+      fill: a.fill, stroke: a.stroke, strokeWidth: a.strokeWidth,
+    }));
+
     // Re-fetch atomically to avoid race conditions from rapid saves
     const freshShare = await SharedCanvas.findById(sharedId).lean();
     const existingCopyId = (freshShare as any)?.copyCanvasId;
@@ -259,6 +285,9 @@ export async function saveSharedCanvasAction(
       // Update existing copy
       await Canvas.findByIdAndUpdate(existingCopyId, {
         lines: serializedLines,
+        circles: serializedCircles,
+        texts: serializedTexts,
+        arrows: serializedArrows,
       });
       return { success: true, copyCanvasId: existingCopyId.toString() };
     }
@@ -268,6 +297,9 @@ export async function saveSharedCanvasAction(
       userId: session.userId,
       name: share.canvasName,
       lines: serializedLines,
+      circles: serializedCircles,
+      texts: serializedTexts,
+      arrows: serializedArrows,
       isSharedCopy: true,
     });
 
@@ -284,7 +316,12 @@ export async function saveSharedCanvasAction(
       const latest = await SharedCanvas.findById(sharedId).lean();
       const latestCopyId = (latest as any)?.copyCanvasId;
       if (latestCopyId) {
-        await Canvas.findByIdAndUpdate(latestCopyId, { lines: serializedLines });
+        await Canvas.findByIdAndUpdate(latestCopyId, {
+          lines: serializedLines,
+          circles: serializedCircles,
+          texts: serializedTexts,
+          arrows: serializedArrows,
+        });
         return { success: true, copyCanvasId: latestCopyId.toString() };
       }
     }
