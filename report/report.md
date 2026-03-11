@@ -138,7 +138,7 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.2.2 Colour Selection & Size Selector
 
-#### 5.2.3 Undo/Redo System
+#### 5.2.3 Undo/Redo System (Rakib)
 
 #### 5.2.4 View Transform (Pan/Zoom)
 
