@@ -18,6 +18,7 @@ interface GestureEngineProps {
   viewOnly?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  inAiWindow: boolean;
 }
 
 const INDEX_FINGER_TIP = 8;
@@ -29,6 +30,7 @@ export default function GestureEngine({
   viewOnly = false,
   onUndo,
   onRedo,
+  inAiWindow,
 }: GestureEngineProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const requestRef = useRef<number>(null);
@@ -54,8 +56,17 @@ export default function GestureEngine({
   // Refs for undo/redo callbacks so they're always fresh
   const onUndoRef = useRef(onUndo);
   const onRedoRef = useRef(onRedo);
-  useEffect(() => { onUndoRef.current = onUndo; }, [onUndo]);
-  useEffect(() => { onRedoRef.current = onRedo; }, [onRedo]);
+  const inAiWindowRef = useRef(inAiWindow);
+  useEffect(() => {
+    onUndoRef.current = onUndo;
+  }, [onUndo]);
+  useEffect(() => {
+    onRedoRef.current = onRedo;
+  }, [onRedo]);
+  useEffect(() => {
+    inAiWindowRef.current = inAiWindow;
+    console.log(inAiWindow);
+  }, [inAiWindow]);
 
   // Debounce: prevent undo/redo from firing every frame
   const lastUndoTime = useRef(0);
@@ -86,7 +97,6 @@ export default function GestureEngine({
         predictions.landmarks,
         predictions.handedness,
       );
-
 
       // custom gestures take priority over regular ones, so we check those first
       if (customGesture) {
@@ -134,7 +144,12 @@ export default function GestureEngine({
         }
 
         // colour wheel logic for ring pinch (disabled in view-only mode)
-        if (!viewOnly && gesture === "rightRingPinch" && !isGauntlet.current && sizeExitTimer.current === null) {
+        if (
+          !viewOnly &&
+          gesture === "rightRingPinch" &&
+          !isGauntlet.current &&
+          sizeExitTimer.current === null
+        ) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
@@ -143,7 +158,11 @@ export default function GestureEngine({
           spinnerAngleEMA.current = new SimpleEMA();
           canvasRef.current?.showSpinner(0);
           canvasRef.current?.setSpinnerStartX(predictions.landmarks[0][16].x);
-        } else if (!viewOnly && gesture === "rightRingPinch" && isGauntlet.current) {
+        } else if (
+          !viewOnly &&
+          gesture === "rightRingPinch" &&
+          isGauntlet.current
+        ) {
           if (gauntletExitTimer.current) {
             clearTimeout(gauntletExitTimer.current);
             gauntletExitTimer.current = null;
@@ -154,7 +173,11 @@ export default function GestureEngine({
             300;
           const smoothed = spinnerAngleEMA.current!.filter(rawAngle) as number;
           canvasRef.current?.showSpinner(smoothed);
-        } else if (!viewOnly && gesture !== "rightRingPinch" && isGauntlet.current) {
+        } else if (
+          !viewOnly &&
+          gesture !== "rightRingPinch" &&
+          isGauntlet.current
+        ) {
           if (!gauntletExitTimer.current) {
             gauntletExitTimer.current = setTimeout(() => {
               canvasRef.current?.hideSpinner();
@@ -166,7 +189,12 @@ export default function GestureEngine({
         }
 
         // size selector logic (pinky pinch — disabled in view-only mode)
-        if (!viewOnly && gesture === "rightPinkyPinch" && !isSizing.current && gauntletExitTimer.current === null) {
+        if (
+          !viewOnly &&
+          gesture === "rightPinkyPinch" &&
+          !isSizing.current &&
+          gauntletExitTimer.current === null
+        ) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
@@ -176,7 +204,11 @@ export default function GestureEngine({
             predictions.landmarks[0][20].y,
           );
           isSizing.current = true;
-        } else if (!viewOnly && gesture === "rightPinkyPinch" && isSizing.current) {
+        } else if (
+          !viewOnly &&
+          gesture === "rightPinkyPinch" &&
+          isSizing.current
+        ) {
           if (sizeExitTimer.current) {
             clearTimeout(sizeExitTimer.current);
             sizeExitTimer.current = null;
@@ -186,7 +218,11 @@ export default function GestureEngine({
               canvasRef.current?.sizeSelectorStartY()) *
               2,
           );
-        } else if (!viewOnly && gesture !== "rightPinkyPinch" && isSizing.current) {
+        } else if (
+          !viewOnly &&
+          gesture !== "rightPinkyPinch" &&
+          isSizing.current
+        ) {
           if (!sizeExitTimer.current) {
             sizeExitTimer.current = setTimeout(() => {
               canvasRef.current?.hideSizeSelector();
@@ -282,14 +318,17 @@ export default function GestureEngine({
         canvasRef.current?.updateLandmarks(null);
       }
 
+      console.log(inAiWindowRef.current);
       // Draw if pinching (and not panning, and not view-only)
       if (
         !viewOnly &&
+        !inAiWindowRef.current &&
         isDrawing.current &&
         !isPanning.current && // Don't draw while panning
         canvasRef.current !== null &&
         predictions.landmarks[0]?.[0]
       ) {
+        console.log(inAiWindow);
         const thumbPoints = predictions.landmarks[0][4];
         const indexPoints = predictions.landmarks[0][INDEX_FINGER_TIP];
 

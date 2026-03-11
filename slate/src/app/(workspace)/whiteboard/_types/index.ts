@@ -11,6 +11,38 @@ export interface LineData {
   lineJoin: LineJoin;
 }
 
+export interface CircleData {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+}
+
+export interface TextData {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  fill: string;
+  fontSize: number;
+  fontFamily: string;
+}
+
+export interface ArrowData {
+  id: string;
+  x: number;
+  y: number;
+  points: number[];
+  pointerLength: number;
+  pointerWidth: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+}
+
 export interface Dimensions {
   width: number;
   height: number;
@@ -81,3 +113,8 @@ export interface ToastData {
   duration?: number;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}

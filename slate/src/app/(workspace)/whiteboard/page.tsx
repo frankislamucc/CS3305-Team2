@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LineData } from "./_types";
+import { ArrowData, CircleData, LineData, TextData } from "./_types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,13 +29,21 @@ import { useSocket, type WhiteboardSharedEvent } from "./_hooks/useSocket";
 import OptionButton from "./_components/ui/OptionButton";
 import { UndoRedo } from "./_components/UndoRedo";
 import RecordingControls from "./RecordingControls";
+import ChatEngine from "./_components/ChatEngine";
 
 const Canvas = dynamic(() => import("./_components/Canvas"), {
   ssr: false,
 });
 
 export default function WhiteboardPage() {
+  // konva shapes
   const [lines, setLines] = useState<LineData[]>([]);
+  const [circles, setCircles] = useState<CircleData[]>([]);
+  const [text, setText] = useState<TextData[]>([]);
+  const [arrows, setArrows] = useState<ArrowData[]>([]);
+
+  const [inAiWindow, setInAiWindow] = useState(false);
+
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [canvasName, setCanvasName] = useState<string>("Untitled");
   const canvasRef = useRef<CanvasHandle>(null);
@@ -436,6 +444,7 @@ export default function WhiteboardPage() {
               canvasRef.current?.clearCanvas();
               undoRedo.current.clearCanvas(lines);
               setLines([]);
+              setCircles([]);
               saveCanvas([], canvasId);
               updateHistoryFlags();
             }}
@@ -450,6 +459,14 @@ export default function WhiteboardPage() {
               addToast("Recording saved successfully", "success")
             }
             onError={(error) => addToast(`Recording error: ${error}`, "error")}
+          />
+
+          <OptionButton
+            onClick={() => {
+              setInAiWindow((inAiWindow) => !inAiWindow);
+            }}
+            isDisabled={isViewOnly}
+            text={inAiWindow ? "Normal Mode" : "AI Mode"}
           />
           <Link
             href="/settings"
@@ -467,7 +484,13 @@ export default function WhiteboardPage() {
                 strokeLinejoin="round"
                 d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01"
               />
-              <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             Help
           </Link>
@@ -481,8 +504,27 @@ export default function WhiteboardPage() {
             onUndo={performUndo}
             onRedo={performRedo}
           />
+          {!isViewOnly && (
+            <GestureEngine
+              canvasRef={canvasRef}
+              onDrawEnd={handleDrawEnd}
+              cameraLocation={cameraLocation}
+              inAiWindow={inAiWindow}
+            />
+          )}
+          {inAiWindow && (
+            <ChatEngine
+              setLines={setLines}
+              setCircles={setCircles}
+              setText={setText}
+              setArrows={setArrows}
+            />
+          )}
           <Canvas
             lines={lines}
+            circles={circles}
+            text={text}
+            arrows={arrows}
             canvasRef={canvasRef}
             onPaste={isViewOnly ? undefined : handlePaste}
             onCut={isViewOnly ? undefined : handleCut}
