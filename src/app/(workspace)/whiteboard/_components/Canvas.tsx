@@ -829,7 +829,7 @@ export default function Canvas(props: CanvasProps) {
       {/* ── HUD overlay for colour wheel & size selector (not affected by pan/zoom) ── */}
       {!props.viewOnly && dimensions.width > 0 && (showSpinner || showSizeSelector) && (
         <div
-          className="absolute bottom-6 right-6 z-30 pointer-events-none"
+          className="absolute bottom-6 left-6 z-30 pointer-events-none"
           style={{ width: 250, height: 220 }}
         >
           <Stage width={250} height={220}>
