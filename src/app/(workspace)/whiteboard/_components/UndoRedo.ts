@@ -1,9 +1,9 @@
-import { LineData } from "../_types";
+import { LineData, CircleData, TextData, ArrowData } from "../_types";
 
 export type UndoAction =
   | { type: "addLine"; line: LineData }
   | { type: "addLines"; lines: LineData[] }
-  | { type: "clearCanvas"; lines: LineData[] }
+  | { type: "clearCanvas"; lines: LineData[]; circles: CircleData[]; texts: TextData[]; arrows: ArrowData[] }
   | { type: "replaceAll"; oldLines: LineData[]; newLines: LineData[] };
 
 /**
@@ -32,9 +32,9 @@ export class UndoRedo {
   }
 
   /** Record a "clear canvas" action so it can be undone. */
-  clearCanvas(currentLines: LineData[]) {
-    if (currentLines.length === 0) return;
-    this.undoStack.push({ type: "clearCanvas", lines: [...currentLines] });
+  clearCanvas(currentLines: LineData[], currentCircles: CircleData[] = [], currentTexts: TextData[] = [], currentArrows: ArrowData[] = []) {
+    if (currentLines.length === 0 && currentCircles.length === 0 && currentTexts.length === 0 && currentArrows.length === 0) return;
+    this.undoStack.push({ type: "clearCanvas", lines: [...currentLines], circles: [...currentCircles], texts: [...currentTexts], arrows: [...currentArrows] });
     this.redoStack.length = 0;
   }
 
