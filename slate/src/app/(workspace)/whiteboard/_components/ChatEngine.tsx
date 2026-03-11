@@ -15,6 +15,7 @@ interface ChatEngineProps {
   setCircles: React.Dispatch<React.SetStateAction<CircleData[]>>;
   setText: React.Dispatch<React.SetStateAction<TextData[]>>;
   setArrows: React.Dispatch<React.SetStateAction<ArrowData[]>>;
+  onDiagramGenerated?: (lines: LineData[], circles: CircleData[], text: TextData[], arrows: ArrowData[]) => void;
 }
 
 export default function ChatEngine({
@@ -22,6 +23,7 @@ export default function ChatEngine({
   setCircles,
   setText,
   setArrows,
+  onDiagramGenerated,
 }: ChatEngineProps) {
   const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
@@ -77,6 +79,7 @@ export default function ChatEngine({
       setCircles((circles) => [...response.circles]);
       setText((text) => [...response.text]);
       setArrows((arrows) => [...response.arrows]);
+      onDiagramGenerated?.(response.lines, response.circles, response.text, response.arrows);
     } catch (error) {
       console.log(error);
     }

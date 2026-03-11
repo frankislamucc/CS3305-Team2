@@ -4,7 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import Canvas from "@/app/models/Canvas";
 import SharedCanvas from "@/app/models/SharedCanvas";
 import { getSession } from "@/lib/auth";
-import type { LineData } from "@/app/(workspace)/whiteboard/_types";
+import type { LineData, CircleData, TextData, ArrowData } from "@/app/(workspace)/whiteboard/_types";
 
 export interface SaveCanvasResult {
   success: boolean;
@@ -17,6 +17,9 @@ export interface LoadCanvasResult {
   canvasId?: string;
   name?: string;
   lines?: LineData[];
+  circles?: CircleData[];
+  texts?: TextData[];
+  arrows?: ArrowData[];
   errorMessage?: string;
 }
 
@@ -39,6 +42,9 @@ export async function saveCanvasAction(
   lines: LineData[],
   canvasId: string | null,
   name?: string,
+  circles?: CircleData[],
+  texts?: TextData[],
+  arrows?: ArrowData[],
 ): Promise<SaveCanvasResult> {
   try {
     const session = await getSession();
@@ -59,11 +65,49 @@ export async function saveCanvasAction(
       lineJoin: line.lineJoin,
     }));
 
+    const serializedCircles = (circles ?? []).map((c) => ({
+      id: c.id,
+      x: c.x,
+      y: c.y,
+      radius: c.radius,
+      fill: c.fill,
+      stroke: c.stroke,
+      strokeWidth: c.strokeWidth,
+    }));
+
+    const serializedTexts = (texts ?? []).map((t) => ({
+      id: t.id,
+      x: t.x,
+      y: t.y,
+      text: t.text,
+      fill: t.fill,
+      fontSize: t.fontSize,
+      fontFamily: t.fontFamily,
+    }));
+
+    const serializedArrows = (arrows ?? []).map((a) => ({
+      id: a.id,
+      x: a.x,
+      y: a.y,
+      points: a.points,
+      pointerLength: a.pointerLength,
+      pointerWidth: a.pointerWidth,
+      fill: a.fill,
+      stroke: a.stroke,
+      strokeWidth: a.strokeWidth,
+    }));
+
     if (canvasId) {
       // Update existing canvas
       const canvas = await Canvas.findOneAndUpdate(
         { _id: canvasId, userId: session.userId },
-        { lines: serializedLines, ...(name !== undefined && { name }) },
+        {
+          lines: serializedLines,
+          circles: serializedCircles,
+          texts: serializedTexts,
+          arrows: serializedArrows,
+          ...(name !== undefined && { name }),
+        },
         { new: true },
       );
 
@@ -79,6 +123,9 @@ export async function saveCanvasAction(
       userId: session.userId,
       name: name || "Untitled",
       lines: serializedLines,
+      circles: serializedCircles,
+      texts: serializedTexts,
+      arrows: serializedArrows,
     });
 
     return { success: true, canvasId: canvas._id.toString() };
@@ -113,6 +160,9 @@ export async function loadCanvasAction(): Promise<LoadCanvasResult> {
       canvasId: canvas._id.toString(),
       name: (canvas as any).name ?? "Untitled",
       lines: canvas.lines as LineData[],
+      circles: ((canvas as any).circles ?? []) as CircleData[],
+      texts: ((canvas as any).texts ?? []) as TextData[],
+      arrows: ((canvas as any).arrows ?? []) as ArrowData[],
     };
   } catch (error) {
     console.error("Load canvas error:", error);
@@ -179,6 +229,9 @@ export async function loadCanvasByIdAction(
       canvasId: canvas._id.toString(),
       name: (canvas as any).name ?? "Untitled",
       lines: canvas.lines as LineData[],
+      circles: ((canvas as any).circles ?? []) as CircleData[],
+      texts: ((canvas as any).texts ?? []) as TextData[],
+      arrows: ((canvas as any).arrows ?? []) as ArrowData[],
     };
   } catch (error) {
     console.error("Load canvas by ID error:", error);

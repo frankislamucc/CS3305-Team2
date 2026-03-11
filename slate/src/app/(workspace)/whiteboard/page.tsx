@@ -113,6 +113,9 @@ export default function WhiteboardPage() {
         const result = await loadCanvasAction();
         if (result.success && result.lines && result.lines.length > 0) {
           setLines(result.lines);
+          setCircles(result.circles ?? []);
+          setText(result.texts ?? []);
+          setArrows(result.arrows ?? []);
           setCanvasId(result.canvasId ?? null);
           setCanvasName(result.name ?? "Untitled");
         }
@@ -125,7 +128,7 @@ export default function WhiteboardPage() {
 
   // Save the current canvas to MongoDB
   const saveCanvas = useCallback(
-    async (currentLines: LineData[], currentCanvasId: string | null) => {
+    async (currentLines: LineData[], currentCanvasId: string | null, currentCircles?: CircleData[], currentTexts?: TextData[], currentArrows?: ArrowData[]) => {
       try {
         // Always read the latest shared state from the ref
         const shared = viewingSharedRef.current;
@@ -133,6 +136,9 @@ export default function WhiteboardPage() {
           const result = await saveSharedCanvasAction(
             shared.sharedId,
             currentLines,
+            currentCircles,
+            currentTexts,
+            currentArrows,
           );
           if (result.success && result.copyCanvasId) {
             setViewingShared((prev) =>
@@ -144,7 +150,7 @@ export default function WhiteboardPage() {
           return;
         }
 
-        const result = await saveCanvasAction(currentLines, currentCanvasId);
+        const result = await saveCanvasAction(currentLines, currentCanvasId, undefined, currentCircles, currentTexts, currentArrows);
         if (result.success && result.canvasId && !currentCanvasId) {
           setCanvasId(result.canvasId);
           setSidebarRefreshKey((k) => k + 1);
@@ -182,9 +188,9 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId);
+    saveCanvas(newLines, canvasId, circles, text, arrows);
     updateHistoryFlags();
-  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
   const performRedo = useCallback(() => {
     const action = undoRedo.current.redo();
@@ -207,9 +213,9 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId);
+    saveCanvas(newLines, canvasId, circles, text, arrows);
     updateHistoryFlags();
-  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
   // Keyboard shortcuts for undo (Ctrl+Z), redo (Ctrl+Y), help (Ctrl+H)
   const router = useRouter();
@@ -242,10 +248,10 @@ export default function WhiteboardPage() {
 
       const updated = [...lines, curLine];
       setLines(updated);
-      saveCanvas(updated, canvasId);
+      saveCanvas(updated, canvasId, circles, text, arrows);
       canvasHandler.clear();
     }
-  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
   // ── Copy & Paste: add pasted lines to the canvas ──
   const handlePaste = useCallback(
@@ -255,9 +261,9 @@ export default function WhiteboardPage() {
 
       const updated = [...lines, ...pastedLines];
       setLines(updated);
-      saveCanvas(updated, canvasId);
+      saveCanvas(updated, canvasId, circles, text, arrows);
     },
-    [lines, canvasId, saveCanvas, updateHistoryFlags],
+    [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags],
   );
 
   const handleCut = useCallback(
@@ -265,15 +271,15 @@ export default function WhiteboardPage() {
       undoRedo.current.replaceAll(lines, remainingLines);
       updateHistoryFlags();
       setLines(remainingLines);
-      saveCanvas(remainingLines, canvasId);
+      saveCanvas(remainingLines, canvasId, circles, text, arrows);
     },
-    [lines, canvasId, saveCanvas, updateHistoryFlags],
+    [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags],
   );
 
   const handleRename = useCallback(
     async (newName: string) => {
       if (!canvasId) {
-        const result = await saveCanvasAction(lines, null, newName);
+        const result = await saveCanvasAction(lines, null, newName, circles, text, arrows);
         if (result.success && result.canvasId) {
           setCanvasId(result.canvasId);
         }
@@ -283,7 +289,7 @@ export default function WhiteboardPage() {
       setCanvasName(newName);
       setSidebarRefreshKey((k) => k + 1);
     },
-    [canvasId, lines],
+    [canvasId, lines, circles, text, arrows],
   );
 
   const handleSelectCanvas = useCallback(
@@ -293,6 +299,9 @@ export default function WhiteboardPage() {
         const result = await loadCanvasByIdAction(id);
         if (result.success) {
           setLines(result.lines ?? []);
+          setCircles(result.circles ?? []);
+          setText(result.texts ?? []);
+          setArrows(result.arrows ?? []);
           setCanvasId(result.canvasId ?? null);
           setCanvasName(result.name ?? "Untitled");
           setViewingShared(null);
@@ -313,6 +322,9 @@ export default function WhiteboardPage() {
         const result = await loadSharedCanvasAction(shared.id);
         if (result.success) {
           setLines(result.lines ?? []);
+          setCircles(result.circles ?? []);
+          setText(result.texts ?? []);
+          setArrows(result.arrows ?? []);
           setCanvasId(null);
           setCanvasName(result.name ?? "Untitled");
           setViewingShared({
@@ -333,6 +345,9 @@ export default function WhiteboardPage() {
 
   const handleNewCanvas = useCallback(() => {
     setLines([]);
+    setCircles([]);
+    setText([]);
+    setArrows([]);
     setCanvasId(null);
     setCanvasName("Untitled");
     setViewingShared(null);
@@ -403,7 +418,7 @@ export default function WhiteboardPage() {
           )}
 
           <OptionButton
-            onClick={() => saveCanvas(lines, canvasId)}
+            onClick={() => saveCanvas(lines, canvasId, circles, text, arrows)}
             isDisabled={isViewOnly}
             text="Save"
           />
@@ -445,7 +460,9 @@ export default function WhiteboardPage() {
               undoRedo.current.clearCanvas(lines);
               setLines([]);
               setCircles([]);
-              saveCanvas([], canvasId);
+              setText([]);
+              setArrows([]);
+              saveCanvas([], canvasId, [], [], []);
               updateHistoryFlags();
             }}
             isDisabled={isViewOnly}
@@ -518,6 +535,9 @@ export default function WhiteboardPage() {
               setCircles={setCircles}
               setText={setText}
               setArrows={setArrows}
+              onDiagramGenerated={(newLines, newCircles, newText, newArrows) => {
+                saveCanvas(newLines, canvasId, newCircles, newText, newArrows);
+              }}
             />
           )}
           <Canvas
