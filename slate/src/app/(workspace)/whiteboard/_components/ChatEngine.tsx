@@ -75,11 +75,32 @@ export default function ChatEngine({
           content: responseMessage,
         },
       ]);
-      setLines((lines: LineData[]) => [...response.lines]);
-      setCircles((circles) => [...response.circles]);
-      setText((text) => [...response.text]);
-      setArrows((arrows) => [...response.arrows]);
-      onDiagramGenerated?.(response.lines, response.circles, response.text, response.arrows);
+
+      // Give every AI-generated shape a unique prefix so IDs never collide
+      // with existing items or previous AI responses
+      const uid = crypto.randomUUID().slice(0, 8);
+      const prefixedLines = (response.lines ?? []).map((l: LineData) => ({ ...l, id: `${uid}-${l.id}` }));
+      const prefixedCircles = (response.circles ?? []).map((c: CircleData) => ({ ...c, id: `${uid}-${c.id}` }));
+      const prefixedText = (response.text ?? []).map((t: TextData) => ({ ...t, id: `${uid}-${t.id}` }));
+      const prefixedArrows = (response.arrows ?? []).map((a: ArrowData) => ({ ...a, id: `${uid}-${a.id}` }));
+
+      // Use functional updaters to read the latest state, then call
+      // onDiagramGenerated outside the updaters to avoid setState-during-render
+      let mergedLines: LineData[] = [];
+      let mergedCircles: CircleData[] = [];
+      let mergedText: TextData[] = [];
+      let mergedArrows: ArrowData[] = [];
+
+      setLines((prev) => { mergedLines = [...prev, ...prefixedLines]; return mergedLines; });
+      setCircles((prev) => { mergedCircles = [...prev, ...prefixedCircles]; return mergedCircles; });
+      setText((prev) => { mergedText = [...prev, ...prefixedText]; return mergedText; });
+      setArrows((prev) => { mergedArrows = [...prev, ...prefixedArrows]; return mergedArrows; });
+
+      // Trigger save after state updates are batched (React 18+ auto-batches)
+      // Use queueMicrotask so the callback runs after React processes the batch
+      queueMicrotask(() => {
+        onDiagramGenerated?.(mergedLines, mergedCircles, mergedText, mergedArrows);
+      });
     } catch (error) {
       console.log(error);
     }

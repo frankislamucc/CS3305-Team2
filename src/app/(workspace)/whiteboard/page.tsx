@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LineData } from "./_types";
+import { LineData, CircleData, TextData, ArrowData } from "./_types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,9 @@ const Canvas = dynamic(() => import("./_components/Canvas"), {
 
 export default function WhiteboardPage() {
   const [lines, setLines] = useState<LineData[]>([]);
+  const [circles, setCircles] = useState<CircleData[]>([]);
+  const [text, setText] = useState<TextData[]>([]);
+  const [arrows, setArrows] = useState<ArrowData[]>([]);
   const [canvasId, setCanvasId] = useState<string | null>(null);
   const [canvasName, setCanvasName] = useState<string>("Untitled");
   const canvasRef = useRef<CanvasHandle>(null);
@@ -158,6 +161,9 @@ export default function WhiteboardPage() {
     if (!action) return;
 
     let newLines: LineData[];
+    let newCircles = circles;
+    let newText = text;
+    let newArrows = arrows;
     switch (action.type) {
       case "addLine":
         newLines = lines.slice(0, -1);
@@ -167,6 +173,9 @@ export default function WhiteboardPage() {
         break;
       case "clearCanvas":
         newLines = action.lines;
+        newCircles = action.circles;
+        newText = action.texts;
+        newArrows = action.arrows;
         break;
       case "replaceAll":
         newLines = action.oldLines;
@@ -174,15 +183,21 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId);
+    setCircles(newCircles);
+    setText(newText);
+    setArrows(newArrows);
+    saveCanvas(newLines, canvasId, newCircles, newText, newArrows);
     updateHistoryFlags();
-  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
   const performRedo = useCallback(() => {
     const action = undoRedo.current.redo();
     if (!action) return;
 
     let newLines: LineData[];
+    let newCircles = circles;
+    let newText = text;
+    let newArrows = arrows;
     switch (action.type) {
       case "addLine":
         newLines = [...lines, action.line];
@@ -192,6 +207,9 @@ export default function WhiteboardPage() {
         break;
       case "clearCanvas":
         newLines = [];
+        newCircles = [];
+        newText = [];
+        newArrows = [];
         break;
       case "replaceAll":
         newLines = action.newLines;
@@ -199,9 +217,12 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId);
+    setCircles(newCircles);
+    setText(newText);
+    setArrows(newArrows);
+    saveCanvas(newLines, canvasId, newCircles, newText, newArrows);
     updateHistoryFlags();
-  }, [lines, canvasId, saveCanvas, updateHistoryFlags]);
+  }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
   // Keyboard shortcuts for undo (Ctrl+Z), redo (Ctrl+Y), help (Ctrl+H)
   const router = useRouter();
@@ -434,9 +455,12 @@ export default function WhiteboardPage() {
           <OptionButton
             onClick={() => {
               canvasRef.current?.clearCanvas();
-              undoRedo.current.clearCanvas(lines);
+              undoRedo.current.clearCanvas(lines, circles, text, arrows);
               setLines([]);
-              saveCanvas([], canvasId);
+              setCircles([]);
+              setText([]);
+              setArrows([]);
+              saveCanvas([], canvasId, [], [], []);
               updateHistoryFlags();
             }}
             isDisabled={isViewOnly}

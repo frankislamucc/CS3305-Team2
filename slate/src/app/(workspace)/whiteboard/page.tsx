@@ -172,6 +172,9 @@ export default function WhiteboardPage() {
     if (!action) return;
 
     let newLines: LineData[];
+    let newCircles = circles;
+    let newText = text;
+    let newArrows = arrows;
     switch (action.type) {
       case "addLine":
         newLines = lines.slice(0, -1);
@@ -181,6 +184,9 @@ export default function WhiteboardPage() {
         break;
       case "clearCanvas":
         newLines = action.lines;
+        newCircles = action.circles;
+        newText = action.texts;
+        newArrows = action.arrows;
         break;
       case "replaceAll":
         newLines = action.oldLines;
@@ -188,7 +194,10 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId, circles, text, arrows);
+    setCircles(newCircles);
+    setText(newText);
+    setArrows(newArrows);
+    saveCanvas(newLines, canvasId, newCircles, newText, newArrows);
     updateHistoryFlags();
   }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
@@ -197,6 +206,9 @@ export default function WhiteboardPage() {
     if (!action) return;
 
     let newLines: LineData[];
+    let newCircles = circles;
+    let newText = text;
+    let newArrows = arrows;
     switch (action.type) {
       case "addLine":
         newLines = [...lines, action.line];
@@ -206,6 +218,9 @@ export default function WhiteboardPage() {
         break;
       case "clearCanvas":
         newLines = [];
+        newCircles = [];
+        newText = [];
+        newArrows = [];
         break;
       case "replaceAll":
         newLines = action.newLines;
@@ -213,7 +228,10 @@ export default function WhiteboardPage() {
     }
 
     setLines(newLines);
-    saveCanvas(newLines, canvasId, circles, text, arrows);
+    setCircles(newCircles);
+    setText(newText);
+    setArrows(newArrows);
+    saveCanvas(newLines, canvasId, newCircles, newText, newArrows);
     updateHistoryFlags();
   }, [lines, circles, text, arrows, canvasId, saveCanvas, updateHistoryFlags]);
 
@@ -457,7 +475,7 @@ export default function WhiteboardPage() {
           <OptionButton
             onClick={() => {
               canvasRef.current?.clearCanvas();
-              undoRedo.current.clearCanvas(lines);
+              undoRedo.current.clearCanvas(lines, circles, text, arrows);
               setLines([]);
               setCircles([]);
               setText([]);

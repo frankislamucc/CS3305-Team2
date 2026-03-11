@@ -965,7 +965,7 @@ export default function Canvas(props: CanvasProps) {
         dimensions.width > 0 &&
         (showSpinner || showSizeSelector) && (
           <div
-            className="absolute bottom-6 right-6 z-30 pointer-events-none"
+            className="absolute bottom-6 left-6 z-30 pointer-events-none"
             style={{ width: 250, height: 220 }}
           >
             <Stage width={250} height={220}>
