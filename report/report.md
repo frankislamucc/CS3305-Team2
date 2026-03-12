@@ -75,8 +75,42 @@ Therefore, what is missing is a whiteboard tool which, without need for external
 ---
 
 ## 3. Requirements Analysis
+This section outlines the requirements that define the behaviors and capabilities of Slate as an application. Requirements analysis was conducted through group discussions, evaluating competitors in the market and considering how gesture-based interaction could be incorporated into a collaborative workspace.
+
+The goal of the system is to provide a fully functional whiteboard application that can be controlled using hand gestures captured through a webcam. The system should support real time gesture recognition, collaborative drawing, user authentication, persistent data storage and recording functionality while maintaining a responsive and low latency performance in a web browser.
+
+The requirements are divided into functional and non-functional categories. Functional requirements describe the specific features the system must provided, while non-functional requirements describe the quality attributes and constraints which the system must operate.
 
 ### 3.1 Functional Requirements
+Functional requirements define the core behaviour of the system and the features that the end user interacts with. The requiremtns are gotten from the primary objectives of the project and the uses we intend the application to have for the end user wether it be assistance with teaching or a collaborative tool.
+
+#### User Account Management 
+- **User Registration**
+The system will  allow new users to create an account using a unique username and password.
+
+- **User Authentication**  
+  The system will allow existing users to log in securely using their credentials.
+
+- **Session Management**  
+  The system will maintain authenticated user sessions using JSON Web Tokens (JWT) stored in httpOnly cookies.
+
+- **Access Control**  
+  The system will restrict access to certain pages and functionality to authenticated users only.
+
+#### Gesture Recognition and Interaction
+- **Hand Tracking via Webcam**  
+  The system will capture video input from the user’s webcam and detect hand landmarks using the MediaPipe framework.
+
+- **Gesture Interpretation**  
+  The system will interpret specific hand gestures and map them to whiteboard actions such as drawing, stopping, panning or zooming.
+
+- **Gesture-Based Drawing**  
+  The system will allow users to draw on the whiteboard canvas using recognised gestures.
+
+- **Gesture-Based Tool Control**  
+  The system will allow gestures to be used to control drawing tools such as colour selection, brush size adjustment and undo/redo.
+
+#### Whiteboard Functionality
 
 ### 3.2 Non-Functional Requirements
 
