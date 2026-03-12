@@ -156,8 +156,6 @@ Functional requirements define the core behaviour of the system and the features
 
 The frontend of this application is rendered using Next.js version 16. This is a react based full stack framework that allows both server and client rendering. UI layout is wrapped in a main page and modular sub-components in seperate files are imported. This makes complex animations and blocks of js and html logic to be grouped into individual components/functions, resulting in easier readability and maintenance. The whiteboard canvas is built using the Konva.js library. Konva.js is a 2D graphics library that has optimized browser integration and react support. React refs can be passed to gesture prediction components to control the state of the Konva.js shapes. Tailwindcss is used for inline styling of components, this had a small learning curve but removed the overhead of switching between style files and JSX/component logic. For complex animations such as the landing page's bento box and the dynamic background effect, Shadcn was used. This is a react component library that has pre built components such as buttons, responsive navbars and footers that enabled a smooth transition from a figma design to a react implementation.
 
-The frontend of this application is rendered using Next.js version 16. Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
-
 #### 4.2.2 Backend
 
 Users authenticate with the application using JWT tokens. The Jose json-encryption library is used to sign theese tokens with a secret-key and randomised salt. For server side form validation, the Zod TypeScript-first validation library is used. This allows us to create a schema/type for form inputs using Zod's typescript types. There is a single authentication source for the server to make LLM request, via a client secret. The google/genai library retrieves this secret from a local env var, enabling stateless server actions to make new clients across requests. The gemini-3.1-flash-lite model is used to process requests as it has a high free rate-limit and is one of the latest stable releases. Google's MediaPipe GestureRecognizer is a synchronous model used toanalyse hand movement and provide predictions. It uses a wasm to run natively in the browser using availbale CPU or GPU's. A MongoDB database is used to persist canvases and user credentials. The MongoDB Atlas service, offers 512MB of storage for free and provided easy integration because of it's documentation.
@@ -167,6 +165,11 @@ Users authenticate with the application using JWT tokens. The Jose json-encrypti
 ### 4.3 Database Schema Design
 
 ### 4.4 API Design
+
+Both server and client components are utilized to choose when logic should and should not be rendered Client side.
+Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
+
+A clear design desicion was made to seperate the gesture prediction logic from the canvas rendering. To do this we used a Gesture engine and a Canvas component. The canvas provides a handler object to the Gesture engine, offering an API to perform CRUD operations on the Canvas. Developers of the gesture recognition where able to completely decouple themselves from the canvas implementation by using this API. Canvas developers in turn had to provide a black box handler that covered all requirements of the gesture engine, e.g. rendering a real time line and exporting the current canvas state.
 
 ### 4.5 Real-Time Communication Design
 
@@ -269,7 +272,7 @@ services:
 
 - **ports** maps container port 3000 to the host so the app is available at `http://localhost:3000`.
 - **env_file** loads secrets from `.env.local` which is not committed to the repo.
-- **restart: unless-stopped** automatically restarts the container oif it crashes.
+- **restart: unless-stopped** automatically restarts the container only if it crashes.
 
 To deploy the application:
 
