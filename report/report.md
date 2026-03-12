@@ -162,6 +162,8 @@ Users authenticate with the application using JWT tokens. The Jose json-encrypti
 
 #### 4.2.3 Deployment
 
+For the app deployment we chose a containerized approach. Next.js statelessness nature supports emphemeral containers out of the box. No state is maintained accross requests as JWT tokens can be verified on a per request basis. Persistence is also avoided in a container approach by using MongoDB atlas to host the database. Docker compose is used to run our optimized image in a single container but allows for easy future replication. A kubernetes deployment was discussed but deemed unnecessary for our use case. The application does not maintain session data and has most computation done client side. Both the model and canvas rendering use client components with only LLM requests and responses being handled on the server. Using load balancing, microservice architecture does not match this monolith application design. Kubernetes present risks such as resource costs from management nodes and overhead of using external tools like KIND to create clusters. Our single image and docker compose file is the most scaleable and maintainable approach for our API design.
+
 ### 4.3 Database Schema Design
 
 ### 4.4 API Design
