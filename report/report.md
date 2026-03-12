@@ -72,19 +72,19 @@ Therefore, what is missing is a whiteboard tool which, without need for external
 
 The idea of collaborative whiteboarding creates requirements for real-time communication. When one user draws a line, the other must see that line with minimal latency. Achieving this requires moving beyond the traditional request-response model of HTTP.
 
-HTTP follows a synchronous pattern: the client initiates a request, the server processes it, and the server returns a response. For real-time collaboration, this creates several problems. First, the server cannot initiate communication, it cannot notify clients of changes unless those clients poll for updates. Polling introduces either high latency or excessive overhead, depending on frequency. Second, each request establishes a new connection, adding TCP handshake overhead. Third, maintaining state across multiple requests requires additional mechanisms like sessions or tokens. 
+HTTP follows a synchronous pattern: the client initiates a request, the server processes it, and the server returns a response. For real-time collaboration, this creates several problems. First, the server cannot initiate communication, it cannot notify clients of changes unless those clients poll for updates. Polling introduces either high latency or excessive overhead, depending on frequency. Second, each request establishes a new connection, adding TCP handshake overhead. Third, maintaining state across multiple requests requires additional mechanisms like sessions or tokens.
 
 WebSockets address these limitations by providing a full-duplex communication channel over a single TCP connection. After an initial HTTP upgrade handshake, the connection persists, allowing either party to send messages at any time. This allows for low latency, bidirectional communication and high efficiency in typical use.
 
-For a whiteboarding application, this provides critical functionality: when User A draws a stroke, the client sends a message describing said stroke, and the server then broadcasts it to User B, whose client renders it immediately. 
+For a whiteboarding application, this provides critical functionality: when User A draws a stroke, the client sends a message describing said stroke, and the server then broadcasts it to User B, whose client renders it immediately.
 
 Socket.IO provides a necessary abstraction layer over raw WebSockets, as support for WebSockets differs across browsers and configurations, and connections can be blocked by firewalls. Socket.IO addresses such challenges by offering automatic connection management to handle reconnection, using exponential backoff to avoid overwhelming servers. Socket.IO can also fall back to HTTP long polling if WebSockets are, for some reason, unavailable. Socket.IO also groups connections into "rooms", ensuring messages are broadcast only to viewers with access to a specific board, not all connected users. Socket.IO also provides support for passing JWT tokens during the connection handshake, further ensuring authorisation of users.
 
-For Slate, Socket.IO provides an ideal tool for collaboration. The gesture-based drawing system generates a stream of actions that map to Socket.IO events. Automatic reconnection handles temporary network interruptions gracefully, which is critical for users who may move between network environments. 
+For Slate, Socket.IO provides an ideal tool for collaboration. The gesture-based drawing system generates a stream of actions that map to Socket.IO events. Automatic reconnection handles temporary network interruptions gracefully, which is critical for users who may move between network environments.
 
 ### 2.3 Gesture Recognition in Web Applications
 
-Enabling gesture-based whiteboard control requires solving a complex computer vision problem in real time within the browser environment. The system must detect hands, track their movement across frames, interpret gestures and map those gestures to drawing actions while maintaining responsive UI performance. This section will examine the technology that makes this possible. 
+Enabling gesture-based whiteboard control requires solving a complex computer vision problem in real time within the browser environment. The system must detect hands, track their movement across frames, interpret gestures and map those gestures to drawing actions while maintaining responsive UI performance. This section will examine the technology that makes this possible.
 
 Firstly, and perhaps most fundamentally, Google's MediaPipe framework, specifically its Hand Tracking solution, has emerged as the leading technology for in-browser hand perception. MediaPipe Hands is made up of two models working in sequence, a palm detection model that identifies hand bounding boxes, followed by a hand landmark model that localises 21 key points across each hand, including fingertips, knuckles and the palm base. These landmarks are returned as coordinates, along with a depth value relative to the wrist.
 
@@ -97,6 +97,7 @@ For Slate's whiteboard control, we take MediaPipe's landmarks and perform our ow
 ---
 
 ## 3. Requirements Analysis
+
 This section outlines the requirements that define the behaviors and capabilities of Slate as an application. Requirements analysis was conducted through group discussions, evaluating competitors in the market and considering how gesture-based interaction could be incorporated into a collaborative workspace.
 
 The goal of the system is to provide a fully functional whiteboard application that can be controlled using hand gestures captured through a webcam. The system should support real time gesture recognition, collaborative drawing, user authentication, persistent data storage and recording functionality while maintaining a responsive and low latency performance in a web browser.
@@ -104,11 +105,13 @@ The goal of the system is to provide a fully functional whiteboard application t
 The requirements are divided into functional and non-functional categories. Functional requirements describe the specific features the system must provided, while non-functional requirements describe the quality attributes and constraints which the system must operate.
 
 ### 3.1 Functional Requirements
+
 Functional requirements define the core behaviour of the system and the features that the end user interacts with. The requiremtns are gotten from the primary objectives of the project and the uses we intend the application to have for the end user wether it be assistance with teaching or a collaborative tool.
 
-#### User Account Management 
+#### User Account Management
+
 - **User Registration**
-The system will  allow new users to create an account using a unique username and password.
+  The system will allow new users to create an account using a unique username and password.
 
 - **User Authentication**  
   The system will allow existing users to log in securely using their credentials.
@@ -120,6 +123,7 @@ The system will  allow new users to create an account using a unique username an
   The system will restrict access to certain pages and functionality to authenticated users only.
 
 #### Gesture Recognition and Interaction
+
 - **Hand Tracking via Webcam**  
   The system will capture video input from the user’s webcam and detect hand landmarks using the MediaPipe framework.
 
@@ -150,9 +154,13 @@ The system will  allow new users to create an account using a unique username an
 
 #### 4.2.1 Frontend
 
+The frontend of this application is rendered using Next.js version 16. This is a react based full stack framework that allows both server and client rendering. UI layout is wrapped in a main page and modular sub-components in seperate files are imported. This makes complex animations and blocks of js and html logic to be grouped into individual components/functions, resulting in easier readability and maintenance. The whiteboard canvas is built using the Konva.js library. Konva.js is a 2D graphics library that has optimized browser integration and react support. React refs can be passed to gesture prediction components to control the state of the Konva.js shapes. Tailwindcss is used for inline styling of components, this had a small learning curve but removed the overhead of switching between style files and JSX/component logic. For complex animations such as the landing page's bento box and the dynamic background effect, Shadcn was used. This is a react component library that has pre built components such as buttons, responsive navbars and footers that enabled a smooth transition from a figma design to a react implementation.
+
 The frontend of this application is rendered using Next.js version 16. Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
 
 #### 4.2.2 Backend
+
+Users authenticate with the application using JWT tokens. The Jose json-encryption library is used to sign theese tokens with a secret-key and randomised salt. For server side form validation, the Zod TypeScript-first validation library is used. This allows us to create a schema/type for form inputs using Zod's typescript types. There is a single authentication source for the server to make LLM request, via a client secret. The google/genai library retrieves this secret from a local env var, enabling stateless server actions to make new clients across requests. The gemini-3.1-flash-lite model is used to process requests as it has a high free rate-limit and is one of the latest stable releases. Google's MediaPipe GestureRecognizer is a synchronous model used toanalyse hand movement and provide predictions. It uses a wasm to run natively in the browser using availbale CPU or GPU's. A MongoDB database is used to persist canvases and user credentials. The MongoDB Atlas service, offers 512MB of storage for free and provided easy integration because of it's documentation.
 
 #### 4.2.3 Deployment
 
