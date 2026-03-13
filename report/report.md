@@ -1,5 +1,7 @@
 # Slate – Hands Free Gesture Based Whiteboard
 
+https://github.com/frankislamucc/CS3305-Team2
+
 ## 1. Introduction
 
 ### 1.1 Project Overview
