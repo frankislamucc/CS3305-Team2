@@ -164,16 +164,14 @@ Users authenticate with the application using JWT tokens. The Jose json-encrypti
 
 For the app deployment we chose a containerized approach. Next.js statelessness nature supports emphemeral containers out of the box. No state is maintained accross requests as JWT tokens can be verified on a per request basis. Persistence is also avoided in a container approach by using MongoDB atlas to host the database. Docker compose is used to run our optimized image in a single container but allows for easy future replication. A kubernetes deployment was discussed but deemed unnecessary for our use case. The application does not maintain session data and has most computation done client side. Both the model and canvas rendering use client components with only LLM requests and responses being handled on the server. Using load balancing, microservice architecture does not match this monolith application design. Kubernetes present risks such as resource costs from management nodes and overhead of using external tools like KIND to create clusters. Our single image and docker compose file is the most scaleable and maintainable approach for our API design.
 
-### 4.3 Database Schema Design
-
-### 4.4 API Design
+### 4.3 API Design
 
 Both server and client components are utilized to choose when logic should and should not be rendered Client side.
 Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
 
 A clear design desicion was made to seperate the gesture prediction logic from the canvas rendering. To do this we used a Gesture engine and a Canvas component. The canvas provides a handler object to the Gesture engine, offering an API to perform CRUD operations on the Canvas. Developers of the gesture recognition where able to completely decouple themselves from the canvas implementation by using this API. Canvas developers in turn had to provide a black box handler that covered all requirements of the gesture engine, e.g. rendering a real time line and exporting the current canvas state.
 
-### 4.5 Real-Time Communication Design
+### 4.4 Real-Time Communication Design
 
 ---
 
@@ -207,13 +205,19 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.2.1 Drawing Engine & Canvas API
 
+The drawing engine is a isolated API provided by the Canvas component, located in the Canvas.tsx file. The parent whiteboard page.tsx passes a ref to the Canvas engine to set the ref object to a handler object. A ref is used here as it allows the child component Canvas to set the object and without re-rendering the component tree. The react hook [useImperativeHandle](https://react.dev/reference/react/useImperativeHandle) sets the ref.current to a handler object with functions such as exportLine, drawLine etc, without giving direct access to the canvas components. This creates a clear layer of abstraction between the Canvas rendering and the gesture predictions. The page component can then share this ref handler with the gesture engine to call when predictions are updated.
+
+Inside the Canvas component the Konva.js react library is harnessed for optimized 2d rendering. The Stage component wraps layers of grouped shapes. The first Layer consists of line data passed as a prop from the parent component. This is the state of the canvas that is persisted in the MongoDB store. To avoid re-rendering this entire state for every point update, we employed a seperate Line object. This single Line is updated for every point added via the handler, but crucially only re-renders all the line data when a user has stoped drawing and the current line is added to the MongoDB store. Other layers are added to visualise the highlighted lines to be copied and to integrate size selection and a color wheel. All of the above 2d visualisation is drawn using a Line shape, the only exception is for LLM generated data structure visualization. This uses arrows and circles to more accurately represent nodes and pointers for Linked structures.
 
 #### 5.2.2 Colour Selection & Size Selector
+
 It was an important consideration that the internal canvas UI and the external React based UI had a clear separation of responsibilities. The external UI is used for lower priority features, features that link with other, non-canvas related parts of the system, and fallback options for features that are already encapsulated by gestures.
 
 Choosing the size of your pen and the colour you write with were identified as the most core options for users and are therefore were assigned to central gestures. Both the `ColourWheelSpinner` and `SizeSelector` are implemented as React components which sit in a separate Konva layer above the drawing canvas. This ensures data integrity for user creations.
 
-The spinner is implemented using Konva. The rotation of the wheel is controlled by a `rotationAngle` property, and the component calculates the selected segment based on this angle which is approximated from a normalized horizontal motion. The active segment is visually highlighted by increasing its size and opacity. Similarly for sizing, a normalized vertical motion is used to navigate a sequence of Konva `rects` mapping to different fill widths. 
+The spinner is implemented using Konva. The rotation of the wheel is controlled by a `rotationAngle` property, and the component calculates the selected segment based on this angle which is approximated from a normalized horizontal motion. The active segment is visually highlighted by increasing its size and opacity. Similarly for sizing, a normalized vertical motion is used to navigate a sequence of Konva `rects` mapping to different fill widths.
+
+#### 5.2.2 Colour Selection & Size Selector (Tom)
 
 #### 5.2.3 Undo/Redo System (Rakib)
 
@@ -230,12 +234,15 @@ The spinner is implemented using Konva. The rotation of the wheel is controlled 
 ### 5.4 Gesture Recognition
 
 #### 5.4.1 GestureEngine & Custom Gestures
-We had to extract verifiable gesture data from a set of 21 landmarks from the MediaPipe worker. Mediapipe offers a very limited set of in-built gestures. We supplemented these by creating the `CustomGestures.ts` module which takes the 2D landmarks as an input and runs them through a sequence of gesture recognition algorithms and produces the most likely gesture. These algorithms mostly isolate a specific motion that is both easy for the user to perform and distinct from other gestures. 
+
+We had to extract verifiable gesture data from a set of 21 landmarks from the MediaPipe worker. Mediapipe offers a very limited set of in-built gestures. We supplemented these by creating the `CustomGestures.ts` module which takes the 2D landmarks as an input and runs them through a sequence of gesture recognition algorithms and produces the most likely gesture. These algorithms mostly isolate a specific motion that is both easy for the user to perform and distinct from other gestures.
 
 #### 5.4.2 Web Worker for Performance
+
 The MediaPipe machine learning model is by far the most expensive element of the system and for this reason it needed to be optimised as much as possible. We chose to spin the model onto it's own thread using a worker which runs the model separately from the main React UI thread. This approach significantly counteracted the performance issues which can occur when attempting such intensive computation in a web browser.
 
 #### 5.4.3 Smoothing with the 1€ Filter and Interpolation
+
 Maximising the user experience for the core functionalities like drawing a line was essential. For this reason we made use of a smoothing algorithm to remove the jitter and unpredictability caused by latency. we researched extensively and found that the academic consensus preferred the 1€ Filter for this type of task. The filter was implemented in javascript and a 3 point system was applied when drawing. The filter is applied to the thumb, index and pinch landmarks individually, and subsequently and exponential moving average is taken of all three, finally the output point is interpolated by a 50ms time window. We found that this approach allows for users to better understand how to interact with the application intuitively.
 
 ### 5.5 Recording Feature
@@ -317,9 +324,12 @@ MongoDB Atlas handles database hosting externally so the Docker setup only needs
 
 ---
 
-## 8. Project Management 
+## 8. Project Management
+
 ### 8.1 Team Roles & Responsibilities
+
 Given the collaborative nature of the group members did more than prescribed below, therefore below is an over arching summary of each members undertakings in the nine weeks.
+
 - Frank - Project Lead and Database
 - Rory - Screen Recording and Saving
 - Naoise - React, UI and LLM
@@ -329,6 +339,7 @@ Given the collaborative nature of the group members did more than prescribed bel
 - Oisín - Smoothing and UI
 
 ### 8.2 Methodology (Agile/Scrum)
+
 The team chose to use the Agile development methodology with elements of the Scrum framework blended into it. The Agile methodology is just that, a methodology whereas Scrum is a framework for Agile project management that can be followed. It is best to use the methods that allow the project to succeed rather then be held back in trying to follow a framework to the letter.
 
 Agile methodology suited the collaborative nature of the environment in which the project was developed. The size of the group and the list objectives to be achieved would have been significantly hampered by Waterfall with team members waiting for other pieces of the process to be completed before they could even begin working. The Waterfall methodology would have removed the collaborative environment in meetings which allowed new ideas to be pitched at all times to solve individual parts of the design. This open and discussion heavy space needed the Agile methodology to ensure the group was adaptable in a fast moving development environment.
