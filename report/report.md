@@ -340,9 +340,27 @@ Konva's `Stage` component provides built-in properties for applying 2D transform
 
 #### 5.3.1 Socket.IO Integration
 
+The custom server in `server.mjs` runs both Next.js and Socket.IO on a single port by attaching a Socket.IO server at the `/api/socketio` path with CORS enabled. There is no separate WebSocket service to deploy.
+
+To track who is online the server keeps a `userSockets` Map that links each userId to a Set of socket IDs. On connection the server reads the userId from the handshake auth payload and registers the socket. When disconnecting it removes the ID and cleans up the entry if the user has no remaining connections. This handles multiple tabs since each tab gets its own socket but they are all grouped under the same user.
+
+The `io` instance and `userSockets` map are exposed on `globalThis` so Next.js server actions can emit events without importing the server module directly. On the client side a `useSocket` hook connects on mount and listens for a `whiteboard-shared` event. When it fires the hook shows a toast notification and refreshes the sidebar so the new shared canvas appears immediately.
+
 #### 5.3.2 Canvas State Synchronization
 
+Canvas persistence is handled through Next.js server actions in `actions/canvas.ts`. The main actions are `saveCanvas`, `loadCanvas`, `loadCanvasById`, `getUserCanvases`, `deleteCanvas` and `renameCanvas`. Every action verifies the JWT session first so unauthenticated requests are rejected.
+
+`saveCanvas` handles both creation and updates. If it receives a `canvasId` it updates the existing document, otherwise it creates a new one. It serializes all shape data to strip anything that is not JSON safe before writing to MongoDB. `loadCanvas` fetches the most recently updated canvas for the current user which is what loads on first visit. `getUserCanvases` returns a summary list excluding shared copies so the sidebar only shows original work.
+
+The whiteboard auto-saves on every meaningful action. Drawing a line, cut/paste, etc. all trigger a save. Users never have to manually save. The Canvas model stores lines as point arrays with stroke colour and width and also supports circles, text and arrows for AI generated shapes.
+
 #### 5.3.3 Shared Canvas & Permissions
+
+Sharing is handled by server actions in `actions/share.ts` and a `SharedCanvas` Mongoose model that links a sender to a recipient. The `shareCanvas` action validates ownership, looks up the recipient by username, prevents self-sharing and checks for duplicates. If the canvas was already shared with that person it resets the `seen` flag instead of creating a new record. It then calls `notifyUser` which iterates the recipient's active socket IDs and emits `whiteboard-shared` to each one.
+
+When a recipient opens a shared canvas the `loadSharedCanvas` action checks for an existing personal copy. If there is none it loads the original in read-only mode. The moment the recipient saves changes, a copy-on-write mechanism creates a new Canvas document with `isSharedCopy` set to true and atomically sets `recipientCanvasId` on the share record. Subsequent saves update that copy so the original is never modified by anyone other than the owner.
+
+The `SharedCanvas` model stores references to the original canvas and the optional recipient copy along with both usernames and a `seen` boolean for the notification badge. A compound unique index on `originalCanvasId` plus `recipientId` prevents duplicates at the database level. Recipients can remove a shared canvas from their account which deletes the share record.
 
 ### 5.4 Gesture Recognition
 
