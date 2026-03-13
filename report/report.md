@@ -207,7 +207,13 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.2.1 Drawing Engine & Canvas API
 
-#### 5.2.2 Colour Selection & Size Selector (Tom)
+
+#### 5.2.2 Colour Selection & Size Selector
+It was an important consideration that the internal canvas UI and the external React based UI had a clear separation of responsibilities. The external UI is used for lower priority features, features that link with other, non-canvas related parts of the system, and fallback options for features that are already encapsulated by gestures.
+
+Choosing the size of your pen and the colour you write with were identified as the most core options for users and are therefore were assigned to central gestures. Both the `ColourWheelSpinner` and `SizeSelector` are implemented as React components which sit in a separate Konva layer above the drawing canvas. This ensures data integrity for user creations.
+
+The spinner is implemented using Konva. The rotation of the wheel is controlled by a `rotationAngle` property, and the component calculates the selected segment based on this angle which is approximated from a normalized horizontal motion. The active segment is visually highlighted by increasing its size and opacity. Similarly for sizing, a normalized vertical motion is used to navigate a sequence of Konva `rects` mapping to different fill widths. 
 
 #### 5.2.3 Undo/Redo System (Rakib)
 
@@ -221,13 +227,16 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.3.3 Shared Canvas & Permissions
 
-### 5.4 Gesture Recognition (Tom)
+### 5.4 Gesture Recognition
 
 #### 5.4.1 GestureEngine & Custom Gestures
+We had to extract verifiable gesture data from a set of 21 landmarks from the MediaPipe worker. Mediapipe offers a very limited set of in-built gestures. We supplemented these by creating the `CustomGestures.ts` module which takes the 2D landmarks as an input and runs them through a sequence of gesture recognition algorithms and produces the most likely gesture. These algorithms mostly isolate a specific motion that is both easy for the user to perform and distinct from other gestures. 
 
 #### 5.4.2 Web Worker for Performance
+The MediaPipe machine learning model is by far the most expensive element of the system and for this reason it needed to be optimised as much as possible. We chose to spin the model onto it's own thread using a worker which runs the model separately from the main React UI thread. This approach significantly counteracted the performance issues which can occur when attempting such intensive computation in a web browser.
 
-#### 5.4.3 1€ Filter for Smoothing
+#### 5.4.3 Smoothing with the 1€ Filter and Interpolation
+Maximising the user experience for the core functionalities like drawing a line was essential. For this reason we made use of a smoothing algorithm to remove the jitter and unpredictability caused by latency. we researched extensively and found that the academic consensus preferred the 1€ Filter for this type of task. The filter was implemented in javascript and a 3 point system was applied when drawing. The filter is applied to the thumb, index and pinch landmarks individually, and subsequently and exponential moving average is taken of all three, finally the output point is interpolated by a 50ms time window. We found that this approach allows for users to better understand how to interact with the application intuitively.
 
 ### 5.5 Recording Feature
 
@@ -406,29 +415,13 @@ The primary collaboration tool used was Git as detailed above facilitating the d
 
 ### 10.1 Planned Enhancements
 
-If we had more time, the first thing we would tackle is making collaboration truly real-time. Right now Socket.IO is only used to notify someone when a canvas gets shared with them, but you cannot actually watch another person draw live. The good news is that the Socket.IO rooms and events are already wired up in the server, so broadcasting stroke data as it happens and rendering it would be a vital feature.
-
-We would also want to expand the gesture set. At the moment drawing only works with the right hand and the left hand is limited to undo and redo. An eraser gesture would be really useful because right now if you make a small mistake you have to keep undoing strokes until it is gone. We also talked about shape recognition where the system notices you are trying to draw a straight line or a rectangle and cleans it up for you automatically. That would make Slate a lot more practical for diagrams. Being able to select, move and resize shapes after drawing them is another thing we want to add since once something is on the canvas right now it is stuck there unless you undo it.
-
-The AI assistant could be a lot smarter too however we are limited to the free version of the GeminiAI model. It generates shapes from text prompts but it has no idea what is already on the canvas, so you cannot say something like "connect those two boxes." Giving it that context would make it far more useful. We would also like to turn the settings page into an actual settings page where users can change their keybinds and adjust gesture controls to suit how they work.
-
 ### 10.2 Scalability Considerations
-
-The biggest problem that could be faced at scale is how recordings are stored. They are saved as raw binary buffers inside MongoDB documents and MongoDB has a 16MB document size limit. Even a short recording could hit that. A larger cluster would help with general capacity but the document size cap is a hard limit and there is cost issues with a larger database size. Canvas data has a similar issue on a smaller scale since every single stroke point sits inline in one document. Sending only the new shapes to the server instead of the whole canvas each time would cut down on both network traffic and database writes.
-
-On the infrastructure side our Docker Compose setup is just a single container with no health checks or logging. For a proper production deployment we would add a health endpoint, set up structured logging and forward those logs somewhere central so we can actually diagnose issues without poking around inside the container. The app is stateless by design so scaling horizontally behind a load balancer would be straightforward, though Socket.IO would need a Redis adapter so events reach every instance. Setting up a CI/CD pipeline with GitHub Actions to build the image and push it to a registry on every merge is something we ran out of time for but it would catch problems earlier and make deployments much more consistent.
 
 ### 10.3 Additional Features
 
-Users should be able to save their whiteboard as a PNG, SVG or PDF. Konva already supports exporting the stage to an image so the frontend side of this would be fairly quick to build.
-
-On the accounts side there is no email verification, no way to reset a forgotten password and no option to log in with Google or GitHub. It uses the most basic username and password login system with no email or additional info needed at registration. OAuth would be needed for Google sign-in and further authentication will be needed.
-
-We also talked about an offline mode. If the gesture model was cached locally with a service worker and canvas data was saved to IndexedDB until the connection came back you could sketch without needing the internet at all. Finally, even though the whole point of Slate is making whiteboarding more accessible through gestures, not everyone can use gestures. Making sure every gesture action has a keyboard shortcut and adding high contrast themes would make the app properly inclusive for everyone.
-
 ---
 
-## 11. Conclusion (Frank)
+## 11. Conclusion
 
 ---
 
