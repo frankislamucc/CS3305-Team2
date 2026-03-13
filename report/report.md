@@ -567,6 +567,8 @@ We also planned to implement shape drawing tools that would allow users to creat
 
 Another feature that remained incomplete was a gesture implementation of our selection mode. The goal was to allow users to select existing strokes on the canvas using a gesture rather than a mouse. While our selection mode works as intended and met our goals as a whiteboard feature, due to gesture congestion and certain design choices (such as keeping the left limited to undo and redo) we fell short of this goal as well.
 
+A feature that was planned but also was not implemented was being able to actually collaborate on a whiteboard with other users. The sharing feature is view only and the users cannot draw on shared canvases. This was due to technical limitations as we would have needed to implement friends and permission as well as the added logic for collaborative drawing such as handling how the undo and redo would work with more than one person. Ultimately, this feature was considered too late into development to have made it to implementation.
+
 Despite these missing features, the system still achieves its core objective of demonstrating a functional gesture controlled whiteboard. The implemented features provide a strong foundation for future development.
 
 ### 9.2 Technical Challenges & Solutions
