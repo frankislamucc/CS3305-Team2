@@ -568,23 +568,9 @@ MongoDB Atlas handles database hosting externally so the Docker setup only needs
 
 ---
 
-## 7. Testing
+## 7. Project Management
 
-### 7.1 Testing Strategy
-
-### 7.2 Unit Tests
-
-### 7.3 Integration Tests
-
-### 7.4 User Acceptance Testing
-
-### 7.5 Test Results & Coverage
-
----
-
-## 8. Project Management
-
-### 8.1 Team Roles & Responsibilities
+### 7.1 Team Roles & Responsibilities
 
 Given the collaborative nature of the group members did more than prescribed below, therefore below is an over arching summary of each members undertakings in the nine weeks.
 
@@ -596,7 +582,7 @@ Given the collaborative nature of the group members did more than prescribed bel
 - Darragh - Smoothing and React conversion
 - Oisín - Smoothing and UI
 
-### 8.2 Methodology (Agile/Scrum)
+### 7.2 Methodology (Agile/Scrum)
 
 The team chose to use the Agile development methodology with elements of the Scrum framework blended into it. The Agile methodology is just that, a methodology whereas Scrum is a framework for Agile project management that can be followed. It is best to use the methods that allow the project to succeed rather then be held back in trying to follow a framework to the letter.
 
@@ -608,7 +594,7 @@ Given there was no customer to give feedback on the weekly sprint, the team beca
 
 This Agile environment allowed the group to work fast and in parallel, enabled by Git, to keep development moving quickly and iteratively. The iterative nature of the process and frequent communication benefited the project as it allowed the team to be adaptable and make changes rapidly and when needed. The use of these methodologies and frameworks was a significant contributor to the success of the project.
 
-### 8.3 Sprint Breakdown & Timeline
+### 7.3 Sprint Breakdown & Timeline
 
 As stated above we used Agile and Scrum to complete this project which consisted of **one week Sprints** allowing for continuous integration and improvement and the flexibility to modify requirements.
 
@@ -650,7 +636,7 @@ As stated above we used Agile and Scrum to complete this project which consisted
 
 A deployable version of the product was ready by week 8 for a live demonstration during the presentation and a fully fledged version was completed by week 9 of the semester. The goal was to have the fully fledged product available for the presentation but due to the requirement for it to be functioning for the presentation certain features had to be compromised.
 
-### 8.4 Version Control Strategy (Git)
+### 7.4 Version Control Strategy (Git)
 
 Our version control strategy was implemented using Git which is an industry standard for version control in software development environments. Given that version control is the backbone for any successful software project it was important clear guidelines were laid out and a system was followed.
 
@@ -662,7 +648,7 @@ If a commit was reliant or impacting upon another feature group members were req
 
 By adhering to our own guidelines it kept consistency amongst the group and allowed the project to be delivered on time with minimum errors and mishaps.
 
-### 8.5 Communication & Collaboration Tools
+### 7.5 Communication & Collaboration Tools
 
 The team communicated on a daily basis through a WhatsApp group chat created at beginning of this process, this allowed for quick updates, information sharing and collaboration between team members outside of the university campus. This greatly increased efficiency of the development process providing instant access to resources and information. The existence of WhatsApp for the web made it the only communication channel used as this allowed for links to sites and other resources to be accessed on one's own laptop or PC rather than their mobile phone.
 
@@ -670,9 +656,9 @@ The primary collaboration tool used was Git as detailed above facilitating the d
 
 ---
 
-## 9. Evaluation & Discussion (Rakib)
+## 8. Evaluation & Discussion (Rakib)
 
-### 9.1 Objectives Met vs. Not Met
+### 8.1 Objectives Met vs. Not Met
 
 A fundamental objective of this project was to build a fully functional collaborative whiteboard controlled through hand gestures detected via a webcam. The design philosophy behind sticking purely to computer vision was simply because we wanted to make an application that anyone could use, without relying on any software plugins or hardware peripherals. The system successfully achieved many of our primary goals and delivered a working application that demonstrates the viability of gesture interaction within a web browser, but naturally only within the resource scope. The final system allows users to draw on a whiteboard using hand gestures, pan and zoom around the canvas, select drawing colours and brush sizes, and perform undo and redo actions, all using gestures. In addition to the gesture controlled features, the system also includes account creation, authentication and canvas persistence through MongoDB, which allow us to implement the ability to share whiteboards between users and save recordings to a dashboard. These features combine to create a complete web application that is usable and is not missing anything critical.
 
@@ -696,7 +682,7 @@ A feature that was planned but also was not implemented was being able to actual
 
 Despite these missing features, the system still achieves its core objective of demonstrating a functional gesture controlled whiteboard. The implemented features provide a strong foundation for future development.
 
-### 9.2 Technical Challenges & Solutions
+### 8.2 Technical Challenges & Solutions
 
 We encountered a number of technical challenges throughout the entire development process, related to gesture recognition, canvas rendering, UI design and performance optimisation. Many of these issues were rooted in the inherent difficulty of translating three dimensional hand motion captured through a camera into reliable two dimensional interactions within a browser environment.
 
@@ -710,7 +696,7 @@ Gesture recognition itself also presented design challenges. `MediaPipe` provide
 
 Finally, managing performance in the browser environment was a challenge. Running the `MediaPipe` gesture recognition model directly on the main thread caused noticeable interface lag because the compute power required for analysis of each frame is relatively heavy. To mitigate this issue, the gesture recognition pipeline was moved into a Web Worker. This allowed the model to run on a separate thread, ensuring that the main UI thread remained responsive for rendering the canvas and handling user interactions.
 
-### 9.3 Performance Analysis
+### 8.3 Performance Analysis
 
 Performance was an important consideration for the project, particularly because gesture recognition, canvas rendering and real-time interaction all occur simultaneously within a browser environment. Maintaining smooth performance required careful design for both the gesture recognition pipeline and the canvas rendering system.
 
@@ -728,9 +714,9 @@ Overall, the application performs well within the innate constraints present by 
 
 ---
 
-## 10. Future Work
+## 9. Future Work
 
-### 10.1 Planned Enhancements
+### 9.1 Planned Enhancements
 
 If we had more time, the first thing we would tackle is making collaboration truly real-time. Right now Socket.IO is only used to notify someone when a canvas gets shared with them, but you cannot actually watch another person draw live. The good news is that the Socket.IO rooms and events are already wired up in the server, so broadcasting stroke data as it happens and rendering it would be a vital feature.
 
@@ -738,13 +724,13 @@ We would also want to expand the gesture set. At the moment drawing only works w
 
 The AI assistant could be a lot smarter too however we are limited to the free version of the GeminiAI model. It generates shapes from text prompts but it has no idea what is already on the canvas, so you cannot say something like "connect those two boxes." Giving it that context would make it far more useful. We would also like to turn the settings page into an actual settings page where users can change their keybinds and adjust gesture controls to suit how they work.
 
-### 10.2 Scalability Considerations
+### 9.2 Scalability Considerations
 
 The biggest problem that could be faced at scale is how recordings are stored. They are saved as raw binary buffers inside MongoDB documents and MongoDB has a 16MB document size limit. Even a short recording could hit that. A larger cluster would help with general capacity but the document size cap is a hard limit and there is cost issues with a larger database size. Canvas data has a similar issue on a smaller scale since every single stroke point sits inline in one document. Sending only the new shapes to the server instead of the whole canvas each time would cut down on both network traffic and database writes.
 
 On the infrastructure side our Docker Compose setup is just a single container with no health checks or logging. For a proper production deployment we would add a health endpoint, set up structured logging and forward those logs somewhere central so we can actually diagnose issues without poking around inside the container. The app is stateless by design so scaling horizontally behind a load balancer would be straightforward, though Socket.IO would need a Redis adapter so events reach every instance. Setting up a CI/CD pipeline with GitHub Actions to build the image and push it to a registry on every merge is something we ran out of time for but it would catch problems earlier and make deployments much more consistent.
 
-### 10.3 Additional Features
+### 9.3 Additional Features
 
 Users should be able to save their whiteboard as a PNG, SVG or PDF. Konva already supports exporting the stage to an image so the frontend side of this would be fairly quick to build.
 
@@ -754,7 +740,7 @@ We also talked about an offline mode. If the gesture model was cached locally wi
 
 ---
 
-## 11. Conclusion
+## 10. Conclusion
 
 The goal of this project was to build a whiteboard you could control with just your hands and a webcam. In nine weeks with a seven person team we delivered exactly that. Slate lets you draw, pan, zoom, pick colours, adjust brush size and undo or redo all through hand gestures tracked by MediaPipe running in a Web Worker. The 1€ filter smooths out the raw tracking data so it actually feels natural to use.
 
@@ -766,7 +752,7 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ---
 
-## 12. References
+## 11. References
 
 [One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
 
@@ -776,7 +762,7 @@ What this project proved is that gesture-based interaction in the browser is not
 
 
 
-## 13. Appendices
+## 12. Appendices
 
 ### Individual Contributions
 | Name | Contributions & Responsibilities |
