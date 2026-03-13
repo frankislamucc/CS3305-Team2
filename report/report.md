@@ -139,6 +139,30 @@ Functional requirements define the core behaviour of the system and the features
   The system will allow gestures to be used to control drawing tools such as colour selection, brush size adjustment and undo/redo.
 
 #### Whiteboard Functionality
+- **Real-Time Whiteboard Rendering**  
+  The system will display user drawing actions on a digital whiteboard in real time.
+
+- **Canvas Interaction Tools**  
+  The system will provide tools such as colour selection, brush size selection, undo/redo functionality and canvas clearing.
+
+- **View Transformation**  
+  The system will allow users to pan and zoom the whiteboard canvas.
+
+#### Recording and Playback
+
+- **Screen Recording**  
+  The system will allow users to record their whiteboard session directly from within the application.
+
+- **Recording Storage**  
+  The system will allow recordings to be saved and associated with user accounts.
+
+- **Recording Playback**  
+  The system will allow recorded sessions to be previewed within the application.
+
+- **Recording Download**  
+  The system will allow users to download recorded sessions locally.
+
+
 
 ### 3.2 Non-Functional Requirements
 
@@ -203,6 +227,33 @@ Non-functional requirements define the quality, attributes and constraints under
 
 - **External Database**  
   MongoDB Atlas is used as an external service so that the application container itself holds no persistent data and can be replaced or replicated without migration.
+
+### 3.3 User Stories / Use Cases
+
+User stories focus on the perspective of the end user by describing how different users may interact with the application.
+
+- **User Story 1 - Drawing with Gestures**
+  As a user, I want to draw  on the whiteboard using hand gestures so that I can interact with a canvas without needing a mouse or stylus.
+
+- **User Story 2 - Controlling Drawing Tools**
+  As a user, I want to change drawing colour and brush size so that I can customise how I use the drawing function 
+
+- **User Story 3 - Saving Whiteboards**
+  As a user, I want my whiteboard sessions to be saved so that I can see and share them later
+
+- **User Story 4 - Recording a Session**
+  As a user, I want to record my whiteboard session so that I can review or present my recordings.
+
+- **User Story 5 – Viewing Recordings**  
+  As a user, I want to access my saved recordings so that I can replay previous recordings.
+
+- **User Story 6 – Secure Login**  
+  As a user, I want to log into my account so that my work and recordings are associated with me.
+
+- **User Story 7 – Easy Access to the Application**  
+  As a user, I want to open the application in a web browser without installing additional software.
+
+These user stories guided the design and implementation of the application, ensuring that the system remained focuses on providing a natural and accessible gesture based whiteboard application.
 
 ---
 
@@ -724,8 +775,8 @@ What this project proved is that gesture-based interaction in the browser is not
 ### Appendix E: Individual Contributions
 | Name | Contributions & Responsibilities |
 | :--- | :--- |
-| **Naoise** | • Created initial Next.js project structure.<br>• Designed `GestureEngine` and `Canvas` Konva.js component layouts.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread canvas processing.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. |
-| **Oisin** | Researched movement filters at the beginning of the process to reduce jitter at low speed movement and prevent ink bleed and to stabilise drawing at high speed. Read papers including the one referenced below resulting the One Euro Filter being selected and applied to the applications drawing functionality. Later, created a profile page for user accounts went not needed due to the creation of the settings page as well as the project moving away from the idea of friends. Created an alternative to the sidebar that was already on the whiteboard page of the application, unused as no improvement was made.  |
+| **Naoise** | • Created initial Next.js project structure.<br>• Designed and integrated `GestureEngine` and `Canvas` Konva.js components.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread model inference.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. <br>• Refactored api routes to use modern Next.js server actions.|
+| **Oisin** | [Insert Contributions Here] |
 | **Rakib** | [Insert Contributions Here] |
 | **Frank** | [Insert Contributions Here] |
 | **Tom** | [Insert Contributions Here] |
