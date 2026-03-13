@@ -154,16 +154,12 @@ Functional requirements define the core behaviour of the system and the features
 
 #### 4.2.1 Frontend
 
-#### 4.2.1 Frontend
-
 The frontend of this application is rendered using [Next.js](https://nextjs.org/) version 16. This is a [React](https://react.dev/learn) based full-stack framework that allows both server and client rendering.
 
 - **Component Architecture:** UI layout is wrapped in a main page and modular sub-components in separate files are imported. This makes complex animations and blocks of JS and HTML logic to be grouped into individual components/functions, resulting in easier readability and maintenance.
 - **Canvas Rendering:** The whiteboard canvas is built using the **Konva.js** library. [Konva.js](https://konvajs.org/) is a 2D graphics library that has optimized browser integration and React support. React `refs` can be passed to gesture prediction components to control the state of the Konva.js shapes.
 - **Styling & UI:** \* **Tailwindcss** is used for inline styling of components; [Tailwindcss](https://tailwindcss.com/) had a small learning curve but removed the overhead of switching between style files and JSX/component logic.
   - For complex animations such as the landing page's bento box and the dynamic background effect, **Shadcn** was used. [Shadcn](https://ui.shadcn.com/) is a React component library that has pre-built components—such as buttons, responsive navbars, and footers—that enabled a smooth transition from a Figma design to a React implementation.
-
-#### 4.2.2 Backend
 
 #### 4.2.2 Backend
 
@@ -324,9 +320,9 @@ Zooming is implemented with point centered scaling, which ensures a specific ref
 
 #### Zooming
 
-The algorithm begins by storing the old scale factor, computing the new scale factor with clamping, and then recalculating the pan offsets dynamically. If a point in canvas space maps to a particular screen position, and we want that screen position to remain fixed after zooming. A change notification callback is invoked whenever zoom occurs, triggering a `React` state update that causes Konva to re-composite the scene with the new transforms applied. 
+The algorithm begins by storing the old scale factor, computing the new scale factor with clamping, and then recalculating the pan offsets dynamically. If a point in canvas space maps to a particular screen position, and we want that screen position to remain fixed after zooming. A change notification callback is invoked whenever zoom occurs, triggering a `React` state update that causes Konva to re-composite the scene with the new transforms applied.
 
-#### Panning 
+#### Panning
 
 Panning is simply a direct translation of the view. When the user pans, the system adds the pan delta to both the X and Y offsets. The `panSpeed` factor serves as a damping multiplier that amplifies the hand movement slightly to make panning feel responsive. We kept this low as a factor of exactly 1.0 would provide a direct movement correlation. The damping prevents the canvas from jittering with every small hand tremor. A callback notifies the parent component that the view has changed, triggering a re-render.
 
