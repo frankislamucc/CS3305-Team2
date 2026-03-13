@@ -217,8 +217,6 @@ Choosing the size of your pen and the colour you write with were identified as t
 
 The spinner is implemented using Konva. The rotation of the wheel is controlled by a `rotationAngle` property, and the component calculates the selected segment based on this angle which is approximated from a normalized horizontal motion. The active segment is visually highlighted by increasing its size and opacity. Similarly for sizing, a normalized vertical motion is used to navigate a sequence of Konva `rects` mapping to different fill widths.
 
-#### 5.2.2 Colour Selection & Size Selector (Tom)
-
 #### 5.2.3 Undo/Redo System
 
 The undo/redo system is functionally a command pattern centred on discrete actions. Rather than storing entire canvas snapshots, which would end up being very memory intensive, the system records each user line stroke and maintains an undo stack and a redo stack.
