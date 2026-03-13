@@ -466,6 +466,7 @@ The primary collaboration tool used was Git as detailed above facilitating the d
 ## 10. Future Work
 
 ### 10.1 Planned Enhancements
+
 If we had more time, the first thing we would tackle is making collaboration truly real-time. Right now Socket.IO is only used to notify someone when a canvas gets shared with them, but you cannot actually watch another person draw live. The good news is that the Socket.IO rooms and events are already wired up in the server, so broadcasting stroke data as it happens and rendering it would be a vital feature.
 
 We would also want to expand the gesture set. At the moment drawing only works with the right hand and the left hand is limited to undo and redo. An eraser gesture would be really useful because right now if you make a small mistake you have to keep undoing strokes until it is gone. We also talked about shape recognition where the system notices you are trying to draw a straight line or a rectangle and cleans it up for you automatically. That would make Slate a lot more practical for diagrams. Being able to select, move and resize shapes after drawing them is another thing we want to add since once something is on the canvas right now it is stuck there unless you undo it.
@@ -474,6 +475,7 @@ The AI assistant could be a lot smarter too however we are limited to the free v
 
 
 ### 10.2 Scalability Considerations
+
 The biggest problem that could be faced at scale is how recordings are stored. They are saved as raw binary buffers inside MongoDB documents and MongoDB has a 16MB document size limit. Even a short recording could hit that. A larger cluster would help with general capacity but the document size cap is a hard limit and there is cost issues with a larger database size. Canvas data has a similar issue on a smaller scale since every single stroke point sits inline in one document. Sending only the new shapes to the server instead of the whole canvas each time would cut down on both network traffic and database writes.
 
 On the infrastructure side our Docker Compose setup is just a single container with no health checks or logging. For a proper production deployment we would add a health endpoint, set up structured logging and forward those logs somewhere central so we can actually diagnose issues without poking around inside the container. The app is stateless by design so scaling horizontally behind a load balancer would be straightforward, though Socket.IO would need a Redis adapter so events reach every instance. Setting up a CI/CD pipeline with GitHub Actions to build the image and push it to a registry on every merge is something we ran out of time for but it would catch problems earlier and make deployments much more consistent.
@@ -490,6 +492,14 @@ We also talked about an offline mode. If the gesture model was cached locally wi
 ---
 
 ## 11. Conclusion
+
+The goal of this project was to build a whiteboard you could control with just your hands and a webcam. In nine weeks with a seven person team we delivered exactly that. Slate lets you draw, pan, zoom, pick colours, adjust brush size and undo or redo all through hand gestures tracked by MediaPipe running in a Web Worker. The 1€ filter smooths out the raw tracking data so it actually feels natural to use.
+
+Around that core we built a full web application with JWT authentication, automatic canvas saving to MongoDB, whiteboard sharing with Socket.IO, screen recording and an AI assistant powered by Google Gemini. The whole thing is containerised with Docker Compose so it can be deployed with a single command.
+
+There are gaps we did not get to. Live collaborative drawing, export to PNG or PDF and proper account recovery are all future work. The recording storage will not scale past MongoDB's 16MB document limit either. But these are problems we understand well and know how to solve.
+
+What this project proved is that gesture-based interaction in the browser is not a novelty. With open source libraries and a standard laptop webcam you can build a genuinely usable tool. Slate is not perfect but it is unique and it works and it works without any extra hardware. We believe in this innovative product that can change the interactive drawing world and this idea can be revolutionary in teaching and learning.
 
 ---
 
