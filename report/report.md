@@ -308,12 +308,18 @@ MongoDB Atlas handles database hosting externally so the Docker setup only needs
 
 ---
 
-## 8. Project Management (Oisín)
-
+## 8. Project Management 
 ### 8.1 Team Roles & Responsibilities
+Given the collaborative nature of the group members did more than prescribed below, therefore below is an over arching summary of each members undertakings in the nine weeks.
+- Frank - Project Lead and Database
+- Rory - Screen Recording and Saving
+- Naoise - React, UI and LLM
+- Rakib - Gesture Functionality
+- Tom - Gestures as Whiteboard features
+- Darragh - Smoothing and React conversion
+- Oisín - Smoothing and UI
 
 ### 8.2 Methodology (Agile/Scrum)
-
 The team chose to use the Agile development methodology with elements of the Scrum framework blended into it. The Agile methodology is just that, a methodology whereas Scrum is a framework for Agile project management that can be followed. It is best to use the methods that allow the project to succeed rather then be held back in trying to follow a framework to the letter.
 
 Agile methodology suited the collaborative nature of the environment in which the project was developed. The size of the group and the list objectives to be achieved would have been significantly hampered by Waterfall with team members waiting for other pieces of the process to be completed before they could even begin working. The Waterfall methodology would have removed the collaborative environment in meetings which allowed new ideas to be pitched at all times to solve individual parts of the design. This open and discussion heavy space needed the Agile methodology to ensure the group was adaptable in a fast moving development environment.
