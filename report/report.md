@@ -2,6 +2,20 @@
 
 https://github.com/frankislamucc/CS3305-Team2
 
+| Name | Student Number|
+| :--- | :--- |
+| Frank Islam  | 123366953 |
+| (fullname) | (studentnumber) |
+| (fullname) | (studentnumber) |
+| (fullname) | (studentnumber) |
+| (fullname) | (studentnumber) |
+| (fullname) | (studentnumber) |
+| (fullname) | (studentnumber) |
+
+**Academic Integrity Declaration**
+
+We declare that this project is submitted solely for the purpose of the CS3305 module. All work presented is entirely our own and was completed without assistance from any individual outside of our group. The only external aid used was Generative AI, the use of which is permitted and its usage is documented within this report.
+
 ## 1. Introduction
 
 ### 1.1 Project Overview
@@ -764,15 +778,7 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ## 13. Appendices
 
-### Appendix A: Full API Documentation
-
-### Appendix B: Database Schema Details
-
-### Appendix C: User Manual / Screenshots
-
-### Appendix D: Meeting Minutes / Sprint Logs
-
-### Appendix E: Individual Contributions
+### Individual Contributions
 | Name | Contributions & Responsibilities |
 | :--- | :--- |
 | **Naoise** | • Created initial Next.js project structure.<br>• Designed and integrated `GestureEngine` and `Canvas` Konva.js components.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread model inference.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. <br>• Refactored api routes to use modern Next.js server actions.|
