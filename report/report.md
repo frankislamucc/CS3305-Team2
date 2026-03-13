@@ -775,7 +775,7 @@ What this project proved is that gesture-based interaction in the browser is not
 ### Appendix E: Individual Contributions
 | Name | Contributions & Responsibilities |
 | :--- | :--- |
-| **Naoise** | • Created initial Next.js project structure.<br>• Designed and integrated `GestureEngine` and `Canvas` Konva.js components.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread model inference.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. <br>• Refactored api routes to use moder Next.js server actions.|
+| **Naoise** | • Created initial Next.js project structure.<br>• Designed and integrated `GestureEngine` and `Canvas` Konva.js components.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread model inference.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. <br>• Refactored api routes to use modern Next.js server actions.|
 | **Oisin** | [Insert Contributions Here] |
 | **Rakib** | [Insert Contributions Here] |
 | **Frank** | [Insert Contributions Here] |
