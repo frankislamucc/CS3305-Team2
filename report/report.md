@@ -765,6 +765,10 @@ What this project proved is that gesture-based interaction in the browser is not
 
 [MediaPipe Docs](https://mediapipe.readthedocs.io/en/latest/solutions/hands.html)
 
+[Tailwind CSS](https://tailwindcss.com/)
+
+[Konva Graphics Library](https://konvajs.org/)
+
 ## 12. Appendices
 
 ### Individual Contributions
