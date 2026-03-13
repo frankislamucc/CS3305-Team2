@@ -717,5 +717,7 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ### Appendix E: Individual Contributions
 
+Researched movement filters at the beginning of the process to reduce jitter at low speed movement and prevent ink bleed and to stabilise drawing at high speed. Read papers including the one referenced below resulting the One Euro Filter being selected and applied to the applications drawing functionality. Later, created a profile page for user accounts went not needed due to the creation of the settings page as well as the project moving away from the idea of friends. Created an alternative to the sidebar that was already on the whiteboard page of the application, unused as no improvement was made. 
+
 ### Appendix F: 1€ Filter
 [One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
