@@ -5,7 +5,7 @@ https://github.com/frankislamucc/CS3305-Team2
 | Name | Student Number|
 | :--- | :--- |
 | Frank Islam  | 123366953 |
-| (fullname) | (studentnumber) |
+| Oisin O'Mahony | 123498662 |
 | (fullname) | (studentnumber) |
 | (fullname) | (studentnumber) |
 | (fullname) | (studentnumber) |
