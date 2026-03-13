@@ -722,16 +722,15 @@ What this project proved is that gesture-based interaction in the browser is not
 ### Appendix D: Meeting Minutes / Sprint Logs
 
 ### Appendix E: Individual Contributions
-
-| Name        | Contributions & Responsibilities |
-| :---------- | :------------------------------- |
-| **Oisin**   | [Insert Contributions Here]      |
-| **Rakib**   | [Insert Contributions Here]      |
-| **Frank**   | [Insert Contributions Here]      |
-| **Tom**     | [Insert Contributions Here]      |
-| **Rory**    | [Insert Contributions Here]      |
-| **Darragh** | [Insert Contributions Here]      |
-| **Naoise**  | [Insert Contributions Here]      |
-
+| Name | Contributions & Responsibilities |
+| :--- | :--- |
+| **Naoise** | • Created initial Next.js project structure.<br>• Designed `GestureEngine` and `Canvas` Konva.js component layouts.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread canvas processing.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. |
+| **Oisin** | [Insert Contributions Here] |
+| **Rakib** | [Insert Contributions Here] |
+| **Frank** | [Insert Contributions Here] |
+| **Tom** | [Insert Contributions Here] |
+| **Rory** | [Insert Contributions Here] |
+| **Darragh** | [Insert Contributions Here] |
 
 
+[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
