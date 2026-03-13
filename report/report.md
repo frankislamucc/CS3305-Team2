@@ -219,9 +219,52 @@ The spinner is implemented using Konva. The rotation of the wheel is controlled 
 
 #### 5.2.2 Colour Selection & Size Selector (Tom)
 
-#### 5.2.3 Undo/Redo System (Rakib)
+#### 5.2.3 Undo/Redo System
+
+The undo/redo system is functionally a command pattern centred on discrete actions. Rather than storing entire canvas snapshots, which would end up being very memory intensive, the system records each user line stroke and maintains an undo stack and a redo stack.
+
+The system is implemented as a dedicated class that manages the two independent stacks. The class provides methods for recording four types of actions: adding a single line stroke, adding multiple line strokes (for pasting operations), clearing the entire canvas, and replacing a set of strokes (for cutting operations). Each action type encapsulates data to reverse the operation completely.
+
+The undo operation pops the most recent action from the undo stack and pushes it onto the redo stack. The action is then reversed. So if a line was added, it is removed from the canvas or if the canvas was cleared, all cleared content is restored.
+
+The redo operation reverses this by moving the action back to the undo stack. The key feature here is that the `React` component state always remains the primary source for rendering. The undo/redo stacks never directly manipulate component state. Instead, the stacks store action data, and the parent component uses this data to update state, which then triggers the system to render again.
+
+#### Off Hand Gesture Activation
+
+The undo and redo features are mapped to left/off hand gestures. The left/off hand is recognised by the system, simply tracking the second hand that appears on camera and treating it as the left/off hand. The first hand that appears on the camera is allocated as the right/main hand, responsible for all controls apart from undo/redo. We made this separation to keep the undo/redo features easily accessible while also preventing any accidental triggers while drawing.
+
+`Undo gesture:` With the left/off hand, do an index finger pinch. The gesture fires once, then enters a 500ms cooldown to prevent accidental repeated undos if the user holds the gesture.
+`Redo gesture:` With the left/off hand, do a ring finger pinch. The same cooldown applies.
+
+The gestures were kept a finger apart due to the fact that the off/left hand was allocated for specifically undo/redo, meaning we were not compromising on gestures by having that space between them. The space simply provides another means of mitigation against gesture misidentification.
 
 #### 5.2.4 View Transform (Pan/Zoom)
+
+The whiteboard operates in two coordinate spaces. `Screen space` refers to pixels relative to the browser window, with the origin at the top-left. `Canvas space` refers to the logical coordinates of the whiteboard, where users can zoom and pan freely. All drawn strokes are stored in canvas space; rendering requires conversion to screen space.
+
+The `ViewTransform` class manages the transformation between these spaces, encapsulating all the operations required for correct rendering under arbitrary zoom and pan. This class maintains three key parameters that fully define the view state. A scale factor, an X offset representing horizontal pan in screen pixels, and a Y offset representing vertical pan. The class also defines constraints such as a minimum scale of 0.5x, a maximum scale of 3.0x, and a pan damping factor that moderates the speed of pan operations to filter hand jitter.
+
+Using these maintained values the screen can redraw what is on the canvas as well as apply the canvas transforms without making any visible difference to the user. The line strokes already on the canvas are redrawn accounting for scale and offset every time either scale or offset change, allowing for seamless and efficient zooming and panning. The visual cursor also accounts for the scale and offset so that it always accurately shows where the user is about to draw.
+
+Zooming is implemented with point centered scaling, which ensures a specific reference point on the canvas remains fixed at the same screen position before and after the zoom operation, even as the scale changes. This is crucial for usability because if a user zooms at their cursor position, they expect that position to stay under the cursor.
+
+#### Zooming
+
+The algorithm begins by storing the old scale factor, computing the new scale factor with clamping, and then recalculating the pan offsets dynamically. If a point in canvas space maps to a particular screen position, and we want that screen position to remain fixed after zooming. A change notification callback is invoked whenever zoom occurs, triggering a `React` state update that causes Konva to re-composite the scene with the new transforms applied. 
+
+#### Panning 
+
+Panning is simply a direct translation of the view. When the user pans, the system adds the pan delta to both the X and Y offsets. The `panSpeed` factor serves as a damping multiplier that amplifies the hand movement slightly to make panning feel responsive. We kept this low as a factor of exactly 1.0 would provide a direct movement correlation. The damping prevents the canvas from jittering with every small hand tremor. A callback notifies the parent component that the view has changed, triggering a re-render.
+
+#### Gesture for Pan & Zoom Control
+
+`Panning Gesture:` Panning is done by simply doing a middle finger pinch and moving the hand around as if you are dragging the canvas. The panning accounts for the fact that for this to work the canvas is actually moving inversely to the hand, but this was done as it would feel the most natural to the user.
+
+`Zooming Gesture:` Zooming is done by making a gun with the main hand that is pointing towards the user's left. While this may sound like a far leap from all of our pinching gestures so far, due to the thumb being distinctly away from the rest of the fingers during this gesture, gesture misidentification is heavily mitigated. The gun would then be moved up and down to allow the user to zoom in or zoom out. Since the zooming is based on a hand landmark node on the palm, smoothing filters were also applied to this gesture in particular to prevent aggressive zooming.
+
+#### Re-rendering
+
+Konva's `Stage` component provides built-in properties for applying 2D transformations to all child elements. When the Canvas component renders, it configures the Stage with the current scale and offset values from `ViewTransform`. Konva internally manages all transformation matrix mathematics. The application simply provides the scale and offset parameters, and Konva applies them uniformly to every shape in the rendered scene. This abstraction eliminates the need for manual matrix composition.
 
 ### 5.3 Real-Time Collaboration
 
