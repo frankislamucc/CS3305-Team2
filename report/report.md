@@ -207,7 +207,7 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.2.1 Drawing Engine & Canvas API
 
-#### 5.2.2 Colour Selection & Size Selector
+#### 5.2.2 Colour Selection & Size Selector (Tom)
 
 #### 5.2.3 Undo/Redo System (Rakib)
 
@@ -221,7 +221,7 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.3.3 Shared Canvas & Permissions
 
-### 5.4 Gesture Recognition
+### 5.4 Gesture Recognition (Tom)
 
 #### 5.4.1 GestureEngine & Custom Gestures
 
