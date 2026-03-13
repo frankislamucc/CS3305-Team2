@@ -647,6 +647,20 @@ Finally, managing performance in the browser environment was a challenge. Runnin
 
 ### 9.3 Performance Analysis
 
+Performance was an important consideration for the project, particularly because gesture recognition, canvas rendering and real-time interaction all occur simultaneously within a browser environment. Maintaining smooth performance required careful design for both the gesture recognition pipeline and the canvas rendering system.
+
+Overall, the application performs well under normal usage conditions. Drawing operations are responsive, gestures are recognised with minimal delay and the interface remains interactive even while the hand tracking system is running. The use of a Web Worker to run `MediaPipe` ensures that the computational cost of gesture recognition does not block the main rendering thread.
+
+The smoothing pipeline also contributes to perceived performance by stabilising the drawing cursor. Without smoothing, the rapid fluctuations in landmark positions would produce erratic line segments and make the system difficult to control. The `one euro filter` helps maintain a balance between responsiveness and stability, ensuring that the cursor moves smoothly while still reacting quickly to user input.
+
+Canvas performance was also improved by separating temporary drawing operations from persistent canvas data. Instead of re-rendering the entire canvas on every new point update, the system draws the current stroke separately and only commits it to the stored canvas state when the user finishes drawing. This reduces unnecessary re-rendering and keeps the drawing process smooth even when the canvas contains many line strokes.
+
+Despite these optimisations, the system naturally has some limitations due to the nature of computer vision gesture tracking. The application attempts to interpret three dimensional hand movements using a two dimensional camera feed, which inevitably introduces some inaccuracies. Due to this and the nature of `MediaPipe` tracking of landmarks, we had to accept a certain amount of stuttering and performance issues. Users must learn the optimal distance from the camera to ensure their hands are tracked correctly and this can differ from user to user based on their camera or the room they are in. Lighting conditions also affect tracking quality, and gestures may fail if fingers move outside the camera’s field of view. These factors introduce a small learning curve for new users. However, once users become familiar with the interaction style, the system becomes easier to control.
+
+Latency is another unavoidable aspect of the system. Each frame must be captured by the camera, processed by `MediaPipe`, filtered and then converted into drawing actions. Although this pipeline is relatively fast, it still introduces a small delay between physical hand movement and visible response. The smoothing and interpolation techniques help mitigate this delay to a certain degree, but they cannot eliminate it entirely.
+
+Overall, the application performs well within the innate constraints present by the nature of the project. While some degree of “jank” is inevitable when tracking hand movements with a webcam, the implemented smoothing and optimisation strategies significantly improve the overall usability of the application. The final system definitely does succeed in showing that whiteboard interaction  with gestures is feasible from a technical standpoint and can perform reliably enough for practical use, with practice.
+
 ---
 
 ## 10. Future Work
