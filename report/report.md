@@ -144,7 +144,7 @@ Functional requirements define the core behaviour of the system and the features
 
 ---
 
-## 4. System Architecture & Design [Naoise]
+## 4. System Architecture & Design
 
 ### 4.1 High-Level C4 Architecture Diagram
 
