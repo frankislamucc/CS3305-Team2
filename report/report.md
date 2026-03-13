@@ -154,26 +154,77 @@ Functional requirements define the core behaviour of the system and the features
 
 #### 4.2.1 Frontend
 
-The frontend of this application is rendered using Next.js version 16. This is a react based full stack framework that allows both server and client rendering. UI layout is wrapped in a main page and modular sub-components in seperate files are imported. This makes complex animations and blocks of js and html logic to be grouped into individual components/functions, resulting in easier readability and maintenance. The whiteboard canvas is built using the Konva.js library. Konva.js is a 2D graphics library that has optimized browser integration and react support. React refs can be passed to gesture prediction components to control the state of the Konva.js shapes. Tailwindcss is used for inline styling of components, this had a small learning curve but removed the overhead of switching between style files and JSX/component logic. For complex animations such as the landing page's bento box and the dynamic background effect, Shadcn was used. This is a react component library that has pre built components such as buttons, responsive navbars and footers that enabled a smooth transition from a figma design to a react implementation.
+#### 4.2.1 Frontend
+
+The frontend of this application is rendered using [Next.js](https://nextjs.org/) version 16. This is a [React](https://react.dev/learn) based full-stack framework that allows both server and client rendering.
+
+- **Component Architecture:** UI layout is wrapped in a main page and modular sub-components in separate files are imported. This makes complex animations and blocks of JS and HTML logic to be grouped into individual components/functions, resulting in easier readability and maintenance.
+- **Canvas Rendering:** The whiteboard canvas is built using the **Konva.js** library. [Konva.js](https://konvajs.org/) is a 2D graphics library that has optimized browser integration and React support. React `refs` can be passed to gesture prediction components to control the state of the Konva.js shapes.
+- **Styling & UI:** \* **Tailwindcss** is used for inline styling of components; [Tailwindcss](https://tailwindcss.com/) had a small learning curve but removed the overhead of switching between style files and JSX/component logic.
+  - For complex animations such as the landing page's bento box and the dynamic background effect, **Shadcn** was used. [Shadcn](https://ui.shadcn.com/) is a React component library that has pre-built components—such as buttons, responsive navbars, and footers—that enabled a smooth transition from a Figma design to a React implementation.
 
 #### 4.2.2 Backend
 
-Users authenticate with the application using JWT tokens. The Jose json-encryption library is used to sign theese tokens with a secret-key and randomised salt. For server side form validation, the Zod TypeScript-first validation library is used. This allows us to create a schema/type for form inputs using Zod's typescript types. There is a single authentication source for the server to make LLM request, via a client secret. The google/genai library retrieves this secret from a local env var, enabling stateless server actions to make new clients across requests. The gemini-3.1-flash-lite model is used to process requests as it has a high free rate-limit and is one of the latest stable releases. Google's MediaPipe GestureRecognizer is a synchronous model used toanalyse hand movement and provide predictions. It uses a wasm to run natively in the browser using availbale CPU or GPU's. A MongoDB database is used to persist canvases and user credentials. The MongoDB Atlas service, offers 512MB of storage for free and provided easy integration because of it's documentation.
+#### 4.2.2 Backend
+
+Users authenticate with the application using **JWT tokens**. The **[Jose json-encryption](https://jose.readthedocs.io/en/latest/)** library is used to sign theese tokens with a secret-key and randomised salt.
+
+- **Validation:** For server side form validation, the **[Zod](https://zod.dev/)** TypeScript-first validation library is used. This allows us to create a schema/type for form inputs using Zod's typescript types.
+- **AI Orchestration:** There is a single authentication source for the server to make LLM requests, via a client secret. The **[google/genai](https://www.npmjs.com/package/@google/genai)** library retrieves this secret from a local env var, enabling stateless server actions to make new clients across requests. The **gemini-3.1-flash-lite** model is used to process requests as it has a high free rate-limit and is one of the latest stable releases.
+- **Gesture Recognition:** Google's MediaPipe **[GestureRecognizer](https://ai.google.dev/edge/mediapipe/solutions/vision/gesture_recognizer)** is a synchronous model used toanalyse hand movement and provide predictions. It uses **[wasm](https://webassembly.org/)** to run natively in the browser using availbale CPU's or GPU's.
+- **Data Persistence:** A **[MongoDB](https://www.mongodb.com/)** database is used to persist canvases and user credentials. The **[MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database)** service, offers 512MB of storage for free and provided easy integration because of it's clear and concise documentation.
 
 #### 4.2.3 Deployment
 
-For the app deployment we chose a containerized approach. Next.js statelessness nature supports emphemeral containers out of the box. No state is maintained accross requests as JWT tokens can be verified on a per request basis. Persistence is also avoided in a container approach by using MongoDB atlas to host the database. Docker compose is used to run our optimized image in a single container but allows for easy future replication. A kubernetes deployment was discussed but deemed unnecessary for our use case. The application does not maintain session data and has most computation done client side. Both the model and canvas rendering use client components with only LLM requests and responses being handled on the server. Using load balancing, microservice architecture does not match this monolith application design. Kubernetes present risks such as resource costs from management nodes and overhead of using external tools like KIND to create clusters. Our single image and docker compose file is the most scaleable and maintainable approach for our API design.
+For the app deployment we chose a **[containerized](https://www.docker.com/resources/what-container/)** approach. Next.js statelessness nature supports emphemeral containers out of the box.
+
+- **State Management:** No state is maintained accross requests as **[JWT](https://www.jwt.io/)** tokens can be verified on a per request basis. Persistence is also avoided in a container approach by using MongoDB atlas to host the database.
+- **Orchestration:** **[Docker compose](https://docs.docker.com/compose/)** is used to run our optimized image in a single container but allows for easy future replication.
+- **Architectural Decisions:** A **[kubernetes](https://kubernetes.io/docs/home/)** deployment was discussed but deemed unnecessary for our use case.
+  - The application does not maintain session data and has most computation performed client side.
+  - Both the model and canvas rendering use client components with only LLM requests and responses being handled on the server.
+- **Risk Mitigation:** Using load balancing, microservice architecture does not match this monolith application design. Kubernetes present risks such as resource costs from management nodes and overhead of using external tools like **[KIND](https://kind.sigs.k8s.io/)** to create clusters. Our single image and Docker compose file is the most scalable and maintainable approach for our API design.
 
 ### 4.3 API Design
 
-Both server and client components are utilized to choose when logic should and should not be rendered Client side.
-Next.js client components allow us to access state/memory in the browser. This in turn, is used by routes such as the landing page for dynamic interactivity, including toggling button behavior and animation effects. Server components are used to stream React generated HTML to the client, which is used to pre-render pages server side and stream the response. The ChatEngine component for example uses a protected API key to safely authenticate with the Gemini API. A server component allows the API key to only exist on the server whilst still being able to stream the LLM response. Server actions are serverless (stateless) functions that use their function names as a URL. Pages that require sending data to the server rely on server actions to extensively validate form data beyond basic input requirements (e.g password length). They are also used for authentication. To authenticate, server actions send a HTTP-only cookie in responses for the browser to securely store the JWT access token for subsequent requests.
+Both [server and client components](https://nextjs.org/docs/app/getting-started/server-and-client-components) are utilized to choose when logic should and should not be rendered Client side.
 
-A clear design desicion was made to seperate the gesture prediction logic from the canvas rendering. To do this we used a Gesture engine and a Canvas component. The canvas provides a handler object to the Gesture engine, offering an API to perform CRUD operations on the Canvas. Developers of the gesture recognition where able to completely decouple themselves from the canvas implementation by using this API. Canvas developers in turn had to provide a black box handler that covered all requirements of the gesture engine, e.g. rendering a real time line and exporting the current canvas state.
+### Client Components
 
-### 4.4 Real-Time Communication Design
+Next.js client components allow us to access **state/memory** in the browser. This, in turn, is used by routes such as the landing page for dynamic interactivity, including:
+
+- **Toggling button behavior**
+- **Animation effects**
+
+### Server Components & Security
+
+Server components are used to stream React-generated HTML to the client, which is used to pre-render pages server side and stream the response.
+
+> **Example:** The `ChatEngine` component uses a protected API key to safely authenticate with the [Gemini API](https://ai.google.dev/gemini-api/docs). A server component allows the API key to **only exist on the server** whilst still being able to stream the LLM response.
+
+### Server Actions
+
+[Server actions](https://nextjs.org/docs/app/guides/forms) are serverless (stateless) functions that use their function names as a URL. They are utilized for:
+
+1.  **Data Validation:** Extensively validating form data beyond basic input requirements (e.g., password length).
+2.  **Authentication:** Sending an **HTTP-only cookie** in responses for the browser to securely store the JWT access token for subsequent requests.
 
 ---
+
+## Component Design: Decoupling Logic
+
+A clear design decision was made to separate the **gesture prediction logic** from the **canvas rendering**. To do this, we used a Gesture engine and a Canvas component.
+
+| Entity               | Responsibility                                                                |
+| :------------------- | :---------------------------------------------------------------------------- |
+| **Gesture Engine**   | Handles prediction logic; decoupled from implementation via an API.           |
+| **Canvas Component** | Provides a "black box" handler; manages real-time rendering and state export. |
+
+**The Integration Strategy:**
+
+- The canvas provides a **handler object** to the Gesture engine, offering an API to perform CRUD operations on the Canvas.
+- Developers of the gesture recognition were able to completely decouple themselves from the canvas implementation by using this API.
+- Canvas developers, in turn, had to provide a black box handler that covered all requirements of the gesture engine (e.g., rendering a real-time line and exporting the current canvas state).
 
 ## 5. Implementation
 
@@ -205,9 +256,34 @@ Using middleware rather than checking the session inside each page gives us a si
 
 #### 5.2.1 Drawing Engine & Canvas API
 
-The drawing engine is a isolated API provided by the Canvas component, located in the Canvas.tsx file. The parent whiteboard page.tsx passes a ref to the Canvas engine to set the ref object to a handler object. A ref is used here as it allows the child component Canvas to set the object and without re-rendering the component tree. The react hook [useImperativeHandle](https://react.dev/reference/react/useImperativeHandle) sets the ref.current to a handler object with functions such as exportLine, drawLine etc, without giving direct access to the canvas components. This creates a clear layer of abstraction between the Canvas rendering and the gesture predictions. The page component can then share this ref handler with the gesture engine to call when predictions are updated.
+### Drawing Engine & State Management
 
-Inside the Canvas component the Konva.js react library is harnessed for optimized 2d rendering. The Stage component wraps layers of grouped shapes. The first Layer consists of line data passed as a prop from the parent component. This is the state of the canvas that is persisted in the MongoDB store. To avoid re-rendering this entire state for every point update, we employed a seperate Line object. This single Line is updated for every point added via the handler, but crucially only re-renders all the line data when a user has stoped drawing and the current line is added to the MongoDB store. Other layers are added to visualise the highlighted lines to be copied and to integrate size selection and a color wheel. All of the above 2d visualisation is drawn using a Line shape, the only exception is for LLM generated data structure visualization. This uses arrows and circles to more accurately represent nodes and pointers for Linked structures.
+The drawing engine is an **isolated API** provided by the Canvas component, located in the `Canvas.tsx` file. The parent whiteboard `page.tsx` passes a ref to the Canvas engine to set the ref object to a handler object.
+
+#### Abstraction via Refs
+
+A ref is used here as it allows the child component Canvas to set the object without re-rendering the component tree. The React hook [useImperativeHandle](https://react.dev/reference/react/useImperativeHandle) sets the `ref.current` to a handler object with functions such as:
+
+- `exportLine`
+- `drawLine`
+
+This approach provides functionality without giving direct access to the canvas components, creating a **clear layer of abstraction** between the Canvas rendering and the gesture predictions. The page component can then share this ref handler with the gesture engine to call when predictions are updated.
+
+---
+
+### Optimized Rendering with Konva.js
+
+Inside the Canvas component, the **Konva.js** React library is harnessed for optimized 2D rendering. The `Stage` component wraps layers of grouped shapes:
+
+1.  **Persistent Layer:** Consists of line data passed as a prop from the parent component. This state is persisted in the **MongoDB store**.
+2.  **Active Line Layer:** To avoid re-rendering the entire state for every point update, we employed a separate **Line object**. This single Line is updated for every point added via the handler, but crucially only re-renders all the line data when a user has stopped drawing and the current line is added to the MongoDB store.
+3.  **UI/Utility Layers:** Added to visualize highlighted lines for copying and to integrate size selection and a color wheel.
+
+#### Shape Visualization
+
+All 2D visualization is drawn using a **Line shape**, with one primary exception:
+
+- **LLM Generated Data Structures:** Uses arrows and circles to more accurately represent nodes and pointers for linked structures.
 
 #### 5.2.2 Colour Selection & Size Selector
 
@@ -473,13 +549,11 @@ We would also want to expand the gesture set. At the moment drawing only works w
 
 The AI assistant could be a lot smarter too however we are limited to the free version of the GeminiAI model. It generates shapes from text prompts but it has no idea what is already on the canvas, so you cannot say something like "connect those two boxes." Giving it that context would make it far more useful. We would also like to turn the settings page into an actual settings page where users can change their keybinds and adjust gesture controls to suit how they work.
 
-
 ### 10.2 Scalability Considerations
 
 The biggest problem that could be faced at scale is how recordings are stored. They are saved as raw binary buffers inside MongoDB documents and MongoDB has a 16MB document size limit. Even a short recording could hit that. A larger cluster would help with general capacity but the document size cap is a hard limit and there is cost issues with a larger database size. Canvas data has a similar issue on a smaller scale since every single stroke point sits inline in one document. Sending only the new shapes to the server instead of the whole canvas each time would cut down on both network traffic and database writes.
 
 On the infrastructure side our Docker Compose setup is just a single container with no health checks or logging. For a proper production deployment we would add a health endpoint, set up structured logging and forward those logs somewhere central so we can actually diagnose issues without poking around inside the container. The app is stateless by design so scaling horizontally behind a load balancer would be straightforward, though Socket.IO would need a Redis adapter so events reach every instance. Setting up a CI/CD pipeline with GitHub Actions to build the image and push it to a registry on every merge is something we ran out of time for but it would catch problems earlier and make deployments much more consistent.
-
 
 ### 10.3 Additional Features
 
