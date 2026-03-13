@@ -659,7 +659,7 @@ Despite these optimisations, the system naturally has some limitations due to th
 
 Latency is another unavoidable aspect of the system. Each frame must be captured by the camera, processed by `MediaPipe`, filtered and then converted into drawing actions. Although this pipeline is relatively fast, it still introduces a small delay between physical hand movement and visible response. The smoothing and interpolation techniques help mitigate this delay to a certain degree, but they cannot eliminate it entirely.
 
-Overall, the application performs well within the innate constraints present by the nature of the project. While some degree of “jank” is inevitable when tracking hand movements with a webcam, the implemented smoothing and optimisation strategies significantly improve the overall usability of the application. The final system definitely does succeed in showing that whiteboard interaction  with gestures is feasible from a technical standpoint and can perform reliably enough for practical use, with practice.
+Overall, the application performs well within the innate constraints present by the nature of the project. While some degree of “jank” is inevitable when tracking hand movements with a webcam, the implemented smoothing and optimisation strategies significantly improve the overall usability of the application. The final system definitely does succeed in showing that whiteboard interaction with gestures is feasible from a technical standpoint and can perform reliably enough for practical use, with practice.
 
 ---
 
@@ -703,7 +703,13 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ## 12. References
 
----
+[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
+
+[Google MediaPipe Library](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker)
+
+[MediaPipe Docs](https://mediapipe.readthedocs.io/en/latest/solutions/hands.html)
+
+
 
 ## 13. Appendices
 
@@ -717,7 +723,15 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ### Appendix E: Individual Contributions
 
-Researched movement filters at the beginning of the process to reduce jitter at low speed movement and prevent ink bleed and to stabilise drawing at high speed. Read papers including the one referenced below resulting the One Euro Filter being selected and applied to the applications drawing functionality. Later, created a profile page for user accounts went not needed due to the creation of the settings page as well as the project moving away from the idea of friends. Created an alternative to the sidebar that was already on the whiteboard page of the application, unused as no improvement was made. 
+| Name        | Contributions & Responsibilities |
+| :---------- | :------------------------------- |
+| **Oisin**   | [Researched and selected movement filters - Created alternative UI sidebar for Whiteboard - Created unused Profile Page for user account]      |
+| **Rakib**   | [Insert Contributions Here]      |
+| **Frank**   | [Insert Contributions Here]      |
+| **Tom**     | [Insert Contributions Here]      |
+| **Rory**    | [Insert Contributions Here]      |
+| **Darragh** | [Insert Contributions Here]      |
+| **Naoise**  | [Insert Contributions Here]      |
 
-### Appendix F: 1€ Filter
-[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
+
+
