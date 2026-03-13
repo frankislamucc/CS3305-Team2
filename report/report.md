@@ -9,7 +9,7 @@ https://github.com/frankislamucc/CS3305-Team2
 | (fullname) | (studentnumber) |
 | (fullname) | (studentnumber) |
 | (fullname) | (studentnumber) |
-| (fullname) | (studentnumber) |
+| Rakib Ishaque Chowdhury | 123383941 |
 | Darragh Maher | 123367013 |
 
 **Academic Integrity Declaration**
@@ -656,7 +656,7 @@ The primary collaboration tool used was Git as detailed above facilitating the d
 
 ---
 
-## 8. Evaluation & Discussion (Rakib)
+## 8. Evaluation & Discussion
 
 ### 8.1 Objectives Met vs. Not Met
 
