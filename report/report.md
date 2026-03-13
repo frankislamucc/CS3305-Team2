@@ -702,3 +702,6 @@ What this project proved is that gesture-based interaction in the browser is not
 ### Appendix D: Meeting Minutes / Sprint Logs
 
 ### Appendix E: Individual Contributions
+
+### Appendix F: 1€ Filter
+[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
