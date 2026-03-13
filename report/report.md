@@ -142,7 +142,67 @@ Functional requirements define the core behaviour of the system and the features
 
 ### 3.2 Non-Functional Requirements
 
-### 3.3 User Stories / Use Cases
+Non-functional requirements define the quality, attributes and constraints under which the system must operate. These were derived from the project's technical goals and the practical constraints of running a machine learning model inside a web browser.
+
+#### Performance
+
+- **Responsive Gesture Tracking**  
+  The gesture recognition pipeline must process webcam frames and return landmark data with low enough latency that drawing feels real-time to the user. Running MediaPipe in a Web Worker ensures the main UI thread is never blocked.
+
+- **Smooth Drawing Experience**  
+  Hand landmark jitter must be mitigated by the 1€ smoothing filter and interpolation so that drawn lines appear clean and intentional rather than erratic.
+
+- **Efficient Canvas Rendering**  
+  The canvas must use a separate active-line layer so that adding points to the current stroke does not trigger a full rerender of all existing strokes.
+
+#### Usability
+
+- **No Additional Hardware**  
+  The system must function using only a standard laptop webcam. No external device needed.
+
+- **Intuitive Gesture Mapping**  
+  Gestures should feel natural and be physically distinct from one another to minimise accidental activation. Drawing uses a index pinch, panning uses a middle-finger pinch and zooming uses a gun shape to keep each action clearly separated.
+
+- **Consistent UI**  
+  The application must present a coherant, high quality visual design across the landing page, authentication pages, whiteboard and settings using Tailwind CSS.
+
+#### Reliability
+
+- **Automatic Saving**  
+  Canvas state must be persisted to MongoDB after every meaningful action so that a browser crash or accidental navigation does not result in data loss.
+
+- **Automatic Reconnection**  
+  Socket.IO must handle temporary network interruptions transparently using its built-in reconnection with exponential backoff.
+
+- **Error Handling**  
+  If the webcam is unavailable or permission is denied, the application should inform the user clearly rather than crash silently.
+
+#### Security
+
+- **Secure Authentication**  
+  Passwords must be hashed with bcrypt before storage. JWT tokens must be stored in httpOnly cookies to prevent client-side script access.
+
+- **Route Protection**  
+  Next.js middleware must enforce authentication on all protected routes before any page rendering occurs so unregistered users cant access the whiteboard.
+
+- **Input Validation**  
+  All user data must be validated server-side with Zod schemas to prevent malicious input from reaching the database like injection attacks.
+
+#### Portability & Deployment
+
+- **Containerised Deployment**  
+  The application must be packaged as a Docker image and orchestrated with Docker Compose so that it can be deployed on any machine with Docker installed using a single command.
+
+- **Environment Configuration**  
+  All secrets (MongoDB URI, JWT secret) must be supplied via environment variables so that the same image works across development and production.
+
+#### Scalability
+
+- **Stateless Architecture**  
+  The server must not maintain session state between requests. JWT verification and MongoDB queries are performed per-request, allowing horizontal scaling behind a load balancer in the future.
+
+- **External Database**  
+  MongoDB Atlas is used as an external service so that the application container itself holds no persistent data and can be replaced or replicated without migration.
 
 ---
 
