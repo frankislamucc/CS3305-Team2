@@ -703,7 +703,13 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ## 12. References
 
----
+[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
+
+[Google MediaPipe Library](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker)
+
+[MediaPipe Docs](https://mediapipe.readthedocs.io/en/latest/solutions/hands.html)
+
+
 
 ## 13. Appendices
 
@@ -727,7 +733,5 @@ What this project proved is that gesture-based interaction in the browser is not
 | **Darragh** | [Insert Contributions Here]      |
 | **Naoise**  | [Insert Contributions Here]      |
 
-### Appendix F: 1€ Filter
 
-[One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
 
