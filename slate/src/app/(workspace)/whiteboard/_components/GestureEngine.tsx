@@ -143,9 +143,10 @@ export default function GestureEngine({
           isPanning.current = false;
         }
 
-        // colour wheel logic for ring pinch (disabled in view-only mode)
+        // colour wheel logic for ring pinch (disabled in view-only and AI modes)
         if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture === "rightRingPinch" &&
           !isGauntlet.current &&
           sizeExitTimer.current === null
@@ -160,6 +161,7 @@ export default function GestureEngine({
           canvasRef.current?.setSpinnerStartX(predictions.landmarks[0][16].x);
         } else if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture === "rightRingPinch" &&
           isGauntlet.current
         ) {
@@ -175,6 +177,7 @@ export default function GestureEngine({
           canvasRef.current?.showSpinner(smoothed);
         } else if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture !== "rightRingPinch" &&
           isGauntlet.current
         ) {
@@ -188,9 +191,10 @@ export default function GestureEngine({
           }
         }
 
-        // size selector logic (pinky pinch — disabled in view-only mode)
+        // size selector logic (pinky pinch — disabled in view-only and AI modes)
         if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture === "rightPinkyPinch" &&
           !isSizing.current &&
           gauntletExitTimer.current === null
@@ -206,6 +210,7 @@ export default function GestureEngine({
           isSizing.current = true;
         } else if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture === "rightPinkyPinch" &&
           isSizing.current
         ) {
@@ -220,6 +225,7 @@ export default function GestureEngine({
           );
         } else if (
           !viewOnly &&
+          !inAiWindowRef.current &&
           gesture !== "rightPinkyPinch" &&
           isSizing.current
         ) {
