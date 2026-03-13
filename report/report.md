@@ -504,10 +504,15 @@ The MediaPipe machine learning model is by far the most expensive element of the
 Maximising the user experience for the core functionalities like drawing a line was essential. For this reason we made use of a smoothing algorithm to remove the jitter and unpredictability caused by latency. we researched extensively and found that the academic consensus preferred the 1€ Filter for this type of task. The filter was implemented in javascript and a 3 point system was applied when drawing. The filter is applied to the thumb, index and pinch landmarks individually, and subsequently and exponential moving average is taken of all three, finally the output point is interpolated by a 50ms time window. We found that this approach allows for users to better understand how to interact with the application intuitively.
 
 ### 5.5 Recording Feature
+The recording feature allows users to capture their whiteboard sessions directly from the browser. This functionality was implemented using the browser `getDisplayMedia` API to request screen capture permissions and the `MediaRecorder` API to encode the captured stream into a video file. The recording system runs entirely on the client side and is integrated with the whiteboard page through a dedicated React component so that it does not interfere with gesture recognition or canvas rendering.
+
+When recording begins, the selected screen or tab is captured as a media stream and passed to a `MediaRecorder` instance. Media data is collected in small chunks and stored temporarily until recording stops. Once the session ends the chunks are combined into a `Blob`, which can then be downloaded as a WebM video file.
 
 #### 5.5.1 Recording Controls
+Recording controls are implemented through the `ScreenRecorderControls` React component which overlays the whiteboard interface. The component manages the recording lifecycle including starting capture, stopping capture and handling the generated media data. A recording state indicator and timer were added using React state updates to give users clear feedback when recording is active. To improve usability, the system also generates an object URL for the recorded blob which allows the video to be previewed directly in the browser using a standard HTML `<video>` element.
 
 #### 5.5.2 Upload & Storage
+The recording system was designed to support integration with backend storage so recordings can be associated with user accounts. Metadata such as filename, duration and file size can be generated from the recorded media and stored alongside user information in MongoDB. This allows recordings to be organised per user and later accessed through a dedicated recordings page within the application. The separation of recording capture and persistence ensures that recordings can still be downloaded locally even if backend storage is unavailable.
 
 ### 5.6 Camera Integration
 
