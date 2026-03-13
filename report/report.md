@@ -659,7 +659,7 @@ Despite these optimisations, the system naturally has some limitations due to th
 
 Latency is another unavoidable aspect of the system. Each frame must be captured by the camera, processed by `MediaPipe`, filtered and then converted into drawing actions. Although this pipeline is relatively fast, it still introduces a small delay between physical hand movement and visible response. The smoothing and interpolation techniques help mitigate this delay to a certain degree, but they cannot eliminate it entirely.
 
-Overall, the application performs well within the innate constraints present by the nature of the project. While some degree of “jank” is inevitable when tracking hand movements with a webcam, the implemented smoothing and optimisation strategies significantly improve the overall usability of the application. The final system definitely does succeed in showing that whiteboard interaction  with gestures is feasible from a technical standpoint and can perform reliably enough for practical use, with practice.
+Overall, the application performs well within the innate constraints present by the nature of the project. While some degree of “jank” is inevitable when tracking hand movements with a webcam, the implemented smoothing and optimisation strategies significantly improve the overall usability of the application. The final system definitely does succeed in showing that whiteboard interaction with gestures is feasible from a technical standpoint and can perform reliably enough for practical use, with practice.
 
 ---
 
@@ -717,5 +717,17 @@ What this project proved is that gesture-based interaction in the browser is not
 
 ### Appendix E: Individual Contributions
 
+| Name        | Contributions & Responsibilities |
+| :---------- | :------------------------------- |
+| **Oisin**   | [Insert Contributions Here]      |
+| **Rakib**   | [Insert Contributions Here]      |
+| **Frank**   | [Insert Contributions Here]      |
+| **Tom**     | [Insert Contributions Here]      |
+| **Rory**    | [Insert Contributions Here]      |
+| **Darragh** | [Insert Contributions Here]      |
+| **Naoise**  | [Insert Contributions Here]      |
+
 ### Appendix F: 1€ Filter
+
 [One Euro Filter](https://inria.hal.science/hal-00670496v1/document)
+
