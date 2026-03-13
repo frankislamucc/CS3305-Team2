@@ -776,7 +776,7 @@ What this project proved is that gesture-based interaction in the browser is not
 | Name | Contributions & Responsibilities |
 | :--- | :--- |
 | **Naoise** | • Created initial Next.js project structure.<br>• Designed and integrated `GestureEngine` and `Canvas` Konva.js components.<br>• Implemented LLM integration via the `ChatEngine` component.<br>• Serialized Konva types to JSON for persistence.<br>• Implemented worker thread for off-main-thread model inference.<br>• Integrated specialized line refs for optimal real-time rendering updates.<br>• Developed landing page layout and animations, including the Bento Box main card and Glassbar navbar.<br>• Implemented background animations utilizing the Shadcn library. <br>• Refactored api routes to use modern Next.js server actions.|
-| **Oisin** | [Insert Contributions Here] |
+| **Oisin** | Researched movement filters at the beginning of the process to reduce jitter at low speed movement and prevent ink bleed and to stabilise drawing at high speed. Read papers including the one referenced below resulting the One Euro Filter being selected and applied to the applications drawing functionality. Later, created a profile page for user accounts went not needed due to the creation of the settings page as well as the project moving away from the idea of friends. Created an alternative to the sidebar that was already on the whiteboard page of the application, unused as no improvement was made.  |
 | **Rakib** | [Insert Contributions Here] |
 | **Frank** | [Insert Contributions Here] |
 | **Tom** | [Insert Contributions Here] |
